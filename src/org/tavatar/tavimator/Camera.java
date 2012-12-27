@@ -1,5 +1,6 @@
 package org.tavatar.tavimator;
 
+import android.content.Context;
 import android.opengl.Matrix;
 
 /**
@@ -40,9 +41,10 @@ public class Camera {
 	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
-	TwoFingerTrackball trackball = new TwoFingerTrackball();
+	TwoFingerTrackball trackball;
 	
-	public Camera() {
+	public Camera(Context context) {
+		trackball = new TwoFingerTrackball(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
 		initializeCamera(
 				0.0f, 0.0f, 1.0f,

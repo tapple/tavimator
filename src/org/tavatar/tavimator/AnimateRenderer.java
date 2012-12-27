@@ -36,7 +36,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 	 * Store the view matrix. This can be thought of as our camera. This matrix transforms world space to eye space;
 	 * it positions things relative to our eye.
 	 */
-	private Camera mCamera = new Camera();
+	private Camera mCamera;
 	private float[] tempViewMatrix = new float[16];
 
 	/** Store the projection matrix. This is used to project the scene onto a 2D viewport. */
@@ -76,6 +76,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 	public AnimateRenderer(final Context activityContext)
 	{	
 		mActivityContext = activityContext;
+		mCamera = new Camera(activityContext);
 		
 		// Define points for a cube.
 		// X, Y, Z

@@ -24,19 +24,25 @@ public class TwoFingerTrackball {
 	private float[] frameRotation = new float[16];
 	
 	private float[] temporaryMatrix = new float[16];
+
+	
+	private float flingAxisX;
+	private float flingAxisY;
+	private float flingAxisZ;
+	
+	private int prevFlingX;
+	private int prevFlingY;
 	
 
     private float mDensity = 1.0f;
 
 	private Context mContext;
         	
-	public TwoFingerTrackball() {
+	public TwoFingerTrackball(Context context) {
+		mContext = context;
 		Matrix.setIdentityM(orientation, 0);
-	}
-	
-    public void setContext(Context context) {
-    	mContext = context;
-        mScroller = new Scroller(mContext);
+
+		mScroller = new Scroller(mContext);
         final ViewConfiguration configuration = ViewConfiguration.get(mContext);
         mTouchSlop = configuration.getScaledTouchSlop();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
@@ -45,9 +51,8 @@ public class TwoFingerTrackball {
         final DisplayMetrics displayMetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 		this.mDensity = displayMetrics.density;
-        
-    }
-    
+	}
+	
     public WindowManager getWindowManager() {
 		return ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE));
     }
@@ -67,7 +72,19 @@ public class TwoFingerTrackball {
 	 * @return
 	 */
 	public float[] getOrientation() {
+		updateOrientation();
 		return orientation;
+	}
+	
+	private void updateOrientation() {
+        int x = mScroller.getCurrX();
+        int y = mScroller.getCurrY();
+
+        if (prevFlingX == x && prevFlingY == y) return;
+
+        rotateAboutCameraAxis(x - prevFlingX, flingAxisX, flingAxisY, flingAxisZ);
+        prevFlingX = x;
+        prevFlingY = y;
 	}
 	
 	public void setOrientation(float[] anOrientationMatrix) {
@@ -175,21 +192,22 @@ public class TwoFingerTrackball {
                     scrollBy(deltaX, deltaY);
                 }
                 break;
-                /*
             case MotionEvent.ACTION_UP:
                 if (mIsBeingDragged) {
                     final VelocityTracker velocityTracker = mVelocityTracker;
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                    int initialVelocity = (int) velocityTracker.getYVelocity(mActivePointerId);
+                    float velocityX = velocityTracker.getXVelocity(mActivePointerId);
+                    float velocityY = velocityTracker.getYVelocity(mActivePointerId);
 
-                    if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
-                    	fling(-initialVelocity);
+                    if (Matrix.length(velocityX, velocityY, 0.0f) > mMinimumVelocity) {
+                    	fling(velocityX, velocityY);
                     }
   
                     mActivePointerId = INVALID_POINTER;
                     endDrag();
                 }
                 break;
+/*
             case MotionEvent.ACTION_CANCEL:
                 if (mIsBeingDragged && getChildCount() > 0) {
                     if (mScroller.springBack(mScrollX, mScrollY, 0, 0, 0, getScrollRange())) {
@@ -228,10 +246,14 @@ public class TwoFingerTrackball {
     }
 
     private void scrollBy(float deltaX, float deltaY) {
-	    Matrix.setIdentityM(frameRotation, 0);
 	    float degreesX = deltaX / mDensity / 2f;
 	    float degreesY = deltaY / mDensity / 2f;
-		Matrix.rotateM(frameRotation, 0, Matrix.length(degreesX, degreesY, 0.0f), degreesY, degreesX, 0.0f);
+		rotateAboutCameraAxis(Matrix.length(degreesX, degreesY, 0.0f), degreesY, degreesX, 0.0f);
+    }
+
+    private void rotateAboutCameraAxis(float angle, float x, float y, float z) {
+	    Matrix.setIdentityM(frameRotation, 0);
+		Matrix.rotateM(frameRotation, 0, angle, x, y, z);
 	
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
@@ -239,4 +261,21 @@ public class TwoFingerTrackball {
 		System.arraycopy(temporaryMatrix, 0, orientation, 0, 16);
     }
 
+    private void endDrag() {
+        mIsBeingDragged = false;
+
+        recycleVelocityTracker();
+    }
+
+    private void fling(float velocityX, float velocityY) {
+	    float angularVelocityX = velocityX / mDensity / 2f;
+	    float angularVelocityY = velocityY / mDensity / 2f;
+	    
+		flingAxisX = angularVelocityY;
+		flingAxisY = angularVelocityX;
+		flingAxisZ = 0.0f;
+	
+		mScroller.fling(0, 0, (int) Matrix.length(angularVelocityX, angularVelocityY, 0.0f), 0, 0, Integer.MAX_VALUE, 0, 0);
+	}
+	
 }
