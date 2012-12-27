@@ -78,25 +78,16 @@ public class Camera {
 		System.out.println("origin: " + originX + " " + originY + " " + originZ);
 	}
 	
+	public void updateViewMatrix() {
+		trackball.updateOrientation();
+		Matrix.setIdentityM(temporaryMatrix, 0);
+		Matrix.translateM(temporaryMatrix, 0, originX, originY, originZ);
+		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
+		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
+	}
+	
 	// returns the view matrix. Copy it if you intend to pass it around; this one might change
 	public float[] getViewMatrix() {
-		//System.out.println("offset: " + offsetX + " " + offsetY + " " + offsetZ + 
-		//	"\norigin: " + originX + " " + originY + " " + originZ);
-
-		Matrix.setIdentityM(temporaryMatrix, 0);
-		//Matrix.translateM(temporaryMatrix, 0, offset[0], offset[1], offset[2]);
-		Matrix.translateM(temporaryMatrix, 0, originX, originY, originZ);
-//System.out.println("view0:");
-//LessonFiveRenderer.printMatrix(temporaryMatrix);
-		//Matrix.multiplyMM(viewMatrix, 0, trackball.getOrientation(), 0, temporaryMatrix, 0);
-		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
-//System.out.println("view1:");
-//LessonFiveRenderer.printMatrix(viewMatrix);
-		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
-		//Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
-
-//System.out.println("view2:");
-//LessonFiveRenderer.printMatrix(viewMatrix);
 		return viewMatrix;
 	}
 	

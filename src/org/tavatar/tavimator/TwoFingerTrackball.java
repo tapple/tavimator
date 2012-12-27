@@ -71,11 +71,10 @@ public class TwoFingerTrackball {
 	 * @return
 	 */
 	public float[] getOrientation() {
-		updateOrientation();
 		return orientation;
 	}
 	
-	private void updateOrientation() {
+	public void updateOrientation() {
 		mScroller.computeScrollOffset();
         int x = mScroller.getCurrX();
         int y = mScroller.getCurrY();

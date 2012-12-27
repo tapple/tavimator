@@ -193,6 +193,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 	public void onDrawFrame(GL10 glUnused) 
 	{
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		mCamera.updateViewMatrix();
                 
         // Do a complete rotation every 10 seconds.
         long time = SystemClock.uptimeMillis() % 10000L;        
