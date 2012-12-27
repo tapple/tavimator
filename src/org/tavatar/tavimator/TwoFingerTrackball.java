@@ -175,24 +175,17 @@ public class TwoFingerTrackball {
                     scrollBy(deltaX, deltaY);
                 }
                 break;
+                /*
             case MotionEvent.ACTION_UP:
-/*
                 if (mIsBeingDragged) {
                     final VelocityTracker velocityTracker = mVelocityTracker;
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                     int initialVelocity = (int) velocityTracker.getYVelocity(mActivePointerId);
 
-                    if (getChildCount() > 0) {
-                        if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
-                            fling(-initialVelocity);
-                        } else {
-                            if (mScroller.springBack(mScrollX, mScrollY, 0, 0, 0,
-                                    getScrollRange())) {
-                                postInvalidateOnAnimation();
-                            }
-                        }
+                    if ((Math.abs(initialVelocity) > mMinimumVelocity)) {
+                    	fling(-initialVelocity);
                     }
-
+  
                     mActivePointerId = INVALID_POINTER;
                     endDrag();
                 }
@@ -216,7 +209,7 @@ public class TwoFingerTrackball {
                 onSecondaryPointerUp(ev);
                 mLastMotionY = (int) ev.getY(ev.findPointerIndex(mActivePointerId));
                 break;
-*/
+//*/
         }
         return true;
     }
@@ -238,8 +231,7 @@ public class TwoFingerTrackball {
 	    Matrix.setIdentityM(frameRotation, 0);
 	    float degreesX = deltaX / mDensity / 2f;
 	    float degreesY = deltaY / mDensity / 2f;
-		Matrix.rotateM(frameRotation, 0, degreesX, 0.0f, 1.0f, 0.0f);
-		Matrix.rotateM(frameRotation, 0, degreesY, 1.0f, 0.0f, 0.0f);
+		Matrix.rotateM(frameRotation, 0, Matrix.length(degreesX, degreesY, 0.0f), degreesY, degreesX, 0.0f);
 	
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
