@@ -4,7 +4,6 @@ import android.content.Context;
 import android.opengl.Matrix;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -77,6 +76,7 @@ public class TwoFingerTrackball {
 	}
 	
 	private void updateOrientation() {
+		mScroller.computeScrollOffset();
         int x = mScroller.getCurrX();
         int y = mScroller.getCurrY();
 
@@ -147,7 +147,7 @@ public class TwoFingerTrackball {
                  * will be false if being flinged.
                  */
                 if (!mScroller.isFinished()) {
-                    mScroller.abortAnimation();
+                    mScroller.forceFinished(true);
                 }
 
                 // Remember where the motion event started
@@ -258,7 +258,7 @@ public class TwoFingerTrackball {
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
 		Matrix.multiplyMM(temporaryMatrix, 0, frameRotation, 0, orientation, 0);
-		System.arraycopy(temporaryMatrix, 0, orientation, 0, 16);
+		setOrientation(temporaryMatrix);
     }
 
     private void endDrag() {
@@ -274,6 +274,9 @@ public class TwoFingerTrackball {
 		flingAxisX = angularVelocityY;
 		flingAxisY = angularVelocityX;
 		flingAxisZ = 0.0f;
+		
+		prevFlingX = 0;
+		prevFlingY = 0;
 	
 		mScroller.fling(0, 0, (int) Matrix.length(angularVelocityX, angularVelocityY, 0.0f), 0, 0, Integer.MAX_VALUE, 0, 0);
 	}
