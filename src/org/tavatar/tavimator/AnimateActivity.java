@@ -32,7 +32,7 @@ public class AnimateActivity extends Activity
 
 			// Set the renderer to our demo renderer, defined below.
 			mGLSurfaceView.setRenderer(new AnimateRenderer(this));
-			mGLSurfaceView.getRenderer().getCamera().getTrackball().calibrateForDisplay(getWindowManager().getDefaultDisplay());
+			mGLSurfaceView.getRenderer().getCamera().getTrackball().setContext(this);
 		} 
 		else 
 		{
