@@ -70,12 +70,7 @@ public class Camera {
 		
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 		Matrix.setLookAtM(viewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
-		System.out.println("offset: " + offset[0] + " " + offset[1] + " " + offset[2]);
-		System.out.println("recomputed orientation:");
-		AnimateRenderer.printMatrix(trackball.getOrientation());
 		Matrix.multiplyMV(offset, 0, trackball.getOrientation(), 0, offset, 0);
-		System.out.println("offset2: " + offset[0] + " " + offset[1] + " " + offset[2]);
-		System.out.println("origin: " + originX + " " + originY + " " + originZ);
 	}
 	
 	public void updateViewMatrix() {

@@ -62,8 +62,6 @@ public class TwoFingerTrackball {
 			float upX, float upY, float upZ) {
 		Matrix.setLookAtM(orientation, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 		Matrix.translateM(orientation, 0, eyeX, eyeY, eyeZ);
-		System.out.println("orientation:");
-		AnimateRenderer.printMatrix(orientation);
 	}
 
 	/**

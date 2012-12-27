@@ -143,7 +143,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 		// Disable blending
 		GLES20.glDisable(GLES20.GL_BLEND);
 
-		System.out.println("----------------------------------------------");
+		//System.out.println("----------------------------------------------");
 		mCamera.initializeCamera(
 				-6.0f, 0.0f, -6.0f,
 				 0.0f, 0.0f, -6.0f,
@@ -161,7 +161,8 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 		mProgramHandle = ShaderHelper.createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle, 
 				new String[] {"a_Position",  "a_Color"});								                                							                                            
 	}	
-	
+
+/*
 	public static void printMatrix(float[] m) {
 		System.out.println("" + 
 			m[ 0]+" "+ m[ 4]+" "+m[ 8]+" "+m[12]+"\n"+
@@ -169,6 +170,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 			m[ 2]+" "+ m[ 6]+" "+m[10]+" "+m[14]+"\n"+
 			m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15]);
 	}
+//*/
 		
 	@Override
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) 
