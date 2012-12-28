@@ -43,8 +43,14 @@ public class Camera {
 	 */
 	TwoFingerTrackball trackball;
 	
+	/**
+	 * Gyroscope that keeps track of orientation set by device orientation
+	 */
+	Gyroscope gyroscope;
+	
 	public Camera(Context context) {
 		trackball = new TwoFingerTrackball(context);
+		gyroscope = new Gyroscope(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
 		initializeCamera(
 				0.0f, 0.0f, 1.0f,
@@ -73,10 +79,20 @@ public class Camera {
 		Matrix.multiplyMV(offset, 0, trackball.getOrientation(), 0, offset, 0);
 	}
 	
+	public void onResume() {
+		gyroscope.onResume();
+	}
+
+	public void onPause() {
+		gyroscope.onPause();
+	}	
+
 	public void updateViewMatrix() {
 		trackball.updateOrientation();
-		Matrix.setIdentityM(temporaryMatrix, 0);
-		Matrix.translateM(temporaryMatrix, 0, originX, originY, originZ);
+		gyroscope.updateOrientation();
+		Matrix.setIdentityM(viewMatrix, 0);
+		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
+		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
 		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
 	}

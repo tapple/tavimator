@@ -114,6 +114,14 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 		mCubeColors.put(cubeColorData).position(0);
 	}								  
 	
+	public void onResume() {
+		mCamera.onResume();
+	}
+
+	public void onPause() {
+		mCamera.onPause();
+	}	
+
 	public Camera getCamera() {
 		return mCamera;
 	}
