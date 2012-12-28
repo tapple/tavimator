@@ -54,7 +54,7 @@ public class Gyroscope implements SensorEventListener {
 	}
 	
 	public void updateOrientation() {
-		//SensorManager.getRotationMatrix(orientation, inclination, gravity, magnetic);
+		SensorManager.getRotationMatrix(orientation, inclination, gravity, magnetic);
 	}
 
 	@Override
