@@ -18,16 +18,21 @@ public class TwoFingerTrackball {
 	private float[] orientation = new float[16];
 
 	/**
+	 * A transform from camera coordinates to my local coordinates. Used for touch processing
+	 */
+	private float[] cameraToTrackball = new float[16];
+
+	/**
 	 * The rotation that happened since the last frame
 	 */
 	private float[] frameRotation = new float[16];
 	
 	private float[] temporaryMatrix = new float[16];
+	private float[] temporaryVector = new float[4];
 
 	
-	private float flingAxisX;
-	private float flingAxisY;
-	private float flingAxisZ;
+	private float[] scrollAxis = new float[4];
+	private float[] flingAxis = new float[4];
 	
 	private int prevFlingX;
 	private int prevFlingY;
@@ -40,6 +45,7 @@ public class TwoFingerTrackball {
 	public TwoFingerTrackball(Context context) {
 		mContext = context;
 		Matrix.setIdentityM(orientation, 0);
+		Matrix.setIdentityM(cameraToTrackball, 0);
 
 		mScroller = new Scroller(mContext);
         final ViewConfiguration configuration = ViewConfiguration.get(mContext);
@@ -72,6 +78,10 @@ public class TwoFingerTrackball {
 		return orientation;
 	}
 	
+	public float[] getCameraToTrackballOrientation() {
+		return cameraToTrackball;
+	}
+	
 	public void updateOrientation() {
 		mScroller.computeScrollOffset();
         int x = mScroller.getCurrX();
@@ -79,7 +89,7 @@ public class TwoFingerTrackball {
 
         if (prevFlingX == x && prevFlingY == y) return;
 
-        rotateAboutCameraAxis(x - prevFlingX, flingAxisX, flingAxisY, flingAxisZ);
+        rotateAboutCameraAxis(x - prevFlingX, flingAxis);
         prevFlingX = x;
         prevFlingY = y;
 	}
@@ -243,14 +253,17 @@ public class TwoFingerTrackball {
     }
 
     private void scrollBy(float deltaX, float deltaY) {
-	    float degreesX = deltaX / mDensity / 2f;
-	    float degreesY = deltaY / mDensity / 2f;
-		rotateAboutCameraAxis(Matrix.length(degreesX, degreesY, 0.0f), degreesY, degreesX, 0.0f);
+    	temporaryVector[0] = deltaY / mDensity / 2f;
+    	temporaryVector[1] = deltaX / mDensity / 2f;
+    	temporaryVector[2] = 0.0f;
+    	temporaryVector[3] = 1.0f;
+    	Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, temporaryVector, 0);
+		rotateAboutCameraAxis(Matrix.length(temporaryVector[0], temporaryVector[1], 0.0f), scrollAxis);
     }
 
-    private void rotateAboutCameraAxis(float angle, float x, float y, float z) {
+    private void rotateAboutCameraAxis(float angle, float[] axis) {
 	    Matrix.setIdentityM(frameRotation, 0);
-		Matrix.rotateM(frameRotation, 0, angle, x, y, z);
+		Matrix.rotateM(frameRotation, 0, angle, axis[0], axis[1], axis[2]);
 	
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
@@ -268,9 +281,11 @@ public class TwoFingerTrackball {
 	    float angularVelocityX = velocityX / mDensity / 2f;
 	    float angularVelocityY = velocityY / mDensity / 2f;
 	    
-		flingAxisX = angularVelocityY;
-		flingAxisY = angularVelocityX;
-		flingAxisZ = 0.0f;
+	    temporaryVector[0] = angularVelocityY;
+	    temporaryVector[1] = angularVelocityX;
+	    temporaryVector[2] = 0.0f;
+	    temporaryVector[3] = 1.0f;
+	    Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, temporaryVector, 0);
 		
 		prevFlingX = 0;
 		prevFlingY = 0;

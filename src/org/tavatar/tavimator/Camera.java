@@ -90,6 +90,8 @@ public class Camera {
 	public void updateViewMatrix() {
 		trackball.updateOrientation();
 		gyroscope.updateOrientation();
+		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
+
 		Matrix.setIdentityM(viewMatrix, 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
 		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
