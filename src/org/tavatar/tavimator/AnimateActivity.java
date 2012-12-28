@@ -18,7 +18,9 @@ public class AnimateActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		
-		mGLSurfaceView = new AnimateSurfaceView(this);
+		setContentView(R.layout.animate);
+
+		mGLSurfaceView = (AnimateSurfaceView)findViewById(R.id.gl_surface_view);
 
 		// Check if the system supports OpenGL ES 2.0.
 		final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -39,8 +41,6 @@ public class AnimateActivity extends Activity
 			// renderer if you wanted to support both ES 1 and ES 2.
 			return;
 		}
-
-		setContentView(mGLSurfaceView);
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 <resources>
 
     <string name="app_name">Tavimator</string>
-
+    <string name="button_hold_camera">Hold Camera</string>
+    <string name="button_grab">Grab</string>
+    <string name="button_grab_constrain">Constrain</string>
+        
 </resources>

@@ -2,15 +2,19 @@ package org.tavatar.tavimator;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 public class AnimateSurfaceView extends GLSurfaceView 
 {
 	private AnimateRenderer renderer;
 	
-	public AnimateSurfaceView(Context context) 
-	{
+	public AnimateSurfaceView(Context context) {
 		super(context);	
+	}
+
+	public AnimateSurfaceView(Context context, AttributeSet attrs) {
+		super(context, attrs);		
 	}
 
 	@Override
