@@ -5,15 +5,15 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-public class AnimateSurfaceView extends GLSurfaceView 
+public class AnimationView extends GLSurfaceView 
 {
-	private AnimateRenderer renderer;
+	private AnimationRenderer renderer;
 	
-	public AnimateSurfaceView(Context context) {
+	public AnimationView(Context context) {
 		super(context);	
 	}
 
-	public AnimateSurfaceView(Context context, AttributeSet attrs) {
+	public AnimationView(Context context, AttributeSet attrs) {
 		super(context, attrs);		
 	}
 
@@ -25,13 +25,13 @@ public class AnimateSurfaceView extends GLSurfaceView
 	}
 
 	// Hides superclass method.
-	public void setRenderer(AnimateRenderer renderer) 
+	public void setRenderer(AnimationRenderer renderer) 
 	{
 		this.renderer = renderer;
 		super.setRenderer(renderer);
 	}
 	
-	public AnimateRenderer getRenderer() {
+	public AnimationRenderer getRenderer() {
 		return renderer;
 	}
 

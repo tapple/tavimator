@@ -22,7 +22,7 @@ import com.learnopengles.android.common.ShapeBuilder;
  * This class implements our custom renderer. Note that the GL10 parameter passed in is unused for OpenGL ES 2.0
  * renderers -- the static class GLES20 is used instead.
  */
-public class AnimateRenderer implements GLSurfaceView.Renderer 
+public class AnimationRenderer implements GLSurfaceView.Renderer 
 {	
 	private final Context mActivityContext;
 	
@@ -73,7 +73,7 @@ public class AnimateRenderer implements GLSurfaceView.Renderer
 	/**
 	 * Initialize the model data.
 	 */
-	public AnimateRenderer(final Context activityContext)
+	public AnimationRenderer(final Context activityContext)
 	{	
 		mActivityContext = activityContext;
 		mCamera = new Camera(activityContext);

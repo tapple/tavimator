@@ -8,10 +8,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ToggleButton;
 
-public class AnimateActivity extends Activity 
+public class AnimationActivity extends Activity 
 {
 	/** Hold a reference to our GLSurfaceView */
-	private AnimateSurfaceView mGLSurfaceView;
+	private AnimationView mGLSurfaceView;
 	
 	private static final String SHOWED_TOAST = "showed_toast";
 
@@ -22,7 +22,7 @@ public class AnimateActivity extends Activity
 		
 		setContentView(R.layout.animate);
 
-		mGLSurfaceView = (AnimateSurfaceView)findViewById(R.id.gl_surface_view);
+		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 
 		// Check if the system supports OpenGL ES 2.0.
 		final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -35,7 +35,7 @@ public class AnimateActivity extends Activity
 			mGLSurfaceView.setEGLContextClientVersion(2);
 
 			// Set the renderer to our demo renderer, defined below.
-			mGLSurfaceView.setRenderer(new AnimateRenderer(this));
+			mGLSurfaceView.setRenderer(new AnimationRenderer(this));
 		} 
 		else 
 		{
