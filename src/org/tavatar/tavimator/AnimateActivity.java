@@ -5,6 +5,8 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ToggleButton;
 
 public class AnimateActivity extends Activity 
 {
@@ -63,5 +65,32 @@ public class AnimateActivity extends Activity
 	protected void onSaveInstanceState (Bundle outState)
 	{
 		outState.putBoolean(SHOWED_TOAST, true);
+	}
+	
+	public void onTrackingClicked(View view) {
+	    // Is the toggle on?
+	    boolean on = ((ToggleButton) view).isChecked();
+	    
+	    mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(on);
+	    if (on) {
+	        System.out.println("Tracking on");
+	    } else {
+	        System.out.println("Tracking off");
+	    }
+	}
+	
+	public void onGrabClicked(View view) {
+	    // Is the toggle on?
+	    boolean on = ((ToggleButton) view).isChecked();
+	    
+	    if (on) {
+	        System.out.println("Grab on");
+	    } else {
+	        System.out.println("Grab off");
+	    }
+	}
+	
+	public void onGrabConstrainClicked(View view) {
+        System.out.println("grab constrain");
 	}
 }

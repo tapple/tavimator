@@ -107,4 +107,8 @@ public class Camera {
 	public TwoFingerTrackball getTrackball() {
 		return trackball;
 	}
+	
+	public Gyroscope getGyroscope() {
+		return gyroscope;
+	}
 }

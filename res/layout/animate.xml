@@ -12,21 +12,30 @@
 		android:layout_height="wrap_content"
 		android:layout_gravity="bottom|center_horizontal"
 		android:orientation="horizontal">
+
 		<Button
-			android:id="@+id/button_hold_camera"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"					
-			android:text="@string/button_hold_camera" />
-		<Button
+		    android:id="@+id/button_grab_constrain"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/button_grab_constrain"
+		    android:onClick="onGrabConstrainClicked"/>
+		
+		<ToggleButton
 			android:id="@+id/button_grab"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"					
-			android:text="@string/button_grab" />	
-		<Button
-			android:id="@+id/button_grab_constrain"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"					
-			android:text="@string/button_grab_constrain" />	
+			android:textOn="@string/button_grab_on"
+			android:textOff="@string/button_grab_off"
+		    android:onClick="onGrabClicked"/>
+				
+		<ToggleButton
+		    android:id="@+id/button_tracking"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+    		android:textOn="@string/button_tracking_on"
+		    android:textOff="@string/button_tracking_off"
+		    android:onClick="onTrackingClicked"/>
+	
 			</LinearLayout>
 
 </FrameLayout>
