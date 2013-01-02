@@ -3,7 +3,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"	
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
-	<org.tavatar.tavimator.AnimateSurfaceView
+	<org.tavatar.tavimator.AnimationView
 		android:id="@+id/gl_surface_view"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent" />

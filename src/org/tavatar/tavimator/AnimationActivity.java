@@ -20,7 +20,7 @@ public class AnimationActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		
-		setContentView(R.layout.animate);
+		setContentView(R.layout.animation);
 
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 
