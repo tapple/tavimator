@@ -174,7 +174,7 @@ public class TwoFingerTrackball {
                 break;
             }
             case MotionEvent.ACTION_MOVE:
-            	debugLabel.setText("Move");
+            	//debugLabel.setText("Move");
                 final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex == -1) {
                     Log.e(TAG, "Invalid pointerId=" + mActivePointerId + " in onTouchEvent");
@@ -211,7 +211,7 @@ public class TwoFingerTrackball {
                 }
                 break;
             case MotionEvent.ACTION_UP:
-            	debugLabel.setText("");
+            	debugLabel.setText("Up");
                 if (mIsBeingDragged) {
                     final VelocityTracker velocityTracker = mVelocityTracker;
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
@@ -226,29 +226,48 @@ public class TwoFingerTrackball {
                     endDrag();
                 }
                 break;
-/*
             case MotionEvent.ACTION_CANCEL:
-                if (mIsBeingDragged && getChildCount() > 0) {
-                    if (mScroller.springBack(mScrollX, mScrollY, 0, 0, 0, getScrollRange())) {
-                        postInvalidateOnAnimation();
-                    }
+            	debugLabel.setText("Cancel");
+                if (mIsBeingDragged) {
                     mActivePointerId = INVALID_POINTER;
                     endDrag();
                 }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN: {
+            	debugLabel.setText("Pointer Down");
                 final int index = ev.getActionIndex();
+                mLastMotionX = (int) ev.getX(index);
                 mLastMotionY = (int) ev.getY(index);
                 mActivePointerId = ev.getPointerId(index);
                 break;
             }
             case MotionEvent.ACTION_POINTER_UP:
+            	debugLabel.setText("Pointer Up");
                 onSecondaryPointerUp(ev);
+                mLastMotionX = (int) ev.getX(ev.findPointerIndex(mActivePointerId));
                 mLastMotionY = (int) ev.getY(ev.findPointerIndex(mActivePointerId));
                 break;
 //*/
         }
         return true;
+    }
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >>
+                MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+        final int pointerId = ev.getPointerId(pointerIndex);
+        if (pointerId == mActivePointerId) {
+            // This was our active pointer going up. Choose a new
+            // active pointer and adjust accordingly.
+            // TODO: Make this decision more intelligent.
+            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+            mLastMotionX = (int) ev.getX(newPointerIndex);
+            mLastMotionY = (int) ev.getY(newPointerIndex);
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+            if (mVelocityTracker != null) {
+                mVelocityTracker.clear();
+            }
+        }
     }
 
     private void initVelocityTrackerIfNotExists() {
@@ -265,6 +284,8 @@ public class TwoFingerTrackball {
     }
 
     private void scrollBy(float deltaX, float deltaY) {
+    	//Log.v(TAG, "scrollBy(" + deltaX + ", " + deltaY + ")");
+    	if (deltaX == 0.0f && deltaY == 0.0f) return;
     	temporaryVector[0] = deltaY / mDensity / 2f;
     	temporaryVector[1] = deltaX / mDensity / 2f;
     	temporaryVector[2] = 0.0f;
