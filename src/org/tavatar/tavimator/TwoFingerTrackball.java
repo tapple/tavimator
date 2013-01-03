@@ -9,6 +9,8 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.Scroller;
+import android.widget.TextView;
+import android.app.Activity;
 
 public class TwoFingerTrackball {
 
@@ -41,9 +43,16 @@ public class TwoFingerTrackball {
     private float mDensity = 1.0f;
 
 	private Context mContext;
+	
+	/**
+	 * A text view at the top of the screen for printing debugging messages
+	 */
+	private TextView debugLabel;
         	
 	public TwoFingerTrackball(Context context) {
 		mContext = context;
+		debugLabel = (TextView)((Activity)context).findViewById(R.id.debugLabel);
+
 		Matrix.setIdentityM(orientation, 0);
 		Matrix.setIdentityM(cameraToTrackball, 0);
 
@@ -149,6 +158,7 @@ public class TwoFingerTrackball {
 
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
+            	debugLabel.setText("Down");
                 /*
                  * If being flinged and user touches, stop the fling. isFinished
                  * will be false if being flinged.
@@ -164,6 +174,7 @@ public class TwoFingerTrackball {
                 break;
             }
             case MotionEvent.ACTION_MOVE:
+            	debugLabel.setText("Move");
                 final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex == -1) {
                     Log.e(TAG, "Invalid pointerId=" + mActivePointerId + " in onTouchEvent");
@@ -200,6 +211,7 @@ public class TwoFingerTrackball {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+            	debugLabel.setText("");
                 if (mIsBeingDragged) {
                     final VelocityTracker velocityTracker = mVelocityTracker;
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
