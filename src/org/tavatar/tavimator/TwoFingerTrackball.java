@@ -120,6 +120,8 @@ public class TwoFingerTrackball {
      */
     private int mLastMotionX;
     private int mLastMotionY;
+    private int mLastMotionX2;
+    private int mLastMotionY2;
 
 	
 	/**
@@ -138,7 +140,12 @@ public class TwoFingerTrackball {
      * ID of the active pointer. This is used to retain consistency during
      * drags/flings if multiple pointers are used.
      */
-    private int mActivePointerId = INVALID_POINTER;
+    private int activePointer1Id = INVALID_POINTER;
+    
+    /**
+     * ID of the second finger pointer during two finger gestures. 
+     */
+    private int activePointer2Id = INVALID_POINTER;
 
     private int mTouchSlop;
     private int mMinimumVelocity;
@@ -146,17 +153,21 @@ public class TwoFingerTrackball {
 
     /**
      * Sentinel value for no current active pointer.
-     * Used by {@link #mActivePointerId}.
+     * Used by {@link #activePointer1Id}.
      */
     private static final int INVALID_POINTER = -1;
 
     public boolean onTouchEvent(MotionEvent ev) {
+        final int action = ev.getAction();
+        final int actionMask = action & MotionEvent.ACTION_MASK;
+        final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+        
+        if (activePointer1Id == INVALID_POINTER && actionMask != MotionEvent.ACTION_DOWN) return true;
+        
         initVelocityTrackerIfNotExists();
         mVelocityTracker.addMovement(ev);
 
-        final int action = ev.getAction();
-
-        switch (action & MotionEvent.ACTION_MASK) {
+        switch (actionMask) {
             case MotionEvent.ACTION_DOWN: {
             	debugLabel.setText("Down");
                 /*
@@ -168,19 +179,12 @@ public class TwoFingerTrackball {
                 }
 
                 // Remember where the motion event started
-                mLastMotionX = (int) ev.getX();
-                mLastMotionY = (int) ev.getY();
-                mActivePointerId = ev.getPointerId(0);
+                activePointer1Id = ev.getPointerId(0);
+                saveLastMotion(ev);
                 break;
             }
             case MotionEvent.ACTION_MOVE:
-            	//debugLabel.setText("Move");
-                final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (activePointerIndex == -1) {
-                    Log.e(TAG, "Invalid pointerId=" + mActivePointerId + " in onTouchEvent");
-                    break;
-                }
-
+                final int activePointerIndex = ev.findPointerIndex(activePointer1Id);
                 final int x = (int) ev.getX(activePointerIndex);
                 final int y = (int) ev.getY(activePointerIndex);
                 int deltaX = x - mLastMotionX;
@@ -204,70 +208,105 @@ public class TwoFingerTrackball {
                 	}
                 }
                 if (mIsBeingDragged) {
+                	if (activePointer2Id == INVALID_POINTER) {
+                		debugLabel.setText("move 1 finger");
+                	} else {
+                		debugLabel.setText("move 2 finger");
+                	}
                     // Scroll to follow the motion event
                     mLastMotionX = x;
                     mLastMotionY = y;
                     scrollBy(deltaX, deltaY);
                 }
                 break;
-            case MotionEvent.ACTION_UP:
-            	debugLabel.setText("Up");
+            case MotionEvent.ACTION_UP: // the last finger was lifted
                 if (mIsBeingDragged) {
+                	debugLabel.setText("Fling 1 finger");
                     final VelocityTracker velocityTracker = mVelocityTracker;
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                    float velocityX = velocityTracker.getXVelocity(mActivePointerId);
-                    float velocityY = velocityTracker.getYVelocity(mActivePointerId);
+                    float velocityX = velocityTracker.getXVelocity(activePointer1Id);
+                    float velocityY = velocityTracker.getYVelocity(activePointer1Id);
 
                     if (Matrix.length(velocityX, velocityY, 0.0f) > mMinimumVelocity) {
                     	fling(velocityX, velocityY);
                     }
   
-                    mActivePointerId = INVALID_POINTER;
                     endDrag();
+                } else if (activePointer1Id != INVALID_POINTER) {
+                	debugLabel.setText("Tap");
+                	endDrag();
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
             	debugLabel.setText("Cancel");
-                if (mIsBeingDragged) {
-                    mActivePointerId = INVALID_POINTER;
-                    endDrag();
-                }
+            	endDrag();
                 break;
             case MotionEvent.ACTION_POINTER_DOWN: {
-            	debugLabel.setText("Pointer Down");
-                final int index = ev.getActionIndex();
-                mLastMotionX = (int) ev.getX(index);
-                mLastMotionY = (int) ev.getY(index);
-                mActivePointerId = ev.getPointerId(index);
+            	final int pointerId = ev.getPointerId(pointerIndex);
+                if (activePointer2Id == INVALID_POINTER) {
+	                if (mIsBeingDragged) {
+		                activePointer1Id = pointerId;
+	                } else {
+	                    activePointer2Id = pointerId;
+	                }
+	                saveLastMotion(ev);
+                }
                 break;
             }
             case MotionEvent.ACTION_POINTER_UP:
-            	debugLabel.setText("Pointer Up");
-                onSecondaryPointerUp(ev);
-                mLastMotionX = (int) ev.getX(ev.findPointerIndex(mActivePointerId));
-                mLastMotionY = (int) ev.getY(ev.findPointerIndex(mActivePointerId));
+            	final int pointerId = ev.getPointerId(pointerIndex);
+                final int newPointerId = unusedPointerId(ev);
+                if (newPointerId == INVALID_POINTER) { // one of the last two fingers was lifted
+                	if (!mIsBeingDragged) {
+                		if (pointerId == activePointer1Id) {
+                			activePointer1Id = activePointer2Id;
+                		}
+                		activePointer2Id = INVALID_POINTER;
+                		mVelocityTracker.clear();
+                	} else if (activePointer2Id == INVALID_POINTER) {
+                		Log.e(TAG, "got to end 2 finger drag, but only one finger is active");
+                		endDrag();
+                	} else {
+                    	debugLabel.setText("Fling 2 finger");
+                    	endDrag();
+                	}
+                } else { // 3 or more fingers were present, and one was lifted
+                	if (pointerId == activePointer1Id) {
+                        activePointer1Id = newPointerId;
+                		mVelocityTracker.clear();
+                    } else if (pointerId == activePointer2Id) {
+                        activePointer2Id = newPointerId;
+                		mVelocityTracker.clear();
+                    }
+                }
+                saveLastMotion(ev);
                 break;
-//*/
         }
         return true;
     }
+    
+    private void saveLastMotion(MotionEvent ev) {
+    	int index;
+    	if (activePointer1Id != INVALID_POINTER) {
+    		index = ev.findPointerIndex(activePointer1Id);
+    		mLastMotionX = (int) ev.getX(index);
+    		mLastMotionY = (int) ev.getY(index);
+    	}
+    	if (activePointer2Id != INVALID_POINTER) {
+    		index = ev.findPointerIndex(activePointer2Id);
+    		mLastMotionX2 = (int) ev.getX(index);
+    		mLastMotionY2 = (int) ev.getY(index);
+    	}
+    }
 
-    private void onSecondaryPointerUp(MotionEvent ev) {
-        final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >>
-                MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-        final int pointerId = ev.getPointerId(pointerIndex);
-        if (pointerId == mActivePointerId) {
-            // This was our active pointer going up. Choose a new
-            // active pointer and adjust accordingly.
-            // TODO: Make this decision more intelligent.
-            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-            mLastMotionX = (int) ev.getX(newPointerIndex);
-            mLastMotionY = (int) ev.getY(newPointerIndex);
-            mActivePointerId = ev.getPointerId(newPointerIndex);
-            if (mVelocityTracker != null) {
-                mVelocityTracker.clear();
-            }
-        }
+    private int unusedPointerId(MotionEvent ev) {
+    	for (int i = 0; i < ev.getPointerCount(); i++) {
+    		int id = ev.getPointerId(i);
+    		if (id != activePointer1Id && id != activePointer2Id) {
+    			return id;
+    		}
+    	}
+    	return INVALID_POINTER;
     }
 
     private void initVelocityTrackerIfNotExists() {
@@ -306,6 +345,8 @@ public class TwoFingerTrackball {
 
     private void endDrag() {
         mIsBeingDragged = false;
+        activePointer1Id = INVALID_POINTER;
+        activePointer2Id = INVALID_POINTER;
 
         recycleVelocityTracker();
     }
