@@ -169,7 +169,7 @@ public class AnimationView extends GLSurfaceView
 			int deltaY2 = 0;
 
 			if (activePointer2Id != INVALID_POINTER) {
-				final int index2 = ev.findPointerIndex(activePointer1Id);
+				final int index2 = ev.findPointerIndex(activePointer2Id);
 				x2 = (int) ev.getX(index2);
 				y2 = (int) ev.getY(index2);
 				deltaX2 = x2 - mLastMotionX2;

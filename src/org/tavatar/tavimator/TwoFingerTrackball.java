@@ -25,11 +25,11 @@ public class TwoFingerTrackball {
 	/**
 	 * The rotation that happened since the last frame
 	 */
-	private float[] frameRotation = new float[16];
+	private float[] localFrameRotation = new float[16];
+	private float[] globalFrameRotation = new float[16];
+	private float[] newOrientation = new float[16];
 
-	private float[] temporaryMatrix = new float[16];
-	private float[] temporaryVector = new float[4];
-
+	private float[] scrollVelocity = new float[4];
 	private float[] scrollAxis = new float[4];
 	private float[] flingAxis = new float[4];
 
@@ -39,7 +39,28 @@ public class TwoFingerTrackball {
 	private float mDensity = 1.0f;
 
 	private Context mContext;
+	
+	public void oneFingerDragToAngularVelocity(float[] angularVelocity, float dx, float dy) {
+		angularVelocity[0] = dy / mDensity / 2f;
+		angularVelocity[1] = dx / mDensity / 2f;
+		angularVelocity[2] = 0.0f;
+		angularVelocity[3] = 1.0f;
+	}
 
+	public void twoFingerDragToAngularVelocity(float[] angularVelocity, int x1, int y1, float dx1, float dy1, int x2, int y2, float dx2, float dy2) {
+		angularVelocity[0] = (dy1+dy2) / mDensity / 4f;
+		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
+		angularVelocity[2] = (float) ((-Math.atan2(y2-y1, x2-x1) + Math.atan2(y2-y1-dy2+dy1, x2-x1-dx2+dx1)) * 180/Math.PI);
+		angularVelocity[3] = 1.0f;
+	}
+
+	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
+		Matrix.setIdentityM(matrix, 0);
+		Matrix.rotateM(matrix, 0, angularVelocity[0], 1, 0, 0);
+		Matrix.rotateM(matrix, 0, angularVelocity[1], 0, 1, 0);
+		Matrix.rotateM(matrix, 0, angularVelocity[2], 0, 0, 1);
+	}
+	
 	public TwoFingerTrackball(Context context) {
 		mContext = context;
 
@@ -109,12 +130,14 @@ public class TwoFingerTrackball {
 	
 			@Override
 			public void onOneFingerMove(int x, int y, int dx, int dy) {
-				scrollBy(dx, dy);
+				oneFingerDragToAngularVelocity(scrollVelocity, dx, dy);
+				scrollBy(scrollVelocity);
 			}
 		
 			@Override
 			public void onOneFingerFling(int x, int y, float vx, float vy) {
-				fling(vx, vy);
+				oneFingerDragToAngularVelocity(scrollVelocity, vx, vy);
+				fling(scrollVelocity);
 			}
 		
 			@Override
@@ -139,12 +162,14 @@ public class TwoFingerTrackball {
 	
 			@Override
 			public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
-				scrollBy(dx1, dy1);
+				twoFingerDragToAngularVelocity(scrollVelocity, x1, y1, dx1, dy1, x2, y2, dx2, dy2);
+				scrollBy(scrollVelocity);
 			}
 
 			@Override
 			public void onTwoFingerFling(int x1, int y1, float vx1, float vy1, int x2, int y2, float vx2, float vy2) {
-				fling(vx1, vy1);
+				twoFingerDragToAngularVelocity(scrollVelocity, x1, y1, vx1, vy1, x2, y2, vx2, vy2);
+				fling(scrollVelocity);
 			}
 
 			@Override
@@ -155,48 +180,32 @@ public class TwoFingerTrackball {
 		return new TwoFingerDragHandler();
 	}
 
-	private void scrollBy(float deltaX, float deltaY) {
-		// Log.v(TAG, "scrollBy(" + deltaX + ", " + deltaY + ")");
-		if (deltaX == 0.0f && deltaY == 0.0f)
-			return;
-		temporaryVector[0] = deltaY / mDensity / 2f;
-		temporaryVector[1] = deltaX / mDensity / 2f;
-		temporaryVector[2] = 0.0f;
-		temporaryVector[3] = 1.0f;
-		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, temporaryVector,
-				0);
-		rotateAboutCameraAxis(
-				Matrix.length(temporaryVector[0], temporaryVector[1], 0.0f),
-				scrollAxis);
+	private void scrollBy(float[] angularVelocity) {
+		angularVelocityToRotationMatrix(localFrameRotation, angularVelocity);
+		Matrix.multiplyMM(globalFrameRotation, 0, cameraToTrackball, 0, localFrameRotation, 0);
+		Matrix.multiplyMM(newOrientation, 0, globalFrameRotation, 0, orientation, 0);
+		setOrientation(newOrientation);
 	}
 
 	private void rotateAboutCameraAxis(float angle, float[] axis) {
-		Matrix.setIdentityM(frameRotation, 0);
-		Matrix.rotateM(frameRotation, 0, angle, axis[0], axis[1], axis[2]);
+		Matrix.setIdentityM(globalFrameRotation, 0);
+		Matrix.rotateM(globalFrameRotation, 0, angle, axis[0], axis[1], axis[2]);
 
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
-		Matrix.multiplyMM(temporaryMatrix, 0, frameRotation, 0, orientation, 0);
-		setOrientation(temporaryMatrix);
+		Matrix.multiplyMM(newOrientation, 0, globalFrameRotation, 0, orientation, 0);
+		setOrientation(newOrientation);
 	}
 
-	private void fling(float velocityX, float velocityY) {
-		float angularVelocityX = velocityX / mDensity / 2f;
-		float angularVelocityY = velocityY / mDensity / 2f;
-
-		temporaryVector[0] = angularVelocityY;
-		temporaryVector[1] = angularVelocityX;
-		temporaryVector[2] = 0.0f;
-		temporaryVector[3] = 1.0f;
-		Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, temporaryVector,
-				0);
+	private void fling(float[] angularVelocity) {
+		angularVelocityToRotationMatrix(localFrameRotation, angularVelocity);
+		Matrix.multiplyMM(globalFrameRotation, 0, cameraToTrackball, 0, localFrameRotation, 0);
+		Math3D.toAxisAngle(flingAxis, globalFrameRotation);
 
 		prevFlingX = 0;
 		prevFlingY = 0;
 
-		mScroller.fling(0, 0,
-				(int) Matrix.length(angularVelocityX, angularVelocityY, 0.0f),
-				0, 0, Integer.MAX_VALUE, 0, 0);
+		mScroller.fling(0, 0, (int) flingAxis[3], 0, 0, Integer.MAX_VALUE, 0, 0);
 	}
 
 }
