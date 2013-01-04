@@ -6,5 +6,14 @@
     <string name="button_grab_on">Grab</string>
     <string name="button_grab_off">Release</string>
     <string name="button_grab_constrain">Constrain</string>
-        
+    <string name="short_tool_name_orbit_camera">Orbit</string>
+    <string name="short_tool_name_rotate_bane">Rotate</string>
+    <string name="short_tool_name_move_object">Move</string>
+    <string name="one_finger_tool_name_orbit_camera">Orbit Camera</string>
+    <string name="one_finger_tool_name_rotate_bane">Rotate Bone</string>
+    <string name="one_finger_tool_name_move_object">Move Object</string>
+    <string name="two_finger_tool_name_orbit_camera">Orbit/Zoom Camera</string>
+    <string name="two_finger_tool_name_rotate_bane">Rotate Bone</string>
+    <string name="two_finger_tool_name_move_object">Move/Rotate Object</string>
+    
 </resources>
