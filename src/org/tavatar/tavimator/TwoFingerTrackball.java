@@ -3,10 +3,13 @@ package org.tavatar.tavimator;
 import android.content.Context;
 import android.opengl.Matrix;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Scroller;
 
 public class TwoFingerTrackball {
+	
+	private static String TAG = "TwoFingerTrackball";
 
 	private Scroller mScroller;
 
@@ -40,6 +43,15 @@ public class TwoFingerTrackball {
 
 	private Context mContext;
 	
+	public static String arrayToString(float[] array) {
+		String ans = "[";
+		for (int i = 0; i < array.length; i++) {			
+			ans += array[i];
+			ans += i==array.length-1 ? "]" : ", ";
+		}
+		return ans;
+	}
+	
 	public void oneFingerDragToAngularVelocity(float[] angularVelocity, float dx, float dy) {
 		angularVelocity[0] = dy / mDensity / 2f;
 		angularVelocity[1] = dx / mDensity / 2f;
@@ -48,10 +60,21 @@ public class TwoFingerTrackball {
 	}
 
 	public void twoFingerDragToAngularVelocity(float[] angularVelocity, int x1, int y1, float dx1, float dy1, int x2, int y2, float dx2, float dy2) {
+		int rx = x2-x1; // mathematically, r and v should both be divided by 2, but it ends up canceling out (radius is half the distance, velocity is the average of the two measurements)
+		int ry = y2-y1;
+		int r2 = rx*rx + ry*ry;
+		float vx = dx2-dx1;
+		float vy = dy2-dy1;
+		float projection = (rx*vx + ry*vy) / r2;
+		float vxPerp = vx - projection * rx;
+		float vyPerp = vy - projection * ry;
+		
 		angularVelocity[0] = (dy1+dy2) / mDensity / 4f;
 		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
-		angularVelocity[2] = (float) ((-Math.atan2(y2-y1, x2-x1) + Math.atan2(y2-y1-dy2+dy1, x2-x1-dx2+dx1)) * 180/Math.PI);
+		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
 		angularVelocity[3] = 1.0f;
+		
+		// and the scale factor, if this were a pinch zoom gesture, would be float scale = projection
 	}
 
 	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
@@ -181,13 +204,14 @@ public class TwoFingerTrackball {
 	}
 
 	private void scrollBy(float[] angularVelocity) {
-		angularVelocityToRotationMatrix(localFrameRotation, angularVelocity);
-		Matrix.multiplyMM(globalFrameRotation, 0, cameraToTrackball, 0, localFrameRotation, 0);
-		Matrix.multiplyMM(newOrientation, 0, globalFrameRotation, 0, orientation, 0);
-		setOrientation(newOrientation);
+		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
+		rotateAboutCameraAxis(
+				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
+				scrollAxis);
 	}
 
 	private void rotateAboutCameraAxis(float angle, float[] axis) {
+		if (angle == 0.0f) return; // axis is likely to be zero in this case as well. avoids divide by zero errors in rotateM
 		Matrix.setIdentityM(globalFrameRotation, 0);
 		Matrix.rotateM(globalFrameRotation, 0, angle, axis[0], axis[1], axis[2]);
 
@@ -198,14 +222,14 @@ public class TwoFingerTrackball {
 	}
 
 	private void fling(float[] angularVelocity) {
-		angularVelocityToRotationMatrix(localFrameRotation, angularVelocity);
-		Matrix.multiplyMM(globalFrameRotation, 0, cameraToTrackball, 0, localFrameRotation, 0);
-		Math3D.toAxisAngle(flingAxis, globalFrameRotation);
+		Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 
 		prevFlingX = 0;
 		prevFlingY = 0;
 
-		mScroller.fling(0, 0, (int) flingAxis[3], 0, 0, Integer.MAX_VALUE, 0, 0);
+		mScroller.fling(0, 0,
+				(int) Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
+				0, 0, Integer.MAX_VALUE, 0, 0);
 	}
 
 }

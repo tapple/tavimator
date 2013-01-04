@@ -36,7 +36,7 @@ public class Math3D {
 				return; // zero angle, arbitrary axis
 			}
 			// otherwise this singularity is angle = 180
-			axisAngle[3] = (float) Math.PI;
+			axisAngle[3] = 180f;
 			double xx = (m00+1)/2;
 			double yy = (m11+1)/2;
 			double zz = (m22+1)/2;
@@ -87,7 +87,7 @@ public class Math3D {
 		if (Math.abs(s) < 0.001) s=1; 
 			// prevent divide by zero, should not happen if matrix is orthogonal and should be
 			// caught by singularity test above, but I've left it in just in case
-		axisAngle[3] = (float) Math.acos(( m00 + m11 + m22 - 1)/2);
+		axisAngle[3] = (float) (Math.acos(( m00 + m11 + m22 - 1)/2) * 180/Math.PI);
 		axisAngle[0] = (float) ((m21 - m12)/s);
 		axisAngle[1] = (float) ((m02 - m20)/s);
 		axisAngle[2] = (float) ((m10 - m01)/s);
