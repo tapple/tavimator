@@ -52,6 +52,17 @@ public class TwoFingerTrackball {
 		return ans;
 	}
 	
+	/**
+	 * Converts touch data into an angular velocity vector, in degrees per unit
+	 * time. The angular velocity vector will be in camera-local coordinates.
+	 * Data is provided in screen coordinates (pixels starting at zero in the
+	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
+	 * frame, or whatever
+	 * 
+	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for OpenGL)
+	 * @param dx x component of the velocity vector, in pixels per unit time
+	 * @param dy y component of the velocity vector, in pixels per unit time
+	 */
 	public void oneFingerDragToAngularVelocity(float[] angularVelocity, float dx, float dy) {
 		angularVelocity[0] = dy / mDensity / 2f;
 		angularVelocity[1] = dx / mDensity / 2f;
@@ -59,22 +70,54 @@ public class TwoFingerTrackball {
 		angularVelocity[3] = 1.0f;
 	}
 
+	/**
+	 * Converts touch data into an angular velocity vector, in degrees per unit
+	 * time. The angular velocity vector will be in camera-local coordinates.
+	 * Data is provided in screen coordinates (pixels starting at zero in the
+	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
+	 * frame, or whatever
+	 * 
+	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for OpenGL)
+	 * @param x1 x position of the first finger
+	 * @param y1 y position of the first finger
+	 * @param dx1 x component of the first finger velocity vector, in pixels per unit time
+	 * @param dy1 y component of the first finger velocity vector, in pixels per unit time
+	 * @param x2 x position of the second finger
+	 * @param y2 y position of the second finger
+	 * @param dx2 x component of the second finger velocity vector, in pixels per unit time
+	 * @param dy2 y component of the second finger velocity vector, in pixels per unit time
+	 */
 	public void twoFingerDragToAngularVelocity(float[] angularVelocity, int x1, int y1, float dx1, float dy1, int x2, int y2, float dx2, float dy2) {
-		int rx = x2-x1; // mathematically, r and v should both be divided by 2, but it ends up canceling out (radius is half the distance, velocity is the average of the two measurements)
-		int ry = y2-y1;
-		int r2 = rx*rx + ry*ry;
-		float vx = dx2-dx1;
-		float vy = dy2-dy1;
-		float projection = (rx*vx + ry*vy) / r2;
-		float vxPerp = vx - projection * rx;
-		float vyPerp = vy - projection * ry;
-		
+		// mathematically, r and v should both be divided by
+		// 2, but it ends up canceling out (radius is half
+		// the distance, velocity is the average of the two
+		// measurements, one of which is inverted)
+		int rx = x2-x1; // radius vector, x component
+		int ry = y2-y1; // radius vector, y component
+		int r2 = rx*rx + ry*ry; // radius squared
+/* Center is between fingers
+		float vx = dx2-dx1; // velocity vector, x component
+		float vy = dy2-dy1; // velocity vector, y component
+/*/ // Center is first finger
+		float vx = dx2; // velocity vector, x component
+		float vy = dy2; // velocity vector, y component
+//*/
+		float projection = (rx*vx + ry*vy) / r2; // projection of v onto r, as a fraction of r
+		float vxPerp = vx - projection * rx; // tangential velocity vector, x component
+		float vyPerp = vy - projection * ry; // tangential velocity vector, y component
+
+/* Center is between fingers
 		angularVelocity[0] = (dy1+dy2) / mDensity / 4f;
 		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
+/*/ // Center is first finger
+		angularVelocity[0] = dy1 / mDensity / 2f;
+		angularVelocity[1] = dx1 / mDensity / 2f;
+//*/
 		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
 		angularVelocity[3] = 1.0f;
 		
-		// and the scale factor, if this were a pinch zoom gesture, would be float scale = projection
+		// and the scale factor, if this were a pinch zoom gesture, would be 
+		// float scale = 1f + projection;
 	}
 
 	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
