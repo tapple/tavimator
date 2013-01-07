@@ -17,7 +17,6 @@ import android.util.Log;
 import org.tavatar.tavimator.R;
 import com.learnopengles.android.common.RawResourceReader;
 import com.learnopengles.android.common.ShaderHelper;
-import com.learnopengles.android.common.ShapeBuilder;
 
 /**
  * This class implements our custom renderer. Note that the GL10 parameter passed in is unused for OpenGL ES 2.0
@@ -53,7 +52,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	
 	/** Store our model data in a float buffer. */
 	private final FloatBuffer mCubePositions;
-	private final FloatBuffer mCubeColors;
 	private final FloatBuffer mCubeNormals;
 		
 	/** This will be used to pass in the transformation matrix. */
@@ -79,9 +77,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	
 	/** Size of the position data in elements. */
 	private final int mPositionDataSize = 3;	
-	
-	/** Size of the color data in elements. */
-	private final int mColorDataSize = 4;	
 	
 	/** Size of the normal data in elements. */
 	private final int mNormalDataSize = 3;
@@ -167,58 +162,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				-1.0f, -1.0f, -1.0f,
 		};	
 		
-		// R, G, B, A
-		final float[] cubeColorData =
-		{				
-				// Front face (red)
-				1.0f, 0.0f, 0.0f, 1.0f,				
-				1.0f, 0.0f, 0.0f, 1.0f,
-				1.0f, 0.0f, 0.0f, 1.0f,
-				1.0f, 0.0f, 0.0f, 1.0f,				
-				1.0f, 0.0f, 0.0f, 1.0f,
-				1.0f, 0.0f, 0.0f, 1.0f,
-				
-				// Right face (green)
-				0.0f, 1.0f, 0.0f, 1.0f,				
-				0.0f, 1.0f, 0.0f, 1.0f,
-				0.0f, 1.0f, 0.0f, 1.0f,
-				0.0f, 1.0f, 0.0f, 1.0f,				
-				0.0f, 1.0f, 0.0f, 1.0f,
-				0.0f, 1.0f, 0.0f, 1.0f,
-				
-				// Back face (blue)
-				0.0f, 0.0f, 1.0f, 1.0f,				
-				0.0f, 0.0f, 1.0f, 1.0f,
-				0.0f, 0.0f, 1.0f, 1.0f,
-				0.0f, 0.0f, 1.0f, 1.0f,				
-				0.0f, 0.0f, 1.0f, 1.0f,
-				0.0f, 0.0f, 1.0f, 1.0f,
-				
-				// Left face (yellow)
-				1.0f, 1.0f, 0.0f, 1.0f,				
-				1.0f, 1.0f, 0.0f, 1.0f,
-				1.0f, 1.0f, 0.0f, 1.0f,
-				1.0f, 1.0f, 0.0f, 1.0f,				
-				1.0f, 1.0f, 0.0f, 1.0f,
-				1.0f, 1.0f, 0.0f, 1.0f,
-				
-				// Top face (cyan)
-				0.0f, 1.0f, 1.0f, 1.0f,				
-				0.0f, 1.0f, 1.0f, 1.0f,
-				0.0f, 1.0f, 1.0f, 1.0f,
-				0.0f, 1.0f, 1.0f, 1.0f,				
-				0.0f, 1.0f, 1.0f, 1.0f,
-				0.0f, 1.0f, 1.0f, 1.0f,
-				
-				// Bottom face (magenta)
-				1.0f, 0.0f, 1.0f, 1.0f,				
-				1.0f, 0.0f, 1.0f, 1.0f,
-				1.0f, 0.0f, 1.0f, 1.0f,
-				1.0f, 0.0f, 1.0f, 1.0f,				
-				1.0f, 0.0f, 1.0f, 1.0f,
-				1.0f, 0.0f, 1.0f, 1.0f
-		};
-		
 		// X, Y, Z
 		// The normal is used in light calculations and is a vector which points
 		// orthogonal to the plane of the surface. For a cube model, the normals
@@ -279,10 +222,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
 		mCubePositions.put(cubePositionData).position(0);		
 		
-		mCubeColors = ByteBuffer.allocateDirect(cubeColorData.length * mBytesPerFloat)
-	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
-		mCubeColors.put(cubeColorData).position(0);
-		
 		mCubeNormals = ByteBuffer.allocateDirect(cubeNormalData.length * mBytesPerFloat)
 	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
 		mCubeNormals.put(cubeNormalData).position(0);
@@ -313,8 +252,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) 
 	{				
-		// Set the background clear color to black.
-		GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		
 		// Use culling to remove back faces.
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
@@ -411,8 +349,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
         mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
         mLightPosHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_LightPos");
+        mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
         mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
-        mColorHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Color");
         mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal"); 
         
         // Calculate position of the light. Rotate and then push into the distance.
@@ -428,25 +366,30 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 4.0f, 0.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
+        GLES20.glUniform4f(mColorHandle, 1.0f, 0.0f, 0.0f, 1.0f); // red
         drawCube();
                         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, -4.0f, 0.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
+        GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 0.0f, 1.0f); // green
         drawCube();
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 4.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
+        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
         drawCube();
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, -4.0f, -7.0f);
+        GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
         drawCube();
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
+        GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
         drawCube();      
         
         // Draw a point to indicate the light.
@@ -465,13 +408,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         		0, mCubePositions);        
                 
         GLES20.glEnableVertexAttribArray(mPositionHandle);        
-        
-        // Pass in the color information
-        mCubeColors.position(0);
-        GLES20.glVertexAttribPointer(mColorHandle, mColorDataSize, GLES20.GL_FLOAT, false,
-        		0, mCubeColors);        
-        
-        GLES20.glEnableVertexAttribArray(mColorHandle);
         
         // Pass in the normal information
         mCubeNormals.position(0);
