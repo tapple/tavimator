@@ -65,17 +65,16 @@ public class Camera {
 			float upX, float upY, float upZ,
 			float originX, float originY, float originZ) {
 		
-		this.originX = originX;
-		this.originY = originY;
-		this.originZ = originZ;
+		this.originX = -originX;
+		this.originY = -originY;
+		this.originZ = -originZ;
 		
-		this.offset[0] = eyeX - originX;
-		this.offset[1] = eyeY - originY;
-		this.offset[2] = eyeZ - originZ;
+		this.offset[0] = originX - eyeX;
+		this.offset[1] = originY - eyeY;
+		this.offset[2] = originZ - eyeZ;
 		this.offset[3] = 1.0f;
 		
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
-		Matrix.setLookAtM(viewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 		Matrix.multiplyMV(offset, 0, trackball.getOrientation(), 0, offset, 0);
 	}
 	
@@ -93,10 +92,10 @@ public class Camera {
 		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
 
 		Matrix.setIdentityM(viewMatrix, 0);
-		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
+		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
 		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
-		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
+		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
 	}
 	
 	// returns the view matrix. Copy it if you intend to pass it around; this one might change
