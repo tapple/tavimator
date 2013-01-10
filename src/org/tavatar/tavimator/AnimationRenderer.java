@@ -45,11 +45,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	/** Allocate storage for the final combined matrix. This will be passed into the shader program. */
 	private float[] mMVPMatrix = new float[16];
 	
-	/** 
-	 * Stores a copy of the model matrix specifically for the light position.
-	 */
-	private float[] mLightModelMatrix = new float[16];	
-	
 	/** Store our model data in a float buffer. */
 	private final FloatBuffer mCubePositions;
 	private final FloatBuffer mCubeNormals;
@@ -59,9 +54,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	
 	/** This will be used to pass in the modelview matrix. */
 	private int mMVMatrixHandle;
-	
-	/** This will be used to pass in the light position. */
-	private int mLightPosHandle;
 	
 	/** This will be used to pass in model position information. */
 	private int mPositionHandle;
@@ -81,22 +73,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	/** Size of the normal data in elements. */
 	private final int mNormalDataSize = 3;
 	
-	/** Used to hold a light centered on the origin in model space. We need a 4th coordinate so we can get translations to work when
-	 *  we multiply this by our transformation matrices. */
-	private final float[] mLightPosInModelSpace = new float[] {0.0f, 0.0f, 0.0f, 1.0f};
-	
-	/** Used to hold the current position of the light in world space (after transformation via model matrix). */
-	private final float[] mLightPosInWorldSpace = new float[4];
-	
-	/** Used to hold the transformed position of the light in eye space (after transformation via modelview matrix) */
-	private final float[] mLightPosInEyeSpace = new float[4];
-	
 	/** This is a handle to our per-vertex cube shading program. */
 	private int mPerVertexProgramHandle;
 		
-	/** This is a handle to our light point program. */
-	private int mPointProgramHandle;	
-	
 	private SLPartsRenderer figureRenderer = new SLPartsFemale(this);
 	
 	/**
@@ -293,30 +272,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 		mPerVertexProgramHandle = createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle, 
 				new String[] {"a_Position",  "a_Color", "a_Normal"});								                                							       
-        
-        // Define a simple shader program for our point.
-        final String pointVertexShader =
-        	"uniform mat4 u_MVPMatrix;      \n"		
-          +	"attribute vec4 a_Position;     \n"		
-          + "void main()                    \n"
-          + "{                              \n"
-          + "   gl_Position = u_MVPMatrix   \n"
-          + "               * a_Position;   \n"
-          + "   gl_PointSize = 5.0;         \n"
-          + "}                              \n";
-        
-        final String pointFragmentShader = 
-        	"precision mediump float;       \n"					          
-          + "void main()                    \n"
-          + "{                              \n"
-          + "   gl_FragColor = vec4(1.0,    \n" 
-          + "   1.0, 1.0, 1.0);             \n"
-          + "}                              \n";
-        
-        final int pointVertexShaderHandle = compileShader(GLES20.GL_VERTEX_SHADER, pointVertexShader);
-        final int pointFragmentShaderHandle = compileShader(GLES20.GL_FRAGMENT_SHADER, pointFragmentShader);
-        mPointProgramHandle = createAndLinkProgram(pointVertexShaderHandle, pointFragmentShaderHandle, 
-        		new String[] {"a_Position"});                 
 	}	
 
 //*
@@ -371,19 +326,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         // Set program handles for cube drawing.
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
         mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
-        mLightPosHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_LightPos");
         mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
         mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
         mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal"); 
-        
-        // Calculate position of the light. Rotate and then push into the distance.
-        Matrix.setIdentityM(mLightModelMatrix, 0);
-        Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, -5.0f);      
-        Matrix.rotateM(mLightModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);
-        Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, 10.0f);
-               
-        Matrix.multiplyMV(mLightPosInWorldSpace, 0, mLightModelMatrix, 0, mLightPosInModelSpace, 0);
-        Matrix.multiplyMV(mLightPosInEyeSpace, 0, mCamera.getViewMatrix(), 0, mLightPosInWorldSpace, 0);                        
         
         // Draw some cubes.        
         Matrix.setIdentityM(mModelMatrix, 0);
@@ -419,10 +364,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
         updateUniforms();
         figureRenderer.drawPartNamed("chest");      
-        
-        // Draw a point to indicate the light.
-        GLES20.glUseProgram(mPointProgramHandle);        
-        drawLight();
 	}				
 	
 	
@@ -440,9 +381,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
         // Pass in the combined matrix.
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-        
-        // Pass in the light position in eye space.        
-        GLES20.glUniform3f(mLightPosHandle, mLightPosInEyeSpace[0], mLightPosInEyeSpace[1], mLightPosInEyeSpace[2]);
 	}
 	
 	/**
@@ -469,29 +407,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         // Draw the cube.
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               
 	}	
-	
-	/**
-	 * Draws a point representing the position of the light.
-	 */
-	private void drawLight()
-	{
-		final int pointMVPMatrixHandle = GLES20.glGetUniformLocation(mPointProgramHandle, "u_MVPMatrix");
-        final int pointPositionHandle = GLES20.glGetAttribLocation(mPointProgramHandle, "a_Position");
-        
-		// Pass in the position.
-		GLES20.glVertexAttrib3f(pointPositionHandle, mLightPosInModelSpace[0], mLightPosInModelSpace[1], mLightPosInModelSpace[2]);
-
-		// Since we are not using a buffer object, disable vertex arrays for this attribute.
-        GLES20.glDisableVertexAttribArray(pointPositionHandle);  
-		
-		// Pass in the transformation matrix.
-		Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mLightModelMatrix, 0);
-		Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
-		GLES20.glUniformMatrix4fv(pointMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-		
-		// Draw the point.
-		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
-	}
 	
 	/** 
 	 * Helper function to compile a shader.
