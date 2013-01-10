@@ -273,9 +273,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	{				
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		
-		// Use culling to remove back faces.
-		GLES20.glEnable(GLES20.GL_CULL_FACE);
-		
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			
@@ -391,21 +388,21 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         // Draw some cubes.        
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 20.0f, 0.0f, -7.0f);
-        Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
+        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 1.0f, 0.0f, 0.0f, 1.0f); // red
         updateUniforms();
         figureRenderer.drawPartNamed("lHand");
                         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, -20.0f, 0.0f, -7.0f);
-        Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
+        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 0.0f, 1.0f); // green
         updateUniforms();
         figureRenderer.drawPartNamed("hip");
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
-        Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
+        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
         updateUniforms();
         figureRenderer.drawPartNamed("head");
@@ -418,7 +415,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
-        Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
+        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
         updateUniforms();
         figureRenderer.drawPartNamed("chest");      
