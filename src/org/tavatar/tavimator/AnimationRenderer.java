@@ -97,6 +97,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	/** This is a handle to our light point program. */
 	private int mPointProgramHandle;	
 	
+	private SLPartsRenderer figureRenderer = new SLPartsFemale(this);
+	
 	/**
 	 * Initialize the model data.
 	 */
@@ -225,6 +227,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		mCubeNormals = ByteBuffer.allocateDirect(cubeNormalData.length * mBytesPerFloat)
 	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
 		mCubeNormals.put(cubeNormalData).position(0);
+		
+		figureRenderer.load();
 	}
 	
 	public void onResume() {
@@ -249,6 +253,21 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.color_fragment_shader);
 	}
 	
+	/** This will be used to pass in model position information. */
+	public int getPositionHandle() {
+		return mPositionHandle;
+	}
+	
+	/** This will be used to pass in model color information. */
+	public int getColorHandle() {
+		return mColorHandle;
+	}
+	
+	/** This will be used to pass in model normal information. */
+	public int getNormalHandle() {
+		return mNormalHandle;
+	}
+
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) 
 	{				
@@ -260,9 +279,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			
-		//System.out.println("----------------------------------------------");
+		System.out.println("----------------------------------------------");
 		mCamera.initializeCamera(
-				-6.0f, 0.0f, -6.0f,
+				 0.0f, 0.0f, 30.0f,
 				 0.0f, 0.0f, -6.0f,
 				 0.0f, 1.0f,  0.0f,
 				 0.0f, 0.0f, -6.0f);
@@ -303,13 +322,20 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         		new String[] {"a_Position"});                 
 	}	
 
-/*
+//*
 	public static void printMatrix(float[] m) {
 		System.out.println("" + 
 			m[ 0]+" "+ m[ 4]+" "+m[ 8]+" "+m[12]+"\n"+
 			m[ 1]+" "+ m[ 5]+" "+m[ 9]+" "+m[13]+"\n"+
 			m[ 2]+" "+ m[ 6]+" "+m[10]+" "+m[14]+"\n"+
 			m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15]);
+	}
+
+	public static void printVector(float[] m) {
+		for (float f:m) {
+			System.out.print(" " + f);
+		}
+		System.out.println();
 	}
 //*/
 		
@@ -327,7 +353,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		final float bottom = -1.0f;
 		final float top = 1.0f;
 		final float near = 1.0f;
-		final float far = 50.0f;
+		final float far = 100.0f;
 		
 		Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
 	}	
@@ -357,45 +383,70 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mLightModelMatrix, 0);
         Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, -5.0f);      
         Matrix.rotateM(mLightModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);
-        Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, 2.0f);
+        Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, 10.0f);
                
         Matrix.multiplyMV(mLightPosInWorldSpace, 0, mLightModelMatrix, 0, mLightPosInModelSpace, 0);
         Matrix.multiplyMV(mLightPosInEyeSpace, 0, mCamera.getViewMatrix(), 0, mLightPosInWorldSpace, 0);                        
         
         // Draw some cubes.        
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 4.0f, 0.0f, -7.0f);
+        Matrix.translateM(mModelMatrix, 0, 20.0f, 0.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 1.0f, 0.0f, 0.0f, 1.0f); // red
-        drawCube();
+        updateUniforms();
+        figureRenderer.drawPartNamed("lHand");
                         
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, -4.0f, 0.0f, -7.0f);
+        Matrix.translateM(mModelMatrix, 0, -20.0f, 0.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 0.0f, 1.0f); // green
-        drawCube();
+        updateUniforms();
+        figureRenderer.drawPartNamed("hip");
         
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, 4.0f, -7.0f);
+        Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
-        drawCube();
+        updateUniforms();
+        figureRenderer.drawPartNamed("head");
         
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, -4.0f, -7.0f);
+        Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
         GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
-        drawCube();
+        updateUniforms();
+        figureRenderer.drawPartNamed("rFoot");
         
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
         Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
-        drawCube();      
+        updateUniforms();
+        figureRenderer.drawPartNamed("chest");      
         
         // Draw a point to indicate the light.
         GLES20.glUseProgram(mPointProgramHandle);        
         drawLight();
 	}				
+	
+	
+	private void updateUniforms() {
+		// This multiplies the view matrix by the model matrix, and stores the result in the MVP matrix
+        // (which currently contains model * view).
+        Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mModelMatrix, 0);   
+        
+        // Pass in the modelview matrix.
+        GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVPMatrix, 0);                
+        
+        // This multiplies the modelview matrix by the projection matrix, and stores the result in the MVP matrix
+        // (which now contains model * view * projection).
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+        // Pass in the combined matrix.
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+        
+        // Pass in the light position in eye space.        
+        GLES20.glUniform3f(mLightPosHandle, mLightPosInEyeSpace[0], mLightPosInEyeSpace[1], mLightPosInEyeSpace[2]);
+	}
 	
 	/**
 	 * Draws a cube.
@@ -416,22 +467,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         
         GLES20.glEnableVertexAttribArray(mNormalHandle);
         
-		// This multiplies the view matrix by the model matrix, and stores the result in the MVP matrix
-        // (which currently contains model * view).
-        Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mModelMatrix, 0);   
-        
-        // Pass in the modelview matrix.
-        GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVPMatrix, 0);                
-        
-        // This multiplies the modelview matrix by the projection matrix, and stores the result in the MVP matrix
-        // (which now contains model * view * projection).
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
-
-        // Pass in the combined matrix.
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-        
-        // Pass in the light position in eye space.        
-        GLES20.glUniform3f(mLightPosHandle, mLightPosInEyeSpace[0], mLightPosInEyeSpace[1], mLightPosInEyeSpace[2]);
+        updateUniforms();
         
         // Draw the cube.
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               

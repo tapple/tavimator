@@ -21,7 +21,7 @@ void main() {				// The entry point for our vertex shader.
 	// pointing in the same direction then it will get max illumination.
 	float diffuse = max(dot(modelViewNormal, lightVector), 0.1);
 	// Attenuate the light based on distance.
-	diffuse = diffuse * (1.0 / (1.0 + (0.25 * distance * distance)));
+	diffuse = diffuse * (1.0 / (1.0 + (0.02 * distance * distance)));
 	// Multiply the color by the illumination level. It will be interpolated across the triangle.
 	v_Color = u_Color * diffuse;
 	// gl_Position is a special variable used to store the final position.
