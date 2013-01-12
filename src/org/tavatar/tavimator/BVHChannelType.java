@@ -6,5 +6,16 @@ package org.tavatar.tavimator;
  *
  */
 public enum BVHChannelType {
-	BVH_XPOS, BVH_YPOS, BVH_ZPOS, BVH_XROT, BVH_YROT, BVH_ZROT;
+	BVH_XPOS ("Xposition"),
+	BVH_YPOS ("Yposition"),
+	BVH_ZPOS ("Zposition"),
+	BVH_XROT ("Xrotation"),
+	BVH_YROT ("Yrotation"),
+	BVH_ZROT ("Zrotation");
+
+	public final String name;
+
+	BVHChannelType(String name) {
+		this.name = name;
+	}
 }

@@ -6,5 +6,15 @@ package org.tavatar.tavimator;
  *
  */
 public enum BVHNodeType {
-	BVH_POS, BVH_ROOT, BVH_JOINT, BVH_END, BVH_NO_SL;
+	BVH_POS		("POS"),
+	BVH_ROOT 	("ROOT"),
+	BVH_JOINT	("JOINT"),
+	BVH_END		("End"),
+	BVH_NO_SL	("NoSL");
+	
+	public final String name;
+
+	BVHNodeType(String name) {
+		this.name = name;
+	}
 }
