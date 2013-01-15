@@ -41,7 +41,7 @@ public class BVH {
     public int lastLoadedLoopIn;
     public int lastLoadedLoopOut;
     public float lastLoadedAvatarScale;
-    public double lastLoadedFrameTime;
+    public float lastLoadedFrameTime;
     public Animation.FigureType lastLoadedFigureType;
     public BVHNode lastLoadedPositionNode;
 
