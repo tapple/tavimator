@@ -34,7 +34,7 @@ public class Animation {
 
 	private static final String DEFAULT_POSE = "data/TPose.avm";
 	// private final String DEFAULT_POSE = "data/Relaxed.bvh";
-	private static final String LIMITS_FILE = "data/SL.lim";
+	public static final String LIMITS_FILE = "data/SL.lim";
 
 	// playback resolution in milliseconds
 	// this is the speed of the internal sync timer, in milliseconds, not of the animation itself

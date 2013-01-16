@@ -1,8 +1,11 @@
 package org.tavatar.tavimator;
 
+import java.io.IOException;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
+import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
@@ -79,7 +82,38 @@ public class AnimationView extends GLSurfaceView
 		initialize();
 	}
 
+	private String printList(String[] strings) {
+		StringBuilder ans = new StringBuilder();
+		ans.append('[');
+		if (strings.length >= 1) ans.append(strings[0]);
+		for (int i = 1; i < strings.length; i++) {
+			ans.append(", ");
+			ans.append(strings[i]);
+		}
+		ans.append(']');
+		return ans.toString();
+	}
+	
 	private void initialize() {
+		try {
+			AssetManager assets = getContext().getAssets();
+			Log.d("Test", printList(assets.list("data")));
+			//assets.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		BVH bvh = new BVH();
+		AssetManager assets = getContext().getAssets();
+		try {
+			BVHNode node = bvh.animRead(assets.open("data/SLFemale.bvh"), assets.open(Animation.LIMITS_FILE), false);
+			bvh.dumpNodes(node, "");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// Check if the system supports OpenGL ES 2.0.
 		final ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
 		final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
