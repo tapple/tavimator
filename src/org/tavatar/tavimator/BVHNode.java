@@ -151,7 +151,7 @@ public class BVHNode {
 	}
 
 	public Integer[] keyframeList() {
-		return (Integer[])keyframes.keySet().toArray();
+		return keyframes.keySet().toArray(new Integer[keyframes.size()]);
 	}
 
 
