@@ -37,7 +37,7 @@ public class BVHNode {
 	public float[] channelMax = new float[6];
 
 	public boolean ikOn;
-	public Rotation ikRot;
+	public Rotation ikRot = new Rotation();
 	public float[] ikGoalPos = new float[3];
 	public float[] ikGoalDir = new float[3];
 	public float ikWeight;
@@ -158,7 +158,7 @@ public class BVHNode {
 	public void addKeyframe(int frame,Position pos,Rotation rot) {
 	//  qDebug(QString("addKeyframe(%1)").arg(frame));
 	  keyframes.put(frame, new FrameData(frame,pos,rot));
-	//  if(frame==0 && name()=="hip") qDebug(QString("BVHNode::addKeyframe(%1,<%2,%3,%4>,<%5,%6,%7>) %8").arg(frame).arg(pos.x).arg(pos.y).arg(pos.z).arg(rot.x).arg(rot.y).arg(rot.z).arg(pos.bodyPart));
+	//  if(frame==0 && name().equals("hip")) qDebug(QString("BVHNode::addKeyframe(%1,<%2,%3,%4>,<%5,%6,%7>) %8").arg(frame).arg(pos.x).arg(pos.y).arg(pos.z).arg(rot.x).arg(rot.y).arg(rot.z).arg(pos.bodyPart));
 	}
 
 	public void deleteKeyframe(int frame) {

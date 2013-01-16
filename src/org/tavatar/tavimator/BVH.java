@@ -310,7 +310,7 @@ public class BVH {
     public BVHNode bvhFindNode(BVHNode root, String name) {
     	BVHNode node;
     	if(root != null) return null;
-    	if(root.name() == name) return root;
+    	if(root.name().equals(name)) return root;
 
     	for(int i = 0; i < root.numChildren(); i++) {
     		if((node = bvhFindNode(root.child(i), name)) != null) return node;
@@ -529,17 +529,17 @@ public class BVH {
 
     		if(propertyValue.length() != 0) {
     			Log.d(TAG, "BVH.avmRead(): Found extended property: '" + propertyName + "=" + propertyValue + "'");
-    			if(propertyName == "Scale:") {
+    			if(propertyName.equals("Scale:")) {
     				lastLoadedAvatarScale = Float.parseFloat(propertyValue);
-    			} else if(propertyName == "Figure:") {
+    			} else if(propertyName.equals("Figure:")) {
     				lastLoadedFigureType = Animation.FigureType.values()[Integer.parseInt(propertyValue)];
-    			} else if(propertyName == "LoopIn:") {
+    			} else if(propertyName.equals("LoopIn:")) {
     				//             Log.d(TAG, "BVH.avmRead(): set loop in to "+propertyValue);
     				lastLoadedLoopIn = Integer.parseInt(propertyValue);
-    			} else if(propertyName == "LoopOut:") {
+    			} else if(propertyName.equals("LoopOut:")) {
     				//             Log.d(TAG, "BVH.avmRead(): set loop out to "+propertyValue);
     				lastLoadedLoopOut = Integer.parseInt(propertyValue);
-    			} else if(propertyName == "Positions:") {
+    			} else if(propertyName.equals("Positions:")) {
     				// remember that this is a new animation that has seperate position keyframes
     				havePositionKeys = true;
 
@@ -551,7 +551,7 @@ public class BVH {
     					FrameData frameData = root.frameData(key);
     					lastLoadedPositionNode.addKeyframe(key, frameData.position(), new Rotation());
     				} // for
-    			} else if(propertyName == "PositionsEase:") {
+    			} else if(propertyName.equals("PositionsEase:")) {
     				int num = Integer.parseInt(propertyValue);
     				Log.d(TAG, "Reading " + num + " PositionsEases:");
     				for(int index=0;index<num;index++) {
@@ -652,7 +652,7 @@ public class BVH {
     private boolean expect_token(String name) {
     	// Log.d(TAG, "BVH.expect_token('%s')",name.toLatin1().constData());
 
-    	if(name != token()) {
+    	if(!name.equals(token())) {
     		Log.d(TAG, "BVH.expect_token(): Bad or outdated animation file: " + name + " missing");
     		return false;
     	}
@@ -663,13 +663,13 @@ public class BVH {
     	Log.d(TAG, "BVH.bvhReadNode()");
 
     	String type = token();
-    	if(type == "}") return null;
+    	if(type.equals("}")) return null;
 
     	// check for node type first
     	BVHNodeType nodeType;
-    	if      (type=="ROOT")  nodeType = BVHNodeType.BVH_ROOT;
-    	else if (type=="JOINT") nodeType = BVHNodeType.BVH_JOINT;
-    	else if (type=="End")   nodeType = BVHNodeType.BVH_END;
+    	if      (type.equals("ROOT"))  nodeType = BVHNodeType.BVH_ROOT;
+    	else if (type.equals("JOINT")) nodeType = BVHNodeType.BVH_JOINT;
+    	else if (type.equals("End"))   nodeType = BVHNodeType.BVH_END;
     	else {
     		Log.d(TAG, "BVH.bvhReadNode(): Bad animation file: unknown node type: '" + type + "'");
     		return null;
@@ -701,27 +701,27 @@ public class BVH {
     			node.channelMin[i] = -10000;
     			node.channelMax[i] = 10000;
     			type=token();
-    			if     (type=="Xposition") node.channelType[i] = BVHChannelType.BVH_XPOS;
-    			else if(type=="Yposition") node.channelType[i] = BVHChannelType.BVH_YPOS;
-    			else if(type=="Zposition") node.channelType[i] = BVHChannelType.BVH_ZPOS;
-    			else if(type=="Xrotation") {
+    			if     (type.equals("Xposition")) node.channelType[i] = BVHChannelType.BVH_XPOS;
+    			else if(type.equals("Yposition")) node.channelType[i] = BVHChannelType.BVH_YPOS;
+    			else if(type.equals("Zposition")) node.channelType[i] = BVHChannelType.BVH_ZPOS;
+    			else if(type.equals("Xrotation")) {
     				node.channelType[i] = BVHChannelType.BVH_XROT;
     				order+='X';
-    			} else if(type=="Yrotation") {
+    			} else if(type.equals("Yrotation")) {
     				node.channelType[i] = BVHChannelType.BVH_YROT;
     				order+='Y';
-    			} else if(type=="Zrotation") {
+    			} else if(type.equals("Zrotation")) {
     				node.channelType[i] = BVHChannelType.BVH_ZROT;
     				order+='Z';
     			}
     		}
 
-    		if     (order=="XYZ") node.channelOrder = BVHOrderType.BVH_XYZ;
-    		else if(order=="ZYX") node.channelOrder = BVHOrderType.BVH_ZYX;
-    		else if(order=="YZX") node.channelOrder = BVHOrderType.BVH_YZX;
-    		else if(order=="XZY") node.channelOrder = BVHOrderType.BVH_XZY;
-    		else if(order=="YXZ") node.channelOrder = BVHOrderType.BVH_YXZ;
-    		else if(order=="ZXY") node.channelOrder = BVHOrderType.BVH_ZXY;
+    		if     (order.equals("XYZ")) node.channelOrder = BVHOrderType.BVH_XYZ;
+    		else if(order.equals("ZYX")) node.channelOrder = BVHOrderType.BVH_ZYX;
+    		else if(order.equals("YZX")) node.channelOrder = BVHOrderType.BVH_YZX;
+    		else if(order.equals("XZY")) node.channelOrder = BVHOrderType.BVH_XZY;
+    		else if(order.equals("YXZ")) node.channelOrder = BVHOrderType.BVH_YXZ;
+    		else if(order.equals("ZXY")) node.channelOrder = BVHOrderType.BVH_ZXY;
     	}
 
     	BVHNode child;
@@ -935,7 +935,7 @@ public class BVH {
 
     private int bvhGetIndexHelper(BVHNode node, String name) {
     	nodeCount++;
-    	if(node.name()==name) return nodeCount;
+    	if(node.name().equals(name)) return nodeCount;
 
     	for(int i = 0; i < node.numChildren(); i++) {
     		int val;

@@ -430,29 +430,29 @@ public class Animation {
 	public void setIK(BVHNode node, boolean flag) {
 		String jointName=node.name();
 
-		if(jointName=="lHand" ||
-				jointName=="lForeArm" ||
-				jointName=="lShldr" ||
-				jointName=="lCollar")
+		if(jointName.equals("lHand") ||
+				jointName.equals("lForeArm") ||
+				jointName.equals("lShldr") ||
+				jointName.equals("lCollar"))
 		{
 			setIK(IK_LHAND, flag);
 		}
-		else if(jointName=="rHand" ||
-				jointName=="rForeArm" ||
-				jointName=="rShldr" ||
-				jointName=="rCollar")
+		else if(jointName.equals("rHand") ||
+				jointName.equals("rForeArm") ||
+				jointName.equals("rShldr") ||
+				jointName.equals("rCollar"))
 		{
 			setIK(IK_RHAND, flag);
 		}
-		else if(jointName=="lThigh" ||
-				jointName=="lShin" ||
-				jointName=="lFoot")
+		else if(jointName.equals("lThigh") ||
+				jointName.equals("lShin") ||
+				jointName.equals("lFoot"))
 		{
 			setIK(IK_LFOOT, flag);
 		}
-		else if(jointName=="rThigh" ||
-				jointName=="rShin" ||
-				jointName=="rFoot")
+		else if(jointName.equals("rThigh") ||
+				jointName.equals("rShin") ||
+				jointName.equals("rFoot"))
 		{
 			setIK(IK_RFOOT, flag);
 		}
@@ -461,29 +461,29 @@ public class Animation {
 	public boolean getIK(BVHNode node) {
 		String jointName=node.name();
 
-		if(jointName=="lHand" ||
-				jointName=="lForeArm" ||
-				jointName=="lShldr" ||
-				jointName=="lCollar")
+		if(jointName.equals("lHand") ||
+				jointName.equals("lForeArm") ||
+				jointName.equals("lShldr") ||
+				jointName.equals("lCollar"))
 		{
 			return getIK(IK_LHAND);
 		}
-		else if(jointName=="rHand" ||
-				jointName=="rForeArm" ||
-				jointName=="rShldr" ||
-				jointName=="rCollar")
+		else if(jointName.equals("rHand") ||
+				jointName.equals("rForeArm") ||
+				jointName.equals("rShldr") ||
+				jointName.equals("rCollar"))
 		{
 			return getIK(IK_RHAND);
 		}
-		else if(jointName=="lThigh" ||
-				jointName=="lShin" ||
-				jointName=="lFoot")
+		else if(jointName.equals("lThigh") ||
+				jointName.equals("lShin") ||
+				jointName.equals("lFoot"))
 		{
 			return getIK(IK_LFOOT);
 		}
-		else if(jointName=="rThigh" ||
-				jointName=="rShin" ||
-				jointName=="rFoot")
+		else if(jointName.equals("rThigh") ||
+				jointName.equals("rShin") ||
+				jointName.equals("rFoot"))
 		{
 			return getIK(IK_RFOOT);
 		}
