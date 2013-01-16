@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -74,16 +77,14 @@ public class BVH {
 
     public BVHNode bvhRead(String file) throws IOException {
     	Log.d(TAG, "BVH.bvhRead('" + file + "')");
+    	return bvhRead(openFileNamed(file, "BVH"));
+    }
 
-    	FileReader animationFile;
-    	try {
-    		animationFile = new FileReader(file);
-    	} catch(FileNotFoundException e) {
-    		FileNotFoundException e2 = new FileNotFoundException("BVH File not found: " + file);
-    		e2.initCause(e);
-    		throw e2;
-    	}
+    public BVHNode bvhRead(InputStream file) throws IOException {
+    	return bvhRead(new InputStreamReader(file));
+    }
 
+    public BVHNode bvhRead(Reader animationFile) throws IOException {
     	char[] buffer = new char[4096];
     	StringBuilder contents = new StringBuilder();
     	int readLength;
@@ -123,33 +124,30 @@ public class BVH {
     //public void assignChannels(BVHNode* node, FILE* f, int frame);
     
     public void setChannelLimits(BVHNode node, BVHChannelType type, float min, float max) {
-     Log.d(TAG, "BVH.setChannelLimits()");
+    	Log.d(TAG, "BVH.setChannelLimits()");
 
-     int i;
-     if(node == null) return;
-     for(i=0;i<node.numChannels;i++)
-     {
-       if(node.channelType[i]==type)
-       {
-         node.channelMin[i]=min;
-         node.channelMax[i]=max;
-         return;
-       }
-     }
+    	int i;
+    	if(node == null) return;
+    	for(i = 0; i < node.numChannels; i++) {
+    		if(node.channelType[i] == type) {
+    			node.channelMin[i] = min;
+    			node.channelMax[i] = max;
+    			return;
+    		}
+    	}
     }
 
     //read joint limits file
     public void parseLimFile(BVHNode root, String limFile) throws IOException {
     	Log.d(TAG, "BVH.parseLimFile('" + limFile + "')");
-
-    	FileReader limit;
-    	try {
-    		limit = new FileReader(limFile);
-    	} catch(FileNotFoundException e) {
-    		FileNotFoundException e2 = new FileNotFoundException("Limits file not found at: " + limFile);
-    		e2.initCause(e);
-    		throw e2;
-    	}
+        parseLimFile(root, openFileNamed(limFile, "Limits"));
+    }
+    
+    public void parseLimFile(BVHNode root, InputStream limFile) throws IOException {
+        parseLimFile(root, new InputStreamReader(limFile));
+    }
+    
+    public void parseLimFile(BVHNode root, Reader limit) throws IOException {
         char[] buffer = new char[4096];
         int readLength;
 
@@ -386,9 +384,52 @@ public class BVH {
     	bvhSetFrameDataHelper(node,frame);
     }
 
-
+    Reader openFileNamed(String file, String type) throws FileNotFoundException {
+    	FileReader animationFile;
+    	try {
+    		animationFile = new FileReader(file);
+    	} catch(FileNotFoundException e) {
+    		FileNotFoundException e2 = new FileNotFoundException(type + " file not found at: " + file);
+    		e2.initCause(e);
+    		throw e2;
+    	}
+    	return animationFile;
+    }
+    
+    Reader readerOnStream(InputStream i) {
+    	if (i == null) return null;
+    	return new InputStreamReader(i);
+    }
+    
     // lex neva's stuff:
-    public BVHNode animRead(String file, String limFile) throws IOException {
+    public BVHNode animRead(String animationFileName, String limitsFileName) throws IOException {
+    	Reader animationFile = null;
+    	Reader limitsFile = null;
+    	boolean isAvm;
+    	
+    	// rudimentary file type identification from filename
+    	if(animationFileName.toLowerCase().endsWith(".bvh")) {
+    		animationFile = openFileNamed(animationFileName, "BVH");
+    		isAvm = false;
+    	} else if(animationFileName.toLowerCase().endsWith(".avm")) {
+    		animationFile = openFileNamed(animationFileName, "AVM");
+    		isAvm = true;
+    	} else {
+    		return null;
+    	}
+
+    	if(limitsFileName.length() != 0) {
+    		limitsFile = openFileNamed(limitsFileName, "Limits");
+    	}
+    	
+    	return animRead(animationFile, limitsFile, isAvm);
+    }
+
+    public BVHNode animRead(InputStream file, InputStream limFile, boolean isAvm) throws IOException {
+    	return animRead(readerOnStream(file), readerOnStream(limFile), isAvm);
+    }
+    
+    public BVHNode animRead(Reader file, Reader limFile, boolean isAvm) throws IOException {
     	BVHNode root;
 
     	// positions pseudonode
@@ -407,14 +448,13 @@ public class BVH {
     	// assume old style animation format for compatibility
     	havePositionKeys = false;
     	// rudimentary file type identification from filename
-    	if(file.toLowerCase().endsWith(".bvh"))
+    	if(!isAvm) {
     		root = bvhRead(file);
-    	else if(file.toLowerCase().endsWith(".avm"))
+    	} else { 
     		root = avmRead(file);
-    	else
-    		return null;
+    	}
 
-    	if(limFile.length() != 0)
+    	if(limFile != null)
     		parseLimFile(root,limFile);
 
     	removeNoSLNodes(root);
@@ -436,9 +476,14 @@ public class BVH {
 
     public BVHNode avmRead(String file) throws IOException {
     	Log.d(TAG, "BVH.avmRead(" + file + ")");
+    	return avmRead(openFileNamed(file, "AVM"));
+    }
 
-    	FileReader animationFile = new FileReader(file);
+    public BVHNode avmRead(InputStream file) throws IOException {
+        return avmRead(new InputStreamReader(file));
+    }
 
+    public BVHNode avmRead(Reader animationFile) throws IOException {
     	char[] buffer = new char[4096];
     	StringBuilder contents = new StringBuilder();
     	int readLength;
@@ -850,8 +895,8 @@ public class BVH {
 
     // debugging function, dumps the node structure
     //for debugging only
-    private void dumpNodes(BVHNode node, String indent) {
-    	Log.d(TAG, indent + " " + node + " (" + node.numChildren() + ")");
+    public void dumpNodes(BVHNode node, String indent) {
+    	Log.d(TAG, indent + " " + node.name() + " (" + node.numChildren() + ")");
     	indent += "+--";
     	for(int i = 0; i < node.numChildren(); i++) {
     		dumpNodes(node.child(i), indent);
