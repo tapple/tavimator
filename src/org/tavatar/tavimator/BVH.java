@@ -21,6 +21,7 @@
 
 package org.tavatar.tavimator;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -140,22 +141,18 @@ public class BVH {
     //read joint limits file
     public void parseLimFile(BVHNode root, String limFile) throws IOException {
     	Log.d(TAG, "BVH.parseLimFile('" + limFile + "')");
-        parseLimFile(root, openFileNamed(limFile, "Limits"));
+        parseLimFile(root, new BufferedReader(openFileNamed(limFile, "Limits")));
     }
     
     public void parseLimFile(BVHNode root, InputStream limFile) throws IOException {
-        parseLimFile(root, new InputStreamReader(limFile));
+        parseLimFile(root, new BufferedReader(new InputStreamReader(limFile)));
     }
     
-    public void parseLimFile(BVHNode root, Reader limit) throws IOException {
-        char[] buffer = new char[4096];
-        int readLength;
-
+    public void parseLimFile(BVHNode root, BufferedReader limit) throws IOException {
         try {
         	while(limit.ready()) {
 
-        		readLength = limit.read(buffer, 0, buffer.length);
-        		String line = new String(buffer, 0, readLength).trim();
+        		String line = limit.readLine().trim();
 
         		String[] parameters = line.split(" ");
         		String name = parameters[0];
@@ -309,7 +306,7 @@ public class BVH {
 
     public BVHNode bvhFindNode(BVHNode root, String name) {
     	BVHNode node;
-    	if(root != null) return null;
+    	if(root == null) return null;
     	if(root.name().equals(name)) return root;
 
     	for(int i = 0; i < root.numChildren(); i++) {
@@ -422,14 +419,14 @@ public class BVH {
     		limitsFile = openFileNamed(limitsFileName, "Limits");
     	}
     	
-    	return animRead(animationFile, limitsFile, isAvm);
+    	return animRead(animationFile, new BufferedReader(limitsFile), isAvm);
     }
 
     public BVHNode animRead(InputStream file, InputStream limFile, boolean isAvm) throws IOException {
-    	return animRead(readerOnStream(file), readerOnStream(limFile), isAvm);
+    	return animRead(readerOnStream(file), new BufferedReader(readerOnStream(limFile)), isAvm);
     }
     
-    public BVHNode animRead(Reader file, Reader limFile, boolean isAvm) throws IOException {
+    public BVHNode animRead(Reader file, BufferedReader limFile, boolean isAvm) throws IOException {
     	BVHNode root;
 
     	// positions pseudonode
