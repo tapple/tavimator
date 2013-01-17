@@ -263,14 +263,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 			
-		System.out.println("----------------------------------------------");
-		mCamera.initializeCamera(
-				 0.0f, 0.0f, 30.0f,
-				 0.0f, 0.0f, -6.0f,
-				 0.0f, 1.0f,  0.0f,
-				 0.0f, 0.0f, -6.0f);
-		System.arraycopy(mCamera.getViewMatrix(), 0, tempViewMatrix, 0, 16);
-
+		resetCamera();
 
 		final String vertexShader = getVertexShader();   		
  		final String fragmentShader = getFragmentShader();			
@@ -298,7 +291,16 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		System.out.println();
 	}
 //*/
-		
+
+	public void resetCamera() {
+		mCamera.initializeCamera(
+				 0, 40, 100,
+				 0, 40,   0,
+				 0,  1,   0,
+				 0, 40,   0);
+
+	}
+
 	@Override
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) 
 	{
@@ -373,10 +375,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         updateUniforms();
         figureRenderer.drawPartNamed("chest");
         
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Animation anim = mView.getSelectedAnimation();
-        drawPart(anim, 0, anim.getFrame(), anim.getMotion(), mView.getJoints(1), DrawMode.MODE_PARTS, mModelMatrix);
-        
+        drawAnimations();
 	}
 	
 	
@@ -421,6 +420,44 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               
 	}
 	
+
+	private void drawAnimations() {
+		drawFigure(mView.getSelectedAnimation(), 0);
+/*
+		for(int index=0; index < mView.getAnimationCount(); index++) {
+			drawFigure(mView.getAnimationNumber(index), index);
+		}
+*/
+	}
+	
+	private void drawFigure(Animation anim, int index) {
+	    // int figType = anim.getFigureType().ordinal();
+	    int figType = 1;
+
+	    // save current drawing matrix
+		float[] modelMatrix = new float[16];
+        Matrix.setIdentityM(modelMatrix, 0);
+
+	    // scale drawing matrix to avatar scale specified
+	    float scale = anim.getAvatarScale();
+	    Matrix.scaleM(modelMatrix, 0, scale, scale, scale);
+
+	    Position pos = anim.getPosition();
+	    Matrix.translateM(modelMatrix, 0, pos.x, pos.y, pos.z);
+
+	    // visual compensation
+	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
+
+//	    selectName = index*ANIMATION_INCREMENT;
+	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_PARTS, modelMatrix);
+//	    selectName = index*ANIMATION_INCREMENT;
+        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_ROT_AXES, modelMatrix);
+//	    selectName = index*ANIMATION_INCREMENT;
+	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_SKELETON, modelMatrix);
+	}
+
 	private void drawPart(Animation anim, int currentAnimationIndex, int frame,
 			BVHNode motion, BVHNode joints, DrawMode mode, float[] parentMatrix) {
 		float[] color = new float[4];
@@ -508,13 +545,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 //			if(selecting) glLoadName(selectName);
 
 //			if(anim.getMirrored() && (mirrorSelected == selectName || partSelected == selectName)) {
-//		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f);
+//		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
 //			} else if(partSelected == selectName) {
-//		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f);
+//		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
 //			} else if(partHighlighted==selectName) {
-//		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f);
+//		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
 //			} else {
-		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f);
+				GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f); // grey peach
+//	        	GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
 //			}
 			
 /*

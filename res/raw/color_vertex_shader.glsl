@@ -16,7 +16,7 @@ const vec4 light0DiffuseColor = vec4(1.0, 1.0, 1.0, 1.0);
 const vec3 light1Position = vec3(0, 80, -100);
 const vec4 light1DiffuseColor = vec4(0.5, 0.5, 0.5, 1.0);
 
-const vec4  ambientColor = vec4(0.1, 0.1, 0.1, 1.0);
+const vec4  ambientColor = vec4(0.6, 0.6, 0.6, 1.0);
 const vec4 specularColor = vec4(0.6, 0.6, 0.6, 0.0);
 const float shininess = 100.0;
 
@@ -39,7 +39,7 @@ void main() {				// The entry point for our vertex shader.
 	// Transform the vertex into eye space.
 	vertexPosition = vec3(u_MVMatrix * a_Position);
 	// Transform the normal's orientation into eye space.
-	vertexNormal = vec3(u_MVMatrix * vec4(a_Normal, 0.0));
+	vertexNormal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));
 
 	v_Color = u_Color * ambientColor
 			+ lightVertex(light0Position, light0DiffuseColor)

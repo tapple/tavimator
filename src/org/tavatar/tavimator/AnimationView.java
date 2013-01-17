@@ -153,6 +153,10 @@ public class AnimationView extends GLSurfaceView
     	return animList.get(index);
     }
     
+    public int getAnimationCount() {
+    	return animList.size();
+    }
+    
     public BVHNode getJoints(int index) {
     	return joints[index];
     }
