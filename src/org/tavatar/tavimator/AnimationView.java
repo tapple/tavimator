@@ -123,7 +123,7 @@ public class AnimationView extends GLSurfaceView
 			setEGLContextClientVersion(2);
 
 			// Set the renderer to our demo renderer, defined below.
-			renderer = new AnimationRenderer(getContext());
+			renderer = new AnimationRenderer(this);
 			setRenderer(renderer);
 		} else {
 			// This is where you could create an OpenGL ES 1.x compatible
@@ -153,12 +153,16 @@ public class AnimationView extends GLSurfaceView
     	return animList.get(index);
     }
     
+    public BVHNode getJoints(int index) {
+    	return joints[index];
+    }
+    
     public Animation getLastAnimation() { 
     	return animList.get(animList.size()-1);
     }
 
     public BVH getBVH() {
-      return bvh;
+    	return bvh;
     }
 
     public void selectAnimation(int index) {

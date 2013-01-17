@@ -24,6 +24,7 @@ import com.learnopengles.android.common.ShaderHelper;
  */
 public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final String TAG = "AnimationRenderer";
+	private final AnimationView mView;
 	private final Context mActivityContext;
 	
     private enum DrawMode {
@@ -87,9 +88,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	/**
 	 * Initialize the model data.
 	 */
-	public AnimationRenderer(final Context activityContext) {
-        mActivityContext = activityContext;
-		mCamera = new Camera(activityContext);
+	public AnimationRenderer(AnimationView view) {
+		mView = view;
+        mActivityContext = view.getContext();
+		mCamera = new Camera(mActivityContext);
 		// Define points for a cube.		
 		
 		// X, Y, Z
@@ -369,7 +371,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
         GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
         updateUniforms();
-        figureRenderer.drawPartNamed("chest");      
+        figureRenderer.drawPartNamed("chest");
+        
+        Matrix.setIdentityM(mModelMatrix, 0);
+        Animation anim = mView.getSelectedAnimation();
+        drawPart(anim, 0, anim.getFrame(), anim.getMotion(), mView.getJoints(1), DrawMode.MODE_PARTS, mModelMatrix);
+        
 	}				
 	
 	
@@ -516,6 +523,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				glColor4f(color[0],color[1],color[2]+0.3,color[3]);
 			}
 */
+		    updateUniforms();
 			figureRenderer.drawPartNamed(motion.name());
 
 /*
