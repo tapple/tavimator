@@ -1,6 +1,8 @@
 package org.tavatar.tavimator;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -21,7 +23,10 @@ public class AnimationView extends GLSurfaceView
 	
 	private static final String TAG = "AnimationView";
 	
-	Animation animation;
+    private BVH bvh;
+    private List<Animation> animList = new ArrayList<Animation>();
+    private Animation animation; // this is the "currently selected" animation
+    private BVHNode[] joints = new BVHNode[2];
 
 	/**
 	 * Position of the last motion event.
@@ -97,11 +102,11 @@ public class AnimationView extends GLSurfaceView
 	}
 	
 	private void initialize() {
-		BVH bvh = new BVH();
+		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
 		try {
-			BVHNode node = bvh.animRead(assets.open("data/SLFemale.bvh"), assets.open(Animation.LIMITS_FILE), false);
-			bvh.dumpNodes(node, "");
+			joints[1] = bvh.animRead(assets.open("data/SLFemale.bvh"), assets.open(Animation.LIMITS_FILE), false);
+			bvh.dumpNodes(joints[1], "");
 			animation = new Animation(getContext(), bvh);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -140,7 +145,67 @@ public class AnimationView extends GLSurfaceView
 		return renderer;
 	}
 
-	@Override
+    public Animation getSelectedAnimation() {
+    	return animation;
+    }
+    
+    public Animation getAnimationNumber(int index) {
+    	return animList.get(index);
+    }
+    
+    public Animation getLastAnimation() { 
+    	return animList.get(animList.size()-1);
+    }
+
+    public BVH getBVH() {
+      return bvh;
+    }
+
+    public void selectAnimation(int index) {
+      if(index < animList.size()) {
+        animation = animList.get(index);
+        emit(animationSelected(getSelectedAnimation()));
+        repaint();
+      }
+    }
+
+    public void setAnimation(Animation anim) {
+        clear();
+
+        animation = anim;
+        animList.add(anim);
+        //connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
+        repaint();
+    }
+    
+ // Adds a new animation without overriding others, and sets it current
+    public void addAnimation(Animation anim) {
+    	if(!inAnimList(anim)) {
+    		animList.add(anim);
+    		animation = anim; // set it as the current one
+    		if (!animList.isEmpty() && anim != animList.get(0)) {
+    			anim.setFrame(animList.get(0).getFrame());
+    		}
+
+    		//connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
+    		repaint();
+    	}
+    }
+
+    private boolean inAnimList(Animation anim) {
+    	return animList.contains(anim);
+    }
+
+    public void clear() {
+    	animList.clear();
+    	animation = null;
+    }
+
+    public void repaint() {
+    	// do nothing
+    }
+
+    @Override
 	public void onResume() 
 	{
 		// The activity must call the GL surface view's onResume() on activity onResume().
@@ -401,4 +466,49 @@ public class AnimationView extends GLSurfaceView
 		mIsBeingDragged = false;
 		recycleVelocityTracker();
 	}
+	
+/*
+  signals:
+    void partClicked(BVHNode* node,Rotation rot,RotationLimits rotLimit,Position pos);
+    void partClicked(int part);
+    void propClicked(Prop* prop);
+
+    void partDragged(BVHNode* node,double changeX,double changeY,double changeZ);
+
+    void propDragged(Prop* prop,double changeX,double changeY,double changeZ);
+    void propRotated(Prop* prop,double changeX,double changeY,double changeZ);
+    void propScaled(Prop* prop,double changeX,double changeY,double changeZ);
+
+    void backgroundClicked();
+    void animationSelected(Animation* animation);
+
+    void storeCameraPosition(int num);
+    void restoreCameraPosition(int num);
+
+  public slots:
+    void resetCamera();
+    void protectFrame(bool on);
+    void selectPart(int part);
+
+  protected slots:
+    void draw();
+
+ */
+	void emit(int i) {}
+    int partClicked(BVHNode node, Rotation rot, RotationLimits rotLimit, Position pos) { return 0; }
+    int partClicked(int part) { return 0; }
+//    int propClicked(Prop* prop) { return 0; }
+
+    int partDragged(BVHNode node,double changeX,double changeY,double changeZ) { return 0; }
+
+//    int propDragged(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+//    int propRotated(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+//    int propScaled(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+
+    int backgroundClicked() { return 0; }
+    int animationSelected(Animation animation) { return 0; }
+
+    int storeCameraPosition(int num) { return 0; }
+    int restoreCameraPosition(int num) { return 0; }
+
 }

@@ -26,6 +26,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final String TAG = "AnimationRenderer";
 	private final Context mActivityContext;
 	
+    private enum DrawMode {
+      MODE_PARTS,
+      MODE_SKELETON,
+      MODE_ROT_AXES
+    };
+	
 	/**
 	 * Store the model matrix. This matrix is used to move models from object space (where each model can be thought
 	 * of being located at the center of the universe) to world space.
@@ -305,7 +311,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		final float bottom = -1.0f;
 		final float top = 1.0f;
 		final float near = 1.0f;
-		final float far = 100.0f;
+		final float far = 2000.0f;
 		
 		Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
 	}	
@@ -406,8 +412,126 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         
         // Draw the cube.
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               
-	}	
+	}
 	
+	private void drawPart(Animation anim, int currentAnimationIndex, int frame,
+			BVHNode motion, BVHNode joints, DrawMode mode, float[] parentMatrix) {
+		float[] color = new float[4];
+
+		boolean selecting = false;
+
+		if(motion == null || joints == null) return;
+//		selectName++;
+		float[] modelMatrix = new float[16];
+		System.arraycopy(parentMatrix, 0, modelMatrix, 0, 16);
+		Matrix.translateM(modelMatrix, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
+		if(motion.type==BVHNodeType.BVH_NO_SL) {
+//			selectName++;
+			motion = motion.child(0);
+		}
+
+/*	
+		if(mode == DrawMode.MODE_SKELETON && skeleton && !selecting)
+		{
+			glColor4f(0,1,1,1);
+			glLineWidth(1);
+			glBegin(GL_LINES);
+			glVertex3f(-joints->offset[0],-joints->offset[1],-joints->offset[2]);
+			glVertex3f(0,0,0);
+			glEnd();
+
+			if(joints->type!=BVH_ROOT)
+			{
+				// draw joint spheres in skeleton mode, red for selected parts,
+				// blue for hightlighted and green for all others
+				if(partSelected==selectName)
+					glColor4f(1,0,0,1);
+				else if(partHighlighted==selectName)
+					glColor4f(0,0,1,1);
+				else
+					glColor4f(0,1,0,1);
+
+				glutSolidSphere(1,16,16);
+			}
+		}
+*/
+		
+		Rotation rot = motion.frameData(frame).rotation();
+		for(int i = 0; i < motion.numChannels; i++) {
+			/*
+	      float value;
+	      if(motion->ikOn)
+	        value = motion->frame[frame][i] + motion->ikRot[i];
+	      else
+	        value = motion->frame[frame][i];
+
+	      switch(motion->channelType[i]) {
+	        case BVH_XROT: glRotatef(value, 1, 0, 0); break;
+	        case BVH_YROT: glRotatef(value, 0, 1, 0); break;
+	        case BVH_ZROT: glRotatef(value, 0, 0, 1); break;
+	        default: break;
+	      } */
+
+			Rotation ikRot = new Rotation();
+			if(motion.ikOn) ikRot = motion.ikRot;
+
+			// need to do rotations in the right order
+			switch(motion.channelType[i]) {
+				case BVH_XROT: Matrix.rotateM(modelMatrix, 0, rot.x+ikRot.x, 1, 0, 0); break;
+				case BVH_YROT: Matrix.rotateM(modelMatrix, 0, rot.y+ikRot.y, 0, 1, 0); break;
+				case BVH_ZROT: Matrix.rotateM(modelMatrix, 0, rot.z+ikRot.z, 0, 0, 1); break;
+				default: break;
+			}
+
+/*
+			if(mode == DrawMode.MODE_ROT_AXES && !selecting && partSelected==selectName)
+			{
+				switch(motion->channelType[i])
+				{
+				case BVH_XROT: drawCircle(0,10,xSelect ? 4 : 1); break;
+				case BVH_YROT: drawCircle(1,10,ySelect ? 4 : 1); break;
+				case BVH_ZROT: drawCircle(2,10,zSelect ? 4 : 1); break;
+				default: break;
+				}
+			}
+*/
+		}
+
+		if(mode == DrawMode.MODE_PARTS) {
+//			if(selecting) glLoadName(selectName);
+
+//			if(anim.getMirrored() && (mirrorSelected == selectName || partSelected == selectName)) {
+//		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f);
+//			} else if(partSelected == selectName) {
+//		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f);
+//			} else if(partHighlighted==selectName) {
+//		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f);
+//			} else {
+		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f);
+//			}
+			
+/*
+			if(anim.getIK(motion)) {
+				glGetFloatv(GL_CURRENT_COLOR,color);
+				glColor4f(color[0],color[1],color[2]+0.3,color[3]);
+			}
+*/
+			figureRenderer.drawPartNamed(motion.name());
+
+/*
+			for(int index=0; index < propList.size(); index++) {
+				Prop* prop=propList.at(index);
+				if(prop->isAttached()==selectName) drawProp(prop);
+			} // for
+*/
+		}
+		
+		for(int i = 0; i < motion.numChildren(); i++) {
+			drawPart(anim, currentAnimationIndex, frame, 
+					motion.child(i), joints.child(i), mode, modelMatrix);
+		}
+	}
+
 	/** 
 	 * Helper function to compile a shader.
 	 * 
