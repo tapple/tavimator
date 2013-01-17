@@ -377,7 +377,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Animation anim = mView.getSelectedAnimation();
         drawPart(anim, 0, anim.getFrame(), anim.getMotion(), mView.getJoints(1), DrawMode.MODE_PARTS, mModelMatrix);
         
-	}				
+	}
 	
 	
 	private void updateUniforms() {
@@ -523,6 +523,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				glColor4f(color[0],color[1],color[2]+0.3,color[3]);
 			}
 */
+			System.arraycopy(modelMatrix, 0, mModelMatrix, 0, 16);
 		    updateUniforms();
 			figureRenderer.drawPartNamed(motion.name());
 
