@@ -376,6 +376,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         figureRenderer.drawPartNamed("chest");
         
         drawAnimations();
+
+        Matrix.setIdentityM(mModelMatrix, 0);
+        updateUniforms();
+        drawFloor();
 	}
 	
 	
@@ -450,7 +454,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 //	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_PARTS, modelMatrix);
+	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
 //	    selectName = index*ANIMATION_INCREMENT;
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_ROT_AXES, modelMatrix);
 //	    selectName = index*ANIMATION_INCREMENT;
@@ -577,6 +583,70 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			drawPart(anim, currentAnimationIndex, frame, 
 					motion.child(i), joints.child(i), mode, modelMatrix);
 		}
+	}
+
+	private void drawFloor() {
+		//		  float alpha=(100-Settings::floorTranslucency())/100.0; // default is 33% transparent, so 0.67 alpha
+		float alpha = 0.67f;
+
+		final int BYTES_PER_FLOAT = 4;
+		final int FLOATS_PER_VEC = 3;
+		final int BUFFER_SIZE = 1200;
+
+		FloatBuffer lightTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
+				.order(ByteOrder.nativeOrder()).asFloatBuffer();
+		lightTiles.position(0);
+
+		FloatBuffer darkTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
+				.order(ByteOrder.nativeOrder()).asFloatBuffer();
+		darkTiles.position(0);
+
+		for(int i = -10; i < 10; i++) {
+			for(int j = -10; j < 10; j++) {
+				FloatBuffer buf;
+				if((i+j) % 2 != 0) { // dark
+					buf = darkTiles;
+				} else { // light
+					buf = lightTiles;
+				}
+
+				buf.put( i   *40); buf.put(0); buf.put( j   *40);
+				buf.put( i   *40); buf.put(0); buf.put((j+1)*40);
+				buf.put((i+1)*40); buf.put(0); buf.put((j+1)*40);
+
+				buf.put((i+1)*40); buf.put(0); buf.put( j   *40);
+				buf.put( i   *40); buf.put(0); buf.put( j   *40);
+				buf.put((i+1)*40); buf.put(0); buf.put((j+1)*40);
+			}
+		}
+
+	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+	    GLES20.glVertexAttrib3f(getNormalHandle(), 0, 1, 0);
+        GLES20.glDisableVertexAttribArray(getNormalHandle());
+
+		boolean frameProtected = false;
+
+        GLES20.glEnableVertexAttribArray(mPositionHandle);
+
+        // dark
+		if(frameProtected)
+			GLES20.glUniform4f(mColorHandle, 0.3f, 0.0f, 0.0f, alpha);
+		else
+			GLES20.glUniform4f(mColorHandle, 0.1f, 0.1f, 0.1f, alpha);
+        darkTiles.position(0);
+        GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
+        		0, darkTiles);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 1200);
+
+		// light
+		if(frameProtected)
+			GLES20.glUniform4f(mColorHandle, 0.8f, 0.0f, 0.0f, alpha);
+		else
+			GLES20.glUniform4f(mColorHandle, 0.6f, 0.6f, 0.6f, alpha);
+        lightTiles.position(0);
+        GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
+        		0, lightTiles);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 1200);
 	}
 
 	/** 
