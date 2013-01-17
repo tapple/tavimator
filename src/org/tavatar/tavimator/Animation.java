@@ -24,7 +24,10 @@ package org.tavatar.tavimator;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 
+import android.content.Context;
+import android.content.res.AssetManager;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -39,6 +42,7 @@ public class Animation {
 	// playback resolution in milliseconds
 	// this is the speed of the internal sync timer, in milliseconds, not of the animation itself
 	private final int PLAYBACK_RESOLUTION = 20;
+	
 
 /* ###IK###
 	public static enum IKPartType {
@@ -57,6 +61,8 @@ public class Animation {
 	}
 
 	//public enum { MAX_PARTS=64 };
+
+	private Context context;
 
 	private BVH bvh;
 	private BVHNode frames;
@@ -100,7 +106,12 @@ public class Animation {
 		}
 	};
 
-	public Animation(BVH newBVH, String bvhFile) throws IOException {
+	public Animation(Context context, BVH newBVH) throws IOException {
+		this(context, newBVH, "");
+	}
+	
+	public Animation(Context context, BVH newBVH, String bvhFile) throws IOException {
+		this.context = context;
 		frame = 0;
 		totalFrames = 0;
 		mirrored = false;
@@ -113,25 +124,13 @@ public class Animation {
 			return;
 		}
 
-		String fileName;
-
-		// pick up path from src.pro qmake file's DEFINES section, i.e. usr/share/qavimator
-		//dataPath=QAVIMATOR_DATAPATH;
-/*
-		if (__APPLE__)
-			dataPath=QApplication.applicationDirPath() + "/../Resources";
-		else
-			dataPath=QAVIMATOR_DATAPATH;
-*/
-		dataPath = "FIXME";
-
 		// load BVH that defines motion
-		if (bvhFile.length() > 0)
-			fileName=bvhFile;
-		else
-			fileName=dataPath+"/"+DEFAULT_POSE;
+		if (bvhFile.length() > 0) {
+			loadBVH(bvhFile);
+		} else {
+			loadBVH(context.getAssets().open(DEFAULT_POSE), true);
+		}
 
-		loadBVH(fileName);
 		calcPartMirrors();
 		useRotationLimits(true);
 		setNumberOfFrames(bvh.lastLoadedNumberOfFrames);
@@ -160,8 +159,15 @@ public class Animation {
 
 	public void loadBVH(String bvhFile) throws IOException {
 		Log.d(TAG, "Animation.loadBVH(" + bvhFile + ")");
-		String limFile=dataPath+"/"+LIMITS_FILE;
-		frames=bvh.animRead(bvhFile,limFile);
+		InputStream limFile = context.getAssets().open(LIMITS_FILE);
+		frames=bvh.animRead(bvhFile, limFile);
+		setFrame(0);
+	}
+
+	public void loadBVH(InputStream bvhFile, boolean isAvm) throws IOException {
+		Log.d(TAG, "Animation.loadBVH(" + bvhFile + ")");
+		InputStream limFile = context.getAssets().open(LIMITS_FILE);
+		frames=bvh.animRead(bvhFile, limFile, isAvm);
 		setFrame(0);
 	}
 

@@ -398,10 +398,28 @@ public class BVH {
     	return new InputStreamReader(i);
     }
     
+    BufferedReader bufferedReaderOnStream(InputStream i) {
+    	if (i == null) return null;
+    	return new BufferedReader(readerOnStream(i));
+    }
+    
     // lex neva's stuff:
     public BVHNode animRead(String animationFileName, String limitsFileName) throws IOException {
+    	BufferedReader limitsFile = null;
+    	
+    	if(limitsFileName.length() != 0) {
+    		limitsFile = new BufferedReader(openFileNamed(limitsFileName, "Limits"));
+    	}
+    	
+    	return animRead(animationFileName, limitsFile);
+    }
+
+    public BVHNode animRead(String fileName, InputStream limFile) throws IOException {
+    	return animRead(fileName, bufferedReaderOnStream(limFile));
+    }
+    
+    public BVHNode animRead(String animationFileName, BufferedReader limitsFile) throws IOException {
     	Reader animationFile = null;
-    	Reader limitsFile = null;
     	boolean isAvm;
     	
     	// rudimentary file type identification from filename
@@ -415,15 +433,15 @@ public class BVH {
     		return null;
     	}
 
-    	if(limitsFileName.length() != 0) {
-    		limitsFile = openFileNamed(limitsFileName, "Limits");
-    	}
-    	
-    	return animRead(animationFile, new BufferedReader(limitsFile), isAvm);
+    	return animRead(animationFile, limitsFile, isAvm);
     }
 
     public BVHNode animRead(InputStream file, InputStream limFile, boolean isAvm) throws IOException {
-    	return animRead(readerOnStream(file), new BufferedReader(readerOnStream(limFile)), isAvm);
+    	return animRead(readerOnStream(file), bufferedReaderOnStream(limFile), isAvm);
+    }
+    
+    public BVHNode animRead(Reader file, InputStream limFile, boolean isAvm) throws IOException {
+    	return animRead(file, bufferedReaderOnStream(limFile), isAvm);
     }
     
     public BVHNode animRead(Reader file, BufferedReader limFile, boolean isAvm) throws IOException {
