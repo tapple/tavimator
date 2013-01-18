@@ -18,6 +18,8 @@ const vec4 light1DiffuseColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 const vec4  ambientColor = vec4(0.6, 0.6, 0.6, 1.0);
 const vec4 specularColor = vec4(0.6, 0.6, 0.6, 0.0);
+const vec4      fogColor = vec4(0.5, 0.5, 0.5, 0.3);
+
 const float shininess = 100.0;
 
 float pdot(const vec3 v1, const vec3 v2) {
@@ -36,6 +38,10 @@ vec4 lightVertex(vec3 lightPosition, vec4 lightDiffuseColor) {
 }
 
 void main() {				// The entry point for our vertex shader.
+	// gl_Position is a special variable used to store the final position.
+	// Multiply the vertex by the matrix to get the final point in normalized screen coordinates.
+	gl_Position = u_MVPMatrix * a_Position;
+
 	// Transform the vertex into eye space.
 	vertexPosition = vec3(u_MVMatrix * a_Position);
 	// Transform the normal's orientation into eye space.
@@ -46,7 +52,6 @@ void main() {				// The entry point for our vertex shader.
 			+ lightVertex(light1Position, light1DiffuseColor);
 	v_Color = clamp(v_Color, 0.0, 1.0);
 
-	// gl_Position is a special variable used to store the final position.
-	// Multiply the vertex by the matrix to get the final point in normalized screen coordinates.
-	gl_Position = u_MVPMatrix * a_Position;
+	float fog = exp(-0.005 * gl_Position.z);
+	v_Color = fog * v_Color + (1.0-fog) * fogColor;
 }
