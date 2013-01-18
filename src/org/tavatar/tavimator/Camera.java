@@ -36,7 +36,7 @@ public class Camera {
 	/**
 	 * Vector from the origin to the ideal camera, in camera orientation
 	 */
-	private float[] offset = new float[4];
+	private float distance;
 	
 	/**
 	 * Trackball that keeps track of orientation set by touch
@@ -55,27 +55,24 @@ public class Camera {
 		initializeCamera(
 				0.0f, 0.0f, 1.0f,
 				0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f);
+				0.0f, 1.0f, 0.0f);
 	}
 	
 	public void initializeCamera(
 			float eyeX, float eyeY, float eyeZ, 
 			float lookX, float lookY, float lookZ,
-			float upX, float upY, float upZ,
-			float originX, float originY, float originZ) {
+			float upX, float upY, float upZ) {
 		
-		this.originX = -originX;
-		this.originY = -originY;
-		this.originZ = -originZ;
+		this.originX = -lookX;
+		this.originY = -lookY;
+		this.originZ = -lookZ;
 		
-		this.offset[0] = originX - eyeX;
-		this.offset[1] = originY - eyeY;
-		this.offset[2] = originZ - eyeZ;
-		this.offset[3] = 1.0f;
+		distance = Matrix.length(
+				originX - eyeX,
+				originY - eyeY,
+				originZ - eyeZ);
 		
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
-		Matrix.multiplyMV(offset, 0, trackball.getOrientation(), 0, offset, 0);
 	}
 	
 	public void onResume() {
@@ -92,7 +89,7 @@ public class Camera {
 		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
 
 		Matrix.setIdentityM(viewMatrix, 0);
-		Matrix.translateM(viewMatrix, 0, offset[0], offset[1], offset[2]);
+		Matrix.translateM(viewMatrix, 0, 0.0f, 0.0f, -distance);
 		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);

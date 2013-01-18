@@ -297,8 +297,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		mCamera.initializeCamera(
 				 0, 40, 100,
 				 0, 40,   0,
-				 0,  1,   0,
-				 0, 40,   0);
+				 0,  1,   0);
 
 	}
 
