@@ -216,6 +216,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		mCubeNormals.put(cubeNormalData).position(0);
 		
 		figureRenderer.load();
+		loadFloor();
 	}
 	
 	public void onResume() {
@@ -584,20 +585,20 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 					motion.child(i), joints.child(i), mode, modelMatrix);
 		}
 	}
+	
+	private FloatBuffer lightTiles;
+	private FloatBuffer darkTiles;
 
-	private void drawFloor() {
-		//		  float alpha=(100-Settings::floorTranslucency())/100.0; // default is 33% transparent, so 0.67 alpha
-		float alpha = 0.67f;
-
+	private void loadFloor() {
 		final int BYTES_PER_FLOAT = 4;
 		final int FLOATS_PER_VEC = 3;
 		final int BUFFER_SIZE = 1200;
 
-		FloatBuffer lightTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
+		lightTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
 				.order(ByteOrder.nativeOrder()).asFloatBuffer();
 		lightTiles.position(0);
 
-		FloatBuffer darkTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
+		darkTiles = ByteBuffer.allocateDirect(BUFFER_SIZE * BYTES_PER_FLOAT * FLOATS_PER_VEC)
 				.order(ByteOrder.nativeOrder()).asFloatBuffer();
 		darkTiles.position(0);
 
@@ -619,6 +620,18 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				buf.put((i+1)*40); buf.put(0); buf.put((j+1)*40);
 			}
 		}
+	}
+	
+	private void releaseFloor() {
+		lightTiles.limit(0);
+		lightTiles = null;
+		darkTiles.limit(0);
+		darkTiles = null;
+	}
+	
+	private void drawFloor() {
+		//		  float alpha=(100-Settings::floorTranslucency())/100.0; // default is 33% transparent, so 0.67 alpha
+		float alpha = 0.67f;
 
 	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	    GLES20.glVertexAttrib3f(getNormalHandle(), 0, 1, 0);
