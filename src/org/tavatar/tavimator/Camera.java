@@ -34,11 +34,6 @@ public class Camera {
 	float originZ;
 	
 	/**
-	 * Vector from the origin to the ideal camera, in camera orientation
-	 */
-	private float distance;
-	
-	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
 	TwoFingerTrackball trackball;
@@ -67,11 +62,6 @@ public class Camera {
 		this.originY = -lookY;
 		this.originZ = -lookZ;
 		
-		distance = Matrix.length(
-				originX - eyeX,
-				originY - eyeY,
-				originZ - eyeZ);
-		
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 	}
 	
@@ -89,7 +79,7 @@ public class Camera {
 		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
 
 		Matrix.setIdentityM(viewMatrix, 0);
-		Matrix.translateM(viewMatrix, 0, 0.0f, 0.0f, -distance);
+		Matrix.translateM(viewMatrix, 0, 0.0f, 0.0f, -trackball.getDistance());
 		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);

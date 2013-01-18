@@ -18,6 +18,11 @@ public class TwoFingerTrackball {
 	 * translation
 	 */
 	private float[] orientation = new float[16];
+	
+	private float distance = 50;
+	
+	private float minDistance = 10f;
+	private float maxDistance = 100f;
 
 	/**
 	 * A transform from camera coordinates to my local coordinates. Used for
@@ -77,7 +82,7 @@ public class TwoFingerTrackball {
 	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
 	 * frame, or whatever
 	 * 
-	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for OpenGL)
+	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for zoom factor)
 	 * @param x1 x position of the first finger
 	 * @param y1 y position of the first finger
 	 * @param dx1 x component of the first finger velocity vector, in pixels per unit time
@@ -95,29 +100,16 @@ public class TwoFingerTrackball {
 		int rx = x2-x1; // radius vector, x component
 		int ry = y2-y1; // radius vector, y component
 		int r2 = rx*rx + ry*ry; // radius squared
-/* Center is between fingers
 		float vx = dx2-dx1; // velocity vector, x component
 		float vy = dy2-dy1; // velocity vector, y component
-/*/ // Center is first finger
-		float vx = dx2; // velocity vector, x component
-		float vy = dy2; // velocity vector, y component
-//*/
 		float projection = (rx*vx + ry*vy) / r2; // projection of v onto r, as a fraction of r
 		float vxPerp = vx - projection * rx; // tangential velocity vector, x component
 		float vyPerp = vy - projection * ry; // tangential velocity vector, y component
 
-/* Center is between fingers
 		angularVelocity[0] = (dy1+dy2) / mDensity / 4f;
 		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
-/*/ // Center is first finger
-		angularVelocity[0] = dy1 / mDensity / 2f;
-		angularVelocity[1] = dx1 / mDensity / 2f;
-//*/
 		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
-		angularVelocity[3] = 1.0f;
-		
-		// and the scale factor, if this were a pinch zoom gesture, would be 
-		// float scale = 1f + projection;
+		angularVelocity[3] = 1.0f + projection;
 	}
 
 	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
@@ -150,6 +142,10 @@ public class TwoFingerTrackball {
 		Matrix.setLookAtM(orientation, 0, eyeX, eyeY, eyeZ, lookX, lookY,
 				lookZ, upX, upY, upZ);
 		Matrix.translateM(orientation, 0, eyeX, eyeY, eyeZ);
+		distance = Matrix.length(
+				lookX - eyeX,
+				lookY - eyeY,
+				lookZ - eyeZ);
 	}
 
 	/**
@@ -159,6 +155,10 @@ public class TwoFingerTrackball {
 	 */
 	public float[] getOrientation() {
 		return orientation;
+	}
+	
+	public float getDistance() {
+		return distance;
 	}
 
 	public float[] getCameraToTrackballOrientation() {
@@ -170,7 +170,7 @@ public class TwoFingerTrackball {
 		int x = mScroller.getCurrX();
 		int y = mScroller.getCurrY();
 
-		if (prevFlingX == x && prevFlingY == y)
+        if (prevFlingX == x && prevFlingY == y)
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
@@ -251,6 +251,7 @@ public class TwoFingerTrackball {
 		rotateAboutCameraAxis(
 				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
 				scrollAxis);
+		distance /= angularVelocity[3];
 	}
 
 	private void rotateAboutCameraAxis(float angle, float[] axis) {
