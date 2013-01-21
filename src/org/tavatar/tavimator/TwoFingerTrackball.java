@@ -111,6 +111,10 @@ public class TwoFingerTrackball {
 		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
 		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
 		angularVelocity[3] = 1.0f + projection;
+		
+		// sometimes really dramatic pinches can confuse the finger tracker. we
+		// never want to zoom negative, ie, behind the object we're orbiting
+		if (angularVelocity[3] <= 0) angularVelocity[3] = 1.0f;
 	}
 
 	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
@@ -249,6 +253,7 @@ public class TwoFingerTrackball {
 	}
 
 	private void scrollBy(float[] angularVelocity) {
+//		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 		rotateAboutCameraAxis(
 				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
@@ -268,6 +273,7 @@ public class TwoFingerTrackball {
 	}
 
 	private void fling(float[] angularVelocity) {
+//		Log.d(TAG, "fling(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 
 		prevFlingX = 0;
