@@ -20,9 +20,9 @@ public class AnimationTouchDispatcher {
 	}
 
 	private void debug(String message) {
-		Log.d(TAG, message);
-		((TextView) ((Activity) mContext)
-		.findViewById(R.id.debugLabel)).setText(message);
+//		Log.d(TAG, message);
+//		((TextView) ((Activity) mContext)
+//		.findViewById(R.id.debugLabel)).setText(message);
 	}
 
 	public AnimationTapHandler getTapHandler() {

@@ -1,20 +1,25 @@
 package org.tavatar.tavimator;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.AssetManager;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
+import android.widget.TextView;
 
 public class AnimationView extends GLSurfaceView 
 {
@@ -227,7 +232,29 @@ public class AnimationView extends GLSurfaceView
 		// The activity must call the GL surface view's onPause() on activity onPause().
 		super.onPause();
 		renderer.onPause();
-	}	
+	}
+	
+	private void pickPart(final int x, final int y) {
+		final ByteBuffer colorBuffer = ByteBuffer.allocate(4);
+		final Handler handler = new Handler();
+		queueEvent(new Runnable() {
+			@Override public void run() {
+				GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
+				handler.post(new Runnable() {
+					@Override public void run() {
+						colorBuffer.position(0);
+						((TextView) ((Activity) getContext())
+								.findViewById(R.id.debugLabel)).setText("" +
+										(colorBuffer.get()&0xFF) + " " + 
+										(colorBuffer.get()&0xFF) + " " + 
+										(colorBuffer.get()&0xFF) + " " + 
+										(colorBuffer.get()&0xFF));
+					}
+				});
+			}
+		});
+	}
+	
 	public boolean onTouchEvent(MotionEvent ev) {
 		final int action = ev.getAction();
 		final int actionMask = action & MotionEvent.ACTION_MASK;
@@ -273,6 +300,8 @@ public class AnimationView extends GLSurfaceView
 			int y2 = 0;
 			int deltaX2 = 0;
 			int deltaY2 = 0;
+			
+			pickPart(x1, y1);
 
 			if (activePointer2Id != INVALID_POINTER) {
 				final int index2 = ev.findPointerIndex(activePointer2Id);
