@@ -40,6 +40,7 @@ public class TwoFingerTrackball {
 	private float[] scrollVelocity = new float[4];
 	private float[] scrollAxis = new float[4];
 	private float[] flingAxis = new float[4];
+	private static final float ZOOM_FACTOR = 100.0f;
 
 	private int prevFlingX;
 	private int prevFlingY;
@@ -174,6 +175,7 @@ public class TwoFingerTrackball {
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
+		distance /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
 		prevFlingX = x;
 		prevFlingY = y;
 	}
@@ -273,7 +275,8 @@ public class TwoFingerTrackball {
 
 		mScroller.fling(0, 0,
 				(int) Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
-				0, 0, Integer.MAX_VALUE, 0, 0);
+				(int) (Math.log(angularVelocity[3]) * ZOOM_FACTOR), 
+				0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
 	}
 
 }
