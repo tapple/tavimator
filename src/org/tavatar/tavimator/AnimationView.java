@@ -10,6 +10,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.AssetManager;
+import android.graphics.PixelFormat;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -127,6 +128,8 @@ public class AnimationView extends GLSurfaceView
 			// Request an OpenGL ES 2.0 compatible context.
 			setEGLContextClientVersion(2);
 
+			setDebugFlags(DEBUG_CHECK_GL_ERROR);
+
 			// Set the renderer to our demo renderer, defined below.
 			renderer = new AnimationRenderer(this);
 			setRenderer(renderer);
@@ -239,16 +242,25 @@ public class AnimationView extends GLSurfaceView
 		final Handler handler = new Handler();
 		queueEvent(new Runnable() {
 			@Override public void run() {
-				GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
+				GLES20.glReadPixels(x, getHeight() - y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
 				handler.post(new Runnable() {
 					@Override public void run() {
 						colorBuffer.position(0);
+						byte r = colorBuffer.get();
+						byte g = colorBuffer.get();
+						byte b = colorBuffer.get();
+						byte a = colorBuffer.get();
 						((TextView) ((Activity) getContext())
 								.findViewById(R.id.debugLabel)).setText("" +
-										(colorBuffer.get()&0xFF) + " " + 
-										(colorBuffer.get()&0xFF) + " " + 
-										(colorBuffer.get()&0xFF) + " " + 
-										(colorBuffer.get()&0xFF));
+										(r&0xFF) + " " + 
+										(g&0xFF) + " " + 
+										(b&0xFF) + " " + 
+										(a&0xFF) + " " +
+										AnimationRenderer.colorToIndex(r, g, b, a));
+						renderer.testColor[0] = (r&0xFF) / 255.0f;
+						renderer.testColor[1] = (g&0xFF) / 255.0f;
+						renderer.testColor[2] = (b&0xFF) / 255.0f;
+						renderer.testColor[3] = (a&0xFF) / 255.0f;
 					}
 				});
 			}

@@ -1,6 +1,7 @@
 uniform mat4 u_MVPMatrix;	// A constant representing the combined model/view/projection matrix.
 uniform mat4 u_MVMatrix;	// A constant representing the combined model/view matrix.	
 uniform vec4 u_Color;		// Object color information we will pass in.
+const bool u_Lighting = false;
 
 attribute vec4 a_Position;	// input. Vertex position in model coordinates
 attribute vec3 a_Normal;	// input. Vertex normal   in model coordinates
@@ -42,16 +43,20 @@ void main() {				// The entry point for our vertex shader.
 	// Multiply the vertex by the matrix to get the final point in normalized screen coordinates.
 	gl_Position = u_MVPMatrix * a_Position;
 
-	// Transform the vertex into eye space.
-	vertexPosition = vec3(u_MVMatrix * a_Position);
-	// Transform the normal's orientation into eye space.
-	vertexNormal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));
-
-	v_Color = u_Color * ambientColor
-			+ lightVertex(light0Position, light0DiffuseColor)
-			+ lightVertex(light1Position, light1DiffuseColor);
-	v_Color = clamp(v_Color, 0.0, 1.0);
-
-	float fog = exp(-0.005 * gl_Position.z);
-	v_Color = fog * v_Color + (1.0-fog) * fogColor;
+	if (u_Lighting) {
+		// Transform the vertex into eye space.
+		vertexPosition = vec3(u_MVMatrix * a_Position);
+		// Transform the normal's orientation into eye space.
+		vertexNormal = normalize(vec3(u_MVMatrix * vec4(a_Normal, 0.0)));
+	
+		v_Color = u_Color * ambientColor
+				+ lightVertex(light0Position, light0DiffuseColor)
+				+ lightVertex(light1Position, light1DiffuseColor);
+		v_Color = clamp(v_Color, 0.0, 1.0);
+	
+		float fog = exp(-0.005 * gl_Position.z);
+		v_Color = fog * v_Color + (1.0-fog) * fogColor;
+	} else {
+		v_Color = u_Color;
+	}
 }

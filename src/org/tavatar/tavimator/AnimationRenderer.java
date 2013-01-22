@@ -27,6 +27,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final AnimationView mView;
 	private final Context mActivityContext;
 	
+	public volatile float[] testColor = new float[4];
+	
+	// defines where we start counting opengl ids for parts with multiple animations
+	// first animation counts 0-ANIMATION_INCREMENT-1, next ANIMATION_INCREMENT++
+	public static final int ANIMATION_INCREMENT = 100;
+
     private enum DrawMode {
       MODE_PARTS,
       MODE_SKELETON,
@@ -85,7 +91,11 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 	private SLPartsRenderer figureRenderer = new SLPartsFemale(this);
 	
-	/**
+    private boolean skeleton;
+    private boolean selecting;
+    private int selectName;
+
+    /**
 	 * Initialize the model data.
 	 */
 	public AnimationRenderer(AnimationView view) {
@@ -263,6 +273,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		
+//		  GLES20.glEnable(GLES20.GL_BLEND);
+//		  GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		GLES20.glDisable(GLES20.GL_DITHER);
+
+
 			
 		resetCamera();
 
@@ -299,6 +315,39 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				 0, 40,   0,
 				 0,  1,   0);
 
+	}
+	
+	/**
+	 * Answers a color for color picking, basis. Works on a color buffer with as
+	 * little as 12 bits of precision, thus supporting 4096 pick indices. The
+	 * color is suitable for passing directly to OpenGL
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public static float[] indexToColor(int index) {
+		float[] pickColor = new float[4];
+		pickColor[0] = (index >> 4 & 0xF0) / 255f;
+		pickColor[1] = (index << 0 & 0xF0) / 255f;
+		pickColor[2] = (index << 4 & 0xF0) / 255f;
+		pickColor[3] = 1f;
+		return pickColor;
+	}
+
+	/**
+	 * Answers a pick index for the given color for color picking, basis. Works
+	 * on a color buffer with as little as 12 bits of precision, thus supporting
+	 * 4096 pick indices. Uses the color format as read from glReadPixels(...,
+	 * RGBA, UNSIGNED_BYTE, ...)
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public static int colorToIndex(byte r, byte g, byte b, byte a) {
+		return 
+				(r & 0xF0) << 4 |
+				(g & 0xF0) >> 0 |
+				(b & 0xF0) >> 4 ;
 	}
 
 	@Override
@@ -358,7 +407,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
         //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
-        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
+//        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
+        GLES20.glUniform4fv(mColorHandle, 1, testColor, 0); // blue
         updateUniforms();
         figureRenderer.drawPartNamed("head");
         
@@ -452,14 +502,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	    // visual compensation
 	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
 
-//	    selectName = index*ANIMATION_INCREMENT;
+	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_PARTS, modelMatrix);
 	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
-//	    selectName = index*ANIMATION_INCREMENT;
+	    selectName = index*ANIMATION_INCREMENT;
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_ROT_AXES, modelMatrix);
-//	    selectName = index*ANIMATION_INCREMENT;
+	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_SKELETON, modelMatrix);
 	}
@@ -468,15 +518,15 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			BVHNode motion, BVHNode joints, DrawMode mode, float[] parentMatrix) {
 		float[] color = new float[4];
 
-		boolean selecting = false;
+		selecting = true;
 
 		if(motion == null || joints == null) return;
-//		selectName++;
+		selectName++;
 		float[] modelMatrix = new float[16];
 		System.arraycopy(parentMatrix, 0, modelMatrix, 0, 16);
 		Matrix.translateM(modelMatrix, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
 		if(motion.type==BVHNodeType.BVH_NO_SL) {
-//			selectName++;
+			selectName++;
 			motion = motion.child(0);
 		}
 
@@ -548,7 +598,11 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		}
 
 		if(mode == DrawMode.MODE_PARTS) {
-//			if(selecting) glLoadName(selectName);
+			if(selecting) {
+//				GLES20.glUniform4f(mColorHandle, selectName / 16 / 4f, selectName / 4 % 4 / 4f, selectName % 4 / 4f, 1.0f);
+//				GLES20.glUniform4f(mColorHandle, selectName / 32f, 0f, 0f, 1.0f);
+		        GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
+			} else {
 
 //			if(anim.getMirrored() && (mirrorSelected == selectName || partSelected == selectName)) {
 //		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
@@ -564,9 +618,11 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 /*
 			if(anim.getIK(motion)) {
 				glGetFloatv(GL_CURRENT_COLOR,color);
-				glColor4f(color[0],color[1],color[2]+0.3,color[3]);
+				glColor4f(color[0],color[1],color[2]+0.3,1.0f);
 			}
 */
+			}
+			
 			System.arraycopy(modelMatrix, 0, mModelMatrix, 0, 16);
 		    updateUniforms();
 			figureRenderer.drawPartNamed(motion.name());
