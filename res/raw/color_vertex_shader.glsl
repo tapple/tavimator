@@ -1,7 +1,7 @@
 uniform mat4 u_MVPMatrix;	// A constant representing the combined model/view/projection matrix.
 uniform mat4 u_MVMatrix;	// A constant representing the combined model/view matrix.	
 uniform vec4 u_Color;		// Object color information we will pass in.
-const bool u_Lighting = false;
+uniform bool u_Lighting;
 
 attribute vec4 a_Position;	// input. Vertex position in model coordinates
 attribute vec3 a_Normal;	// input. Vertex normal   in model coordinates

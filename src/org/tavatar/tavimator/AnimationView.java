@@ -242,6 +242,9 @@ public class AnimationView extends GLSurfaceView
 		final Handler handler = new Handler();
 		queueEvent(new Runnable() {
 			@Override public void run() {
+				renderer.touchX = x;
+				renderer.touchY = getHeight() - y; 
+				final int selected = renderer.pickPart(x, getHeight() - y); 
 				GLES20.glReadPixels(x, getHeight() - y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
 				handler.post(new Runnable() {
 					@Override public void run() {
@@ -256,7 +259,7 @@ public class AnimationView extends GLSurfaceView
 										(g&0xFF) + " " + 
 										(b&0xFF) + " " + 
 										(a&0xFF) + " " +
-										AnimationRenderer.colorToIndex(r, g, b, a));
+										selected);
 						renderer.testColor[0] = (r&0xFF) / 255.0f;
 						renderer.testColor[1] = (g&0xFF) / 255.0f;
 						renderer.testColor[2] = (b&0xFF) / 255.0f;

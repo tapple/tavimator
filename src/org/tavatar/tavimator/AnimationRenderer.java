@@ -28,6 +28,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final Context mActivityContext;
 	
 	public volatile float[] testColor = new float[4];
+	public volatile int touchX = 0, touchY = 0;
 	
 	// defines where we start counting opengl ids for parts with multiple animations
 	// first animation counts 0-ANIMATION_INCREMENT-1, next ANIMATION_INCREMENT++
@@ -73,6 +74,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	
 	/** This will be used to pass in model color information. */
 	private int mColorHandle;
+	
+	/** This will be used to enable or disable lighting. */
+	private int mLightingHandle;
 	
 	/** This will be used to pass in model normal information. */
 	private int mNormalHandle;
@@ -269,8 +273,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onSurfaceCreated(GL10 glUnused, EGLConfig config) 
 	{				
-		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
-		
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 		
@@ -290,6 +292,17 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 		mPerVertexProgramHandle = createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle, 
 				new String[] {"a_Position",  "a_Color", "a_Normal"});								                                							       
+
+		// Set our per-vertex lighting program.
+        GLES20.glUseProgram(mPerVertexProgramHandle);
+        
+        // Set program handles for cube drawing.
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
+        mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
+        mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
+        mLightingHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Lighting");
+        mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
+        mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal");
 	}	
 
 //*
@@ -350,6 +363,37 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				(b & 0xF0) >> 4 ;
 	}
 
+	// x and y are already converted to GL pixel coordinates
+	public int pickPart(int x, int y) {
+		final int SIZE = 100;
+
+
+		//	  glMatrixMode(GL_PROJECTION);
+		//	  glPushMatrix();
+		//	  glLoadIdentity();
+		//	  gluPickMatrix(x,(viewport[3]-y),5.0,5.0,viewport);
+		//	  setProjection();
+
+		GLES20.glScissor(x - SIZE/2, y - SIZE/2, SIZE, SIZE);
+		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); /* fog color */
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		selecting = true;
+		GLES20.glUniform1i(mLightingHandle, 0);        
+
+		drawAnimations();
+		//	  drawProps();
+
+		GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+
+		final ByteBuffer colorBuffer = ByteBuffer.allocate(4);
+		GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
+		colorBuffer.position(0);
+		return colorToIndex(colorBuffer.get(), colorBuffer.get(), colorBuffer.get(), colorBuffer.get());
+
+		//  qDebug("AnimationView::pickPart(): %d",name);
+	}
+
 	@Override
 	public void onSurfaceChanged(GL10 glUnused, int width, int height) 
 	{
@@ -372,6 +416,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onDrawFrame(GL10 glUnused) 
 	{
+		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		mCamera.updateViewMatrix();
                 
@@ -379,15 +424,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         long time = SystemClock.uptimeMillis() % 10000L;        
         float angleInDegrees = (360.0f / 10000.0f) * ((int) time);                
         
-        // Set our per-vertex lighting program.
-        GLES20.glUseProgram(mPerVertexProgramHandle);
-        
-        // Set program handles for cube drawing.
-        mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
-        mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
-        mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
-        mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
-        mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal"); 
+        GLES20.glUniform1i(mLightingHandle, 1);
+        selecting = false;
         
         // Draw some cubes.        
         Matrix.setIdentityM(mModelMatrix, 0);
@@ -430,6 +468,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         updateUniforms();
         drawFloor();
+        
+        pickPart(touchX, touchY);
 	}
 	
 	
@@ -517,8 +557,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private void drawPart(Animation anim, int currentAnimationIndex, int frame,
 			BVHNode motion, BVHNode joints, DrawMode mode, float[] parentMatrix) {
 		float[] color = new float[4];
-
-		selecting = true;
 
 		if(motion == null || joints == null) return;
 		selectName++;
