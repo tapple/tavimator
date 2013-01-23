@@ -27,9 +27,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final AnimationView mView;
 	private final Context mActivityContext;
 	
-	public volatile float[] testColor = new float[4];
-	public volatile int touchX = 0, touchY = 0;
-	
 	// defines where we start counting opengl ids for parts with multiple animations
 	// first animation counts 0-ANIMATION_INCREMENT-1, next ANIMATION_INCREMENT++
 	public static final int ANIMATION_INCREMENT = 100;
@@ -365,7 +362,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	// x and y are already converted to GL pixel coordinates
 	public int pickPart(int x, int y) {
-		final int SIZE = 100;
+		final int SIZE = 5;
 
 
 		//	  glMatrixMode(GL_PROJECTION);
@@ -376,7 +373,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 		GLES20.glScissor(x - SIZE/2, y - SIZE/2, SIZE, SIZE);
 		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); /* fog color */
+		GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // white
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		selecting = true;
 		GLES20.glUniform1i(mLightingHandle, 0);        
@@ -389,7 +386,11 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		final ByteBuffer colorBuffer = ByteBuffer.allocate(4);
 		GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
 		colorBuffer.position(0);
-		return colorToIndex(colorBuffer.get(), colorBuffer.get(), colorBuffer.get(), colorBuffer.get());
+		int selection = colorToIndex(colorBuffer.get(), colorBuffer.get(), colorBuffer.get(), colorBuffer.get());
+		
+		// special case: white (the clear color) is no selection
+		if (selection == 4095) selection = -1;
+		return selection;
 
 		//  qDebug("AnimationView::pickPart(): %d",name);
 	}
@@ -445,8 +446,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
         //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
-//        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
-        GLES20.glUniform4fv(mColorHandle, 1, testColor, 0); // blue
+        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
         updateUniforms();
         figureRenderer.drawPartNamed("head");
         
@@ -468,8 +468,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         updateUniforms();
         drawFloor();
-        
-        pickPart(touchX, touchY);
+  
+        // uncomment to debug picking
+//        pickPart(touchX, touchY);
 	}
 	
 	
@@ -637,21 +638,19 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 		if(mode == DrawMode.MODE_PARTS) {
 			if(selecting) {
-//				GLES20.glUniform4f(mColorHandle, selectName / 16 / 4f, selectName / 4 % 4 / 4f, selectName % 4 / 4f, 1.0f);
-//				GLES20.glUniform4f(mColorHandle, selectName / 32f, 0f, 0f, 1.0f);
 		        GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
 			} else {
 
-//			if(anim.getMirrored() && (mirrorSelected == selectName || partSelected == selectName)) {
-//		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
-//			} else if(partSelected == selectName) {
-//		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
-//			} else if(partHighlighted==selectName) {
-//		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
-//			} else {
+			if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getPartSelected() == selectName)) {
+		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
+			} else if(mView.getPartSelected() == selectName) {
+		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
+			} else if(mView.getPartHighlighted()==selectName) {
+		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
+			} else {
 				GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f); // grey peach
 //	        	GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
-//			}
+			}
 			
 /*
 			if(anim.getIK(motion)) {

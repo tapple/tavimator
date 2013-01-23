@@ -42,7 +42,13 @@ public class AnimationView extends GLSurfaceView
 	private int mLastMotionX2;
 	private int mLastMotionY2;
 
-	/**
+    private int partHighlighted = -1;
+    private int partSelected = -1;
+    private int mirrorSelected = -1;
+//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
+//    private int propDragging;  // holds the actual drag handle id
+
+    /**
 	 * True if the user is currently dragging this ScrollView around. This is
 	 * not the same as 'is being flinged', which can be checked by
 	 * mScroller.isFinished() (flinging begins when the user lifts his finger).
@@ -140,6 +146,7 @@ public class AnimationView extends GLSurfaceView
 		}
 
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
+		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
 		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
 		touchDispatcher.setTwoFingerDragHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
 
@@ -237,35 +244,13 @@ public class AnimationView extends GLSurfaceView
 		renderer.onPause();
 	}
 	
-	private void pickPart(final int x, final int y) {
-		final ByteBuffer colorBuffer = ByteBuffer.allocate(4);
-		final Handler handler = new Handler();
+	public void highlightPartAt(final int x, final int y) {
+		partHighlighted = -99;
 		queueEvent(new Runnable() {
 			@Override public void run() {
-				renderer.touchX = x;
-				renderer.touchY = getHeight() - y; 
-				final int selected = renderer.pickPart(x, getHeight() - y); 
-				GLES20.glReadPixels(x, getHeight() - y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
-				handler.post(new Runnable() {
-					@Override public void run() {
-						colorBuffer.position(0);
-						byte r = colorBuffer.get();
-						byte g = colorBuffer.get();
-						byte b = colorBuffer.get();
-						byte a = colorBuffer.get();
-						((TextView) ((Activity) getContext())
-								.findViewById(R.id.debugLabel)).setText("" +
-										(r&0xFF) + " " + 
-										(g&0xFF) + " " + 
-										(b&0xFF) + " " + 
-										(a&0xFF) + " " +
-										selected);
-						renderer.testColor[0] = (r&0xFF) / 255.0f;
-						renderer.testColor[1] = (g&0xFF) / 255.0f;
-						renderer.testColor[2] = (b&0xFF) / 255.0f;
-						renderer.testColor[3] = (a&0xFF) / 255.0f;
-					}
-				});
+				if (partHighlighted != -99) return; // the tap ended before this thread could run
+				int selected = renderer.pickPart(x, getHeight() - y); 
+				if (partHighlighted == -99) partHighlighted = selected; // the tap ended before picking completed
 			}
 		});
 	}
@@ -316,8 +301,6 @@ public class AnimationView extends GLSurfaceView
 			int deltaX2 = 0;
 			int deltaY2 = 0;
 			
-			pickPart(x1, y1);
-
 			if (activePointer2Id != INVALID_POINTER) {
 				final int index2 = ev.findPointerIndex(activePointer2Id);
 				x2 = (int) ev.getX(index2);
@@ -562,5 +545,29 @@ public class AnimationView extends GLSurfaceView
 
     int storeCameraPosition(int num) { return 0; }
     int restoreCameraPosition(int num) { return 0; }
+
+	public int getPartHighlighted() {
+		return partHighlighted;
+	}
+
+	public void setPartHighlighted(int partHighlighted) {
+		this.partHighlighted = partHighlighted;
+	}
+
+	public int getPartSelected() {
+		return partSelected;
+	}
+
+	public void setPartSelected(int partSelected) {
+		this.partSelected = partSelected;
+	}
+
+	public int getMirrorSelected() {
+		return mirrorSelected;
+	}
+
+	public void setMirrorSelected(int mirrorSelected) {
+		this.mirrorSelected = mirrorSelected;
+	}
 
 }
