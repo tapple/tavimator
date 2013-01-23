@@ -418,6 +418,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	{
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		updateAnimationsTransforms();
 		mCamera.updateViewMatrix();
                 
         // Do a complete rotation every 10 seconds.
@@ -515,16 +516,16 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	}
 	
 
-	private void drawAnimations() {
-		drawFigure(mView.getSelectedAnimation(), 0);
+	private void updateAnimationsTransforms() {
+		updateFigureTransforms(mView.getSelectedAnimation(), 0);
 /*
 		for(int index=0; index < mView.getAnimationCount(); index++) {
-			drawFigure(mView.getAnimationNumber(index), index);
+			updateFigureTransforms(mView.getAnimationNumber(index), index);
 		}
 */
 	}
 	
-	private void drawFigure(Animation anim, int index) {
+	private void updateFigureTransforms(Animation anim, int index) {
 	    // int figType = anim.getFigureType().ordinal();
 	    int figType = 1;
 
@@ -541,22 +542,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	    // visual compensation
 	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
-	    updateJointTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
-
-	    selectName = index*ANIMATION_INCREMENT;
-	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_PARTS);
-	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
-	    selectName = index*ANIMATION_INCREMENT;
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_ROT_AXES);
-	    selectName = index*ANIMATION_INCREMENT;
-	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_SKELETON);
-	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+	    updatePartTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
 	}
 
-	private void updateJointTransforms(int frame, BVHNode motion, BVHNode joints, float[] parentMatrix) {
+	private void updatePartTransforms(int frame, BVHNode motion, BVHNode joints, float[] parentMatrix) {
 		if(motion == null || joints == null) return;
 		System.arraycopy(parentMatrix, 0, motion.cachedTransform, 0, 16);
 		Matrix.translateM(motion.cachedTransform, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
@@ -593,10 +582,33 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		}
 
 		for(int i = 0; i < motion.numChildren(); i++) {
-			updateJointTransforms(frame, motion.child(i), joints.child(i), motion.cachedTransform);
+			updatePartTransforms(frame, motion.child(i), joints.child(i), motion.cachedTransform);
 		}
 	}
 	
+	private void drawAnimations() {
+		drawFigure(mView.getSelectedAnimation(), 0);
+/*
+		for(int index=0; index < mView.getAnimationCount(); index++) {
+			drawFigure(mView.getAnimationNumber(index), index);
+		}
+*/
+	}
+	
+	private void drawFigure(Animation anim, int index) {
+	    selectName = index*ANIMATION_INCREMENT;
+	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_PARTS);
+	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
+	    selectName = index*ANIMATION_INCREMENT;
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_ROT_AXES);
+	    selectName = index*ANIMATION_INCREMENT;
+	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_SKELETON);
+	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+	}
+
 	private void drawPart(Animation anim, BVHNode motion, DrawMode mode) {
 		float[] color = new float[4];
 
