@@ -68,6 +68,7 @@ public class AnimationActivity extends Activity
 	}
 	
 	public void onGrabConstrainClicked(View view) {
+		mGLSurfaceView.requestRender();
         System.out.println("grab constrain");
 	}
 }

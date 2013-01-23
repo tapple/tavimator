@@ -364,7 +364,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	public int pickPart(int x, int y) {
 		final int SIZE = 5;
 
-
 		//	  glMatrixMode(GL_PROJECTION);
 		//	  glPushMatrix();
 		//	  glLoadIdentity();
@@ -553,6 +552,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_SKELETON, modelMatrix);
+	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	}
 
 	private void drawPart(Animation anim, int currentAnimationIndex, int frame,

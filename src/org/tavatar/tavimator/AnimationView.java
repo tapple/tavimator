@@ -24,6 +24,8 @@ import android.widget.TextView;
 
 public class AnimationView extends GLSurfaceView 
 {
+	public final static int PICK_PART_RESULT = 932023;
+	
 	private AnimationRenderer renderer;
 	private AnimationTouchDispatcher touchDispatcher;
 	
@@ -139,6 +141,7 @@ public class AnimationView extends GLSurfaceView
 			// Set the renderer to our demo renderer, defined below.
 			renderer = new AnimationRenderer(this);
 			setRenderer(renderer);
+//			setRenderMode(RENDERMODE_WHEN_DIRTY);
 		} else {
 			// This is where you could create an OpenGL ES 1.x compatible
 			// renderer if you wanted to support both ES 1 and ES 2.
@@ -244,13 +247,11 @@ public class AnimationView extends GLSurfaceView
 		renderer.onPause();
 	}
 	
-	public void highlightPartAt(final int x, final int y) {
-		partHighlighted = -99;
+	public void pickPart(final int x, final int y, final Handler resultHandler) {
 		queueEvent(new Runnable() {
 			@Override public void run() {
-				if (partHighlighted != -99) return; // the tap ended before this thread could run
-				int selected = renderer.pickPart(x, getHeight() - y); 
-				if (partHighlighted == -99) partHighlighted = selected; // the tap ended before picking completed
+				resultHandler.sendMessage(resultHandler.obtainMessage(
+						PICK_PART_RESULT, renderer.pickPart(x, getHeight() - y), 0)); 
 			}
 		});
 	}
