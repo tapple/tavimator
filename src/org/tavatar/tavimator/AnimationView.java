@@ -121,7 +121,7 @@ public class AnimationView extends GLSurfaceView
 		try {
 			joints[1] = bvh.animRead(assets.open("data/SLFemale.bvh"), assets.open(Animation.LIMITS_FILE), false);
 			bvh.dumpNodes(joints[1], "");
-			animation = new Animation(getContext(), bvh);
+			setAnimation(new Animation(getContext(), bvh));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -226,6 +226,88 @@ public class AnimationView extends GLSurfaceView
     	animList.clear();
     	animation = null;
     }
+
+    public BVHNode getSelectedPart() {
+    	return getSelectedAnimation().getNode(partSelected % AnimationRenderer.ANIMATION_INCREMENT);
+    }
+
+    public int getSelectedPartIndex() {
+    	return partSelected % AnimationRenderer.ANIMATION_INCREMENT;
+    }
+
+    /*
+    public String getPartName(int index) {
+      // get part name from animation, with respect to multiple animations in view
+      return getSelectedAnimation()->getPartName(index % renderer.ANIMATION_INCREMENT);
+    }
+     */
+
+/*
+    // returns the selected prop name or an empty string if none selected
+    public String getSelectedPropName() {
+    	for(int index = 0; index < propList.count(); index++)
+    		if(propList.at(index).id == propSelected) return propList.at(index).name();
+    	return "";
+    }
+*/
+
+    public void selectPart(int partNum) {
+    	BVHNode node = getSelectedAnimation().getNode(partNum);
+    	Log.d(TAG, "AnimationView.selectPart(" + partNum + ")");
+
+    	if(node == null) {
+    		Log.d(TAG, "AnimationView::selectPart(" + partNum + "): node==0!");
+    		return;
+    	}
+
+    	if(node.type == BVHNodeType.BVH_END) {
+    		partSelected=0;
+    		mirrorSelected=0;
+//    		propSelected=0;
+//    		propDragging=0;
+//    		emit backgroundClicked();
+//    		repaint();
+    	} else {
+    		selectPart(node);
+    	}
+    }
+
+    public void selectPart(BVHNode node) {
+    	if(node == null) {
+    		Log.d(TAG, "AnimationView::selectPart(node): node==0!");
+    		return;
+    	}
+
+    	Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
+    	// make sure no prop is selected anymore
+//    	propSelected=0;
+//    	propDragging=0;
+
+    	// find out the index count of the animation we're working with currently
+    	int animationIndex = animList.indexOf(getSelectedAnimation());
+
+    	// get the part index to be selected, including the proper animation increment
+    	// FIXME: when we are adding support for removing animations we need to remember
+    	//        the increment for each animation so they don't get confused
+    	partSelected = getSelectedAnimation().getPartIndex(node) + AnimationRenderer.ANIMATION_INCREMENT*animationIndex;
+//    	emit partClicked(node,
+//    			Rotation(getSelectedAnimation()->getRotation(node)),
+//    			getSelectedAnimation()->getRotationLimits(node),
+//    			Position(getSelectedAnimation()->getPosition())
+//    			);
+//    	repaint();
+    }
+
+/*
+    void selectProp(final String propName) {
+    	// make sure no part is selected anymore
+    	partSelected=0;
+    	mirrorSelected=0;
+    	Prop prop=getPropByName(propName);
+    	if(prop) propSelected=prop->id;
+    	repaint();
+    }
+*/
 
     public void repaint() {
     	// do nothing
@@ -553,14 +635,6 @@ public class AnimationView extends GLSurfaceView
 
 	public void setPartHighlighted(int partHighlighted) {
 		this.partHighlighted = partHighlighted;
-	}
-
-	public int getPartSelected() {
-		return partSelected;
-	}
-
-	public void setPartSelected(int partSelected) {
-		this.partSelected = partSelected;
 	}
 
 	public int getMirrorSelected() {

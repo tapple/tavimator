@@ -66,7 +66,7 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 			view.setPartHighlighted(pickResult);
 			break;
 		case FINISHED:
-			view.setPartSelected(pickResult);
+			view.selectPart(pickResult);
 		case CANCELED:
 			view.setPartHighlighted(-1);	
 		}

@@ -641,9 +641,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		        GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
 			} else {
 
-			if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getPartSelected() == selectName)) {
+			if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getSelectedPartIndex() == selectName)) {
 		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
-			} else if(mView.getPartSelected() == selectName) {
+			} else if(mView.getSelectedPartIndex() == selectName) {
 		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
 			} else if(mView.getPartHighlighted()==selectName) {
 		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
