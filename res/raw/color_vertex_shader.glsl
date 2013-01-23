@@ -1,6 +1,6 @@
 uniform mat4 u_MVPMatrix;	// A constant representing the combined model/view/projection matrix.
 uniform mat4 u_MVMatrix;	// A constant representing the combined model/view matrix.	
-uniform vec4 u_Color;		// Object color information we will pass in.
+uniform mediump vec4 u_Color;		// Object color information we will pass in.
 uniform bool u_Lighting;
 
 attribute vec4 a_Position;	// input. Vertex position in model coordinates
@@ -8,8 +8,8 @@ attribute vec3 a_Normal;	// input. Vertex normal   in model coordinates
 
 varying vec4 v_Color;		// This will be passed into the fragment shader.
 
-vec3 vertexPosition;		// vertex position in eye coordinates
-vec3 vertexNormal;			// vertex normal   in eye coordinates
+varying vec3 vertexPosition;		// vertex position in eye coordinates
+varying vec3 vertexNormal;			// vertex normal   in eye coordinates
 
 const vec3 light0Position = vec3(0, 80, 100);
 const vec4 light0DiffuseColor = vec4(1.0, 1.0, 1.0, 1.0);
