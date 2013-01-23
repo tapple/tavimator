@@ -41,6 +41,8 @@ public class BVHNode {
 	public float[] ikGoalPos = new float[3];
 	public float[] ikGoalDir = new float[3];
 	public float ikWeight;
+	
+	public float[] cachedTransform = new float[16];
 
 
 	

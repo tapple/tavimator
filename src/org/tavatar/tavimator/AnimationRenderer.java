@@ -541,29 +541,67 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	    // visual compensation
 	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
+	    updateJointTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
 
 	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
-        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_PARTS, modelMatrix);
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_PARTS);
 	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
 	    selectName = index*ANIMATION_INCREMENT;
-        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_ROT_AXES, modelMatrix);
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_ROT_AXES);
 	    selectName = index*ANIMATION_INCREMENT;
 	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        drawPart(anim, index, anim.getFrame(), anim.getMotion(), mView.getJoints(figType), DrawMode.MODE_SKELETON, modelMatrix);
+        drawPart(anim, anim.getMotion(), DrawMode.MODE_SKELETON);
 	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	}
 
-	private void drawPart(Animation anim, int currentAnimationIndex, int frame,
-			BVHNode motion, BVHNode joints, DrawMode mode, float[] parentMatrix) {
+	private void updateJointTransforms(int frame, BVHNode motion, BVHNode joints, float[] parentMatrix) {
+		if(motion == null || joints == null) return;
+		System.arraycopy(parentMatrix, 0, motion.cachedTransform, 0, 16);
+		Matrix.translateM(motion.cachedTransform, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
+		if(motion.type==BVHNodeType.BVH_NO_SL) {
+			motion = motion.child(0);
+		}
+
+		Rotation rot = motion.frameData(frame).rotation();
+		for(int i = 0; i < motion.numChannels; i++) {
+			/*
+		      float value;
+		      if(motion->ikOn)
+		        value = motion->frame[frame][i] + motion->ikRot[i];
+		      else
+		        value = motion->frame[frame][i];
+
+		      switch(motion->channelType[i]) {
+		        case BVH_XROT: glRotatef(value, 1, 0, 0); break;
+		        case BVH_YROT: glRotatef(value, 0, 1, 0); break;
+		        case BVH_ZROT: glRotatef(value, 0, 0, 1); break;
+		        default: break;
+		      } */
+
+			Rotation ikRot = new Rotation();
+			if(motion.ikOn) ikRot = motion.ikRot;
+
+			// need to do rotations in the right order
+			switch(motion.channelType[i]) {
+				case BVH_XROT: Matrix.rotateM(motion.cachedTransform, 0, rot.x+ikRot.x, 1, 0, 0); break;
+				case BVH_YROT: Matrix.rotateM(motion.cachedTransform, 0, rot.y+ikRot.y, 0, 1, 0); break;
+				case BVH_ZROT: Matrix.rotateM(motion.cachedTransform, 0, rot.z+ikRot.z, 0, 0, 1); break;
+				default: break;
+			}
+		}
+
+		for(int i = 0; i < motion.numChildren(); i++) {
+			updateJointTransforms(frame, motion.child(i), joints.child(i), motion.cachedTransform);
+		}
+	}
+	
+	private void drawPart(Animation anim, BVHNode motion, DrawMode mode) {
 		float[] color = new float[4];
 
-		if(motion == null || joints == null) return;
+		if(motion == null) return;
 		selectName++;
-		float[] modelMatrix = new float[16];
-		System.arraycopy(parentMatrix, 0, modelMatrix, 0, 16);
-		Matrix.translateM(modelMatrix, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
 		if(motion.type==BVHNodeType.BVH_NO_SL) {
 			selectName++;
 			motion = motion.child(0);
@@ -595,32 +633,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		}
 */
 		
-		Rotation rot = motion.frameData(frame).rotation();
-		for(int i = 0; i < motion.numChannels; i++) {
-			/*
-	      float value;
-	      if(motion->ikOn)
-	        value = motion->frame[frame][i] + motion->ikRot[i];
-	      else
-	        value = motion->frame[frame][i];
-
-	      switch(motion->channelType[i]) {
-	        case BVH_XROT: glRotatef(value, 1, 0, 0); break;
-	        case BVH_YROT: glRotatef(value, 0, 1, 0); break;
-	        case BVH_ZROT: glRotatef(value, 0, 0, 1); break;
-	        default: break;
-	      } */
-
-			Rotation ikRot = new Rotation();
-			if(motion.ikOn) ikRot = motion.ikRot;
-
-			// need to do rotations in the right order
-			switch(motion.channelType[i]) {
-				case BVH_XROT: Matrix.rotateM(modelMatrix, 0, rot.x+ikRot.x, 1, 0, 0); break;
-				case BVH_YROT: Matrix.rotateM(modelMatrix, 0, rot.y+ikRot.y, 0, 1, 0); break;
-				case BVH_ZROT: Matrix.rotateM(modelMatrix, 0, rot.z+ikRot.z, 0, 0, 1); break;
-				default: break;
-			}
 
 /*
 			if(mode == DrawMode.MODE_ROT_AXES && !selecting && partSelected==selectName)
@@ -634,23 +646,22 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				}
 			}
 */
-		}
 
 		if(mode == DrawMode.MODE_PARTS) {
 			if(selecting) {
 		        GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
 			} else {
 
-			if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getSelectedPartIndex() == selectName)) {
-		        GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
-			} else if(mView.getSelectedPartIndex() == selectName) {
-		        GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
-			} else if(mView.getPartHighlighted()==selectName) {
-		        GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
-			} else {
-				GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f); // grey peach
-//	        	GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
-			}
+				if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getSelectedPartIndex() == selectName)) {
+					GLES20.glUniform4f(mColorHandle, 1.0f, 0.635f, 0.059f, 1.0f); // gold
+				} else if(mView.getSelectedPartIndex() == selectName) {
+					GLES20.glUniform4f(mColorHandle, 0.6f, 0.3f, 0.3f, 1.0f); // red
+				} else if(mView.getPartHighlighted()==selectName) {
+					GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
+				} else {
+					GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f); // grey peach
+//					GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
+				}
 			
 /*
 			if(anim.getIK(motion)) {
@@ -660,7 +671,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 */
 			}
 			
-			System.arraycopy(modelMatrix, 0, mModelMatrix, 0, 16);
+			System.arraycopy(motion.cachedTransform, 0, mModelMatrix, 0, 16);
 		    updateUniforms();
 			figureRenderer.drawPartNamed(motion.name());
 
@@ -673,8 +684,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		}
 		
 		for(int i = 0; i < motion.numChildren(); i++) {
-			drawPart(anim, currentAnimationIndex, frame, 
-					motion.child(i), joints.child(i), mode, modelMatrix);
+			drawPart(anim, motion.child(i), mode);
 		}
 	}
 	
