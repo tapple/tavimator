@@ -103,6 +103,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		mView = view;
         mActivityContext = view.getContext();
 		mCamera = new Camera(mActivityContext);
+		resetCamera();
+
 		// Define points for a cube.		
 		
 		// X, Y, Z
@@ -279,8 +281,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 
 			
-		resetCamera();
-
 		final String vertexShader = getVertexShader();   		
  		final String fragmentShader = getFragmentShader();			
 		

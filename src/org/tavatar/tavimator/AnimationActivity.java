@@ -39,6 +39,9 @@ public class AnimationActivity extends Activity
 		// The activity must call the GL surface view's onPause() on activity onPause().
 		super.onPause();
 		mGLSurfaceView.onPause();
+		isVolumeDownPressed = false;
+		isVolumeUpPressed = false;
+		
 	}	
 	
 	@Override
