@@ -285,6 +285,14 @@ public class BVHNode {
 	  rotations.clear();
 	  positions.clear();
 	}
+	
+	public float[] cachedOrigin() {
+		return new float[] {
+				cachedTransform[12],
+				cachedTransform[13],
+				cachedTransform[14],
+				cachedTransform[15]};
+	}
 
 
 	public boolean compareFrames(int key1,int key2) {
