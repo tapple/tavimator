@@ -419,6 +419,13 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		updateAnimationsTransforms();
+
+		BVHNode selectedNode = mView.getSelectedPart();
+        if (selectedNode != null) {
+        	mCamera.setOrigin(selectedNode.cachedOrigin());
+        }
+		
+		
 		mCamera.updateViewMatrix();
                 
         // Do a complete rotation every 10 seconds.
@@ -450,7 +457,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         updateUniforms();
         figureRenderer.drawPartNamed("head");
         
-        BVHNode selectedNode = mView.getSelectedPart();
         if (selectedNode != null) {
         	float[] selectedOrigin = selectedNode.cachedOrigin();
         	Matrix.setIdentityM(mModelMatrix, 0);

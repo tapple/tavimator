@@ -58,11 +58,18 @@ public class Camera {
 			float lookX, float lookY, float lookZ,
 			float upX, float upY, float upZ) {
 		
+		setOrigin(lookX, lookY, lookZ);
+		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
+	}
+	
+	public void setOrigin(float lookX, float lookY, float lookZ) {
 		this.originX = -lookX;
 		this.originY = -lookY;
 		this.originZ = -lookZ;
-		
-		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
+	}
+	
+	public void setOrigin(float[] look) {
+		setOrigin(look[0], look[1], look[2]);
 	}
 	
 	public void onResume() {
