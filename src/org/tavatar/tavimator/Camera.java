@@ -1,8 +1,12 @@
 package org.tavatar.tavimator;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 /**
  * This class manages the camera's view matrix based on user input. It does not manage the perspective matrix
@@ -39,8 +43,14 @@ public class Camera {
 	 * The a vector from the old origin + distance to the new origin + distance.
 	 * the camera slides along this vector when moving between origins
 	 */
-	float[] transitionRail = new float[] {0.0f, 0.0f, 0.0f, 1.0f};
-	float transitionProgress = 0.0f;
+	private float[] transitionRail = new float[] {0.0f, 0.0f, 0.0f, 1.0f};
+	private float transitionProgress = 0.0f;
+	private Interpolator transitionInterpolator = new AccelerateDecelerateInterpolator();
+    private long transitionStartTime = 0; // ms
+    private float transitionValue = 1.0f;
+    private final int transitionDuration = 300; // ms
+
+	
 	
 	/**
 	 * Trackball that keeps track of orientation set by touch
@@ -99,7 +109,7 @@ public class Camera {
 			trackball.setDistance(10.0f);
 			transitionRail[2] += 10.0f;
 		}
-		transitionProgress = 1.0f;
+		transitionStartTime = SystemClock.uptimeMillis();
 	}
 	
 	public void onResume() {
@@ -108,18 +118,32 @@ public class Camera {
 
 	public void onPause() {
 		gyroscope.onPause();
-	}	
+	}
+	
+	private void updateTransition() {
+		long time = SystemClock.uptimeMillis() - transitionStartTime;
+		if (time < 0) {
+			transitionProgress = 0.0f;
+		} else if (time > transitionDuration) {
+			transitionProgress = 1.0f;
+		} else {
+			transitionProgress = (float)time / transitionDuration;
+		}
+		transitionValue = 1.0f - transitionInterpolator.getInterpolation(transitionProgress);
+
+	}
 
 	public void updateViewMatrix() {
 		trackball.updateOrientation();
 		gyroscope.updateOrientation();
+		updateTransition();
 		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
 
 		Matrix.setIdentityM(viewMatrix, 0);
 		Matrix.translateM(viewMatrix, 0, 
-				transitionProgress * transitionRail[0],
-				transitionProgress * transitionRail[1],
-				transitionProgress * transitionRail[2] - trackball.getDistance());
+				transitionValue * transitionRail[0],
+				transitionValue * transitionRail[1],
+				transitionValue * transitionRail[2] - trackball.getDistance());
 		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
