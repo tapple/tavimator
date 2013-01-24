@@ -460,7 +460,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         if (selectedNode != null) {
         	float[] selectedOrigin = selectedNode.cachedOrigin();
         	Matrix.setIdentityM(mModelMatrix, 0);
-        	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
+//        	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
+        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
         	GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
         	updateUniforms();
         	figureRenderer.drawPartNamed("rFoot");

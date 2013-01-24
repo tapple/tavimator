@@ -84,6 +84,7 @@ public class Camera {
 		transitionRail[3]  = 1.0f;
 		transitionProgress = 0.0f;
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
+		trackball.setZoomRate(1.0f);
 		updateViewMatrix();
 	}
 	
@@ -105,9 +106,9 @@ public class Camera {
 			trackball.setDistance(-transitionRail[2]);
 			transitionRail[2] = 0.0f;
 		} else {
-			// new origin is behind the camera. Move the camera 10 units behind the new origin
-			trackball.setDistance(10.0f);
-			transitionRail[2] += 10.0f;
+			// new origin is behind the camera. Move the camera 20 units behind the new origin
+			trackball.setDistance(20.0f);
+			transitionRail[2] += 20.0f;
 		}
 		transitionStartTime = SystemClock.uptimeMillis();
 	}
@@ -118,6 +119,7 @@ public class Camera {
 
 	public void onPause() {
 		gyroscope.onPause();
+		trackball.setZoomRate(1.0f);
 	}
 	
 	private void updateTransition() {

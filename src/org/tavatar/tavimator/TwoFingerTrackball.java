@@ -2,6 +2,7 @@ package org.tavatar.tavimator;
 
 import android.content.Context;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -41,9 +42,12 @@ public class TwoFingerTrackball {
 	private float[] scrollAxis = new float[4];
 	private float[] flingAxis = new float[4];
 	private static final float ZOOM_FACTOR = 100.0f;
+	
+	private float zoomRate = 1.0f; // per second
 
 	private int prevFlingX;
 	private int prevFlingY;
+	private long prevZoomTime;
 
 	private float mDensity = 1.0f;
 
@@ -174,18 +178,26 @@ public class TwoFingerTrackball {
 		return cameraToTrackball;
 	}
 
+	public void setZoomRate(float zoomRate) {
+		this.zoomRate = zoomRate;
+		prevZoomTime = SystemClock.uptimeMillis();
+	}
+	
 	public void updateOrientation() {
 		mScroller.computeScrollOffset();
 		int x = mScroller.getCurrX();
 		int y = mScroller.getCurrY();
+		long time = SystemClock.uptimeMillis();
 
-        if (prevFlingX == x && prevFlingY == y)
+        if (prevFlingX == x && prevFlingY == y && zoomRate == 1.0f)
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
 		distance /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
+		distance /= (float)Math.pow(zoomRate, (time - prevZoomTime) / 1000.0);
 		prevFlingX = x;
 		prevFlingY = y;
+		prevZoomTime = time;
 	}
 
 	public void setOrientation(float[] anOrientationMatrix) {

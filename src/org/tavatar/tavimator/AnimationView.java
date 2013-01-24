@@ -17,6 +17,7 @@ import android.opengl.Matrix;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -338,6 +339,7 @@ public class AnimationView extends GLSurfaceView
 		});
 	}
 	
+	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
 		final int action = ev.getAction();
 		final int actionMask = action & MotionEvent.ACTION_MASK;
@@ -542,7 +544,7 @@ public class AnimationView extends GLSurfaceView
 		}
 		return true;
 	}
-
+	
 	private void saveLastMotion(MotionEvent ev) {
 		int index;
 		if (activePointer1Id != INVALID_POINTER) {
