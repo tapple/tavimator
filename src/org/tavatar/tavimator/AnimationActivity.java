@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ToggleButton;
 
 public class AnimationActivity extends Activity 
@@ -19,6 +21,9 @@ public class AnimationActivity extends Activity
 	public void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
+		
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		
 		setContentView(R.layout.animation);
 
