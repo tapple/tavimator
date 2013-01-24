@@ -166,6 +166,10 @@ public class TwoFingerTrackball {
 		return distance;
 	}
 
+	public void setDistance(float distance) {
+		this.distance = distance;
+	}
+
 	public float[] getCameraToTrackballOrientation() {
 		return cameraToTrackball;
 	}
