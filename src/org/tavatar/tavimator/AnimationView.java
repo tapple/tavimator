@@ -117,6 +117,7 @@ public class AnimationView extends GLSurfaceView
 	}
 	
 	private void initialize() {
+		if (isInEditMode()) return;
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
 		try {

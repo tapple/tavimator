@@ -3,8 +3,8 @@
     <string name="app_name">Tavimator</string>
     <string name="button_tracking_on" >Rotate Camera</string>
     <string name="button_tracking_off">Hold Camera</string>
-    <string name="button_grab_on">Grab</string>
-    <string name="button_grab_off">Release</string>
+    <string name="button_grab_camera">Grab Camera</string>
+    <string name="button_grab_part">Grab Part</string>
     <string name="button_grab_constrain">Constrain</string>
     <string name="short_tool_name_orbit_camera">Orbit</string>
     <string name="short_tool_name_rotate_bane">Rotate</string>

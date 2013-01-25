@@ -8,6 +8,38 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent" />
 
+	<LinearLayout		
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="top|center_horizontal"
+		android:orientation="horizontal"
+		>
+
+		<ToggleButton
+		    android:id="@+id/button_tracking"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:enabled="true"
+		    android:onClick="onTrackingClicked"
+		    android:textOff="@string/button_tracking_off"
+		    android:textOn="@string/button_tracking_on" />
+	
+	    <Button
+		    android:id="@+id/button_one_finger_action"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+			android:text="@string/short_tool_name_orbit_camera"
+		/>
+		
+		<Button
+			android:id="@+id/button_two_finger_action"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"					
+			android:text="@string/short_tool_name_orbit_camera"
+		/>
+				
+	</LinearLayout>
+
 	<TextView
 	    android:id="@+id/debugLabel"
 	    android:layout_width="wrap_content"
@@ -32,22 +64,18 @@
 		    android:onClick="onGrabConstrainClicked"
 		/>
 		
-		<ToggleButton
-			android:id="@+id/button_grab"
+		<Button
+			android:id="@+id/button_grab_part"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"					
-			android:textOn="@string/button_grab_on"
-			android:textOff="@string/button_grab_off"
-		    android:onClick="onGrabClicked"
+			android:text="@string/button_grab_part"
 		/>
 				
-		<ToggleButton
-		    android:id="@+id/button_tracking"
+		<Button
+		    android:id="@+id/button_grab_camera"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
-    		android:textOn="@string/button_tracking_on"
-		    android:textOff="@string/button_tracking_off"
-		    android:onClick="onTrackingClicked"
+			android:text="@string/button_grab_camera"
 		/>
 	
 	</LinearLayout>

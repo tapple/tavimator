@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -28,6 +29,8 @@ public class AnimationActivity extends Activity
 		setContentView(R.layout.animation);
 
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
+		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
+		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
 	}
 
 	@Override
@@ -96,31 +99,48 @@ public class AnimationActivity extends Activity
 		return true;
 	}
 
+	private View.OnTouchListener onGrabCameraTouched = new View.OnTouchListener() {
+		@Override public boolean onTouch(View v, MotionEvent event) {
+			switch (event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				Log.d(TAG, "Grab Camera");
+				break;
+			case MotionEvent.ACTION_UP:
+				Log.d(TAG, "Release Camera");
+				break;
+			}
+			return false;
+		}
+	};
+	
+	private View.OnTouchListener onGrabPartTouched = new View.OnTouchListener() {
+		@Override public boolean onTouch(View v, MotionEvent event) {
+			switch (event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				Log.d(TAG, "Grab Part");
+				break;
+			case MotionEvent.ACTION_UP:
+				Log.d(TAG, "Release Part");
+				break;
+			}
+			return false;
+		}
+	};
+	
 	public void onTrackingClicked(View view) {
 	    // Is the toggle on?
 	    boolean on = ((ToggleButton) view).isChecked();
 	    
 	    mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(on);
 	    if (on) {
-	        System.out.println("Tracking on");
+	        Log.d(TAG, "Tracking on");
 	    } else {
-	        System.out.println("Tracking off");
-	    }
-	}
-	
-	public void onGrabClicked(View view) {
-	    // Is the toggle on?
-	    boolean on = ((ToggleButton) view).isChecked();
-	    
-	    if (on) {
-	        System.out.println("Grab on");
-	    } else {
-	        System.out.println("Grab off");
+	        Log.d(TAG, "Tracking off");
 	    }
 	}
 	
 	public void onGrabConstrainClicked(View view) {
 		mGLSurfaceView.requestRender();
-        System.out.println("grab constrain");
+        Log.d(TAG, "grab constrain");
 	}
 }
