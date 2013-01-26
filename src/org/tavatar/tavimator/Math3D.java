@@ -1,5 +1,7 @@
 package org.tavatar.tavimator;
 
+import android.opengl.Matrix;
+
 public class Math3D {
 	/**
 	 * Input: a 4x4 or 3x3 matrix in column-major order. It is assumed to be an orientation matrix (that is, orthonormal)
@@ -92,5 +94,94 @@ public class Math3D {
 		axisAngle[1] = (float) ((m02 - m20)/s);
 		axisAngle[2] = (float) ((m10 - m01)/s);
 		return;
+	}
+
+	public static Rotation toEulerAngles(Rotation angles, float[] matrix, BVHOrderType order) {
+	    /*
+	    Convert the given Quaternion to Euler angles (degrees), using
+	    the given rotation order for the conversion.
+
+	    The order can be 'xyz', 'xzy', 'yxz', 'yzx', 'zxy', or 'zyx'.
+	    */
+
+		angles.x = 0;
+		angles.y = 0;
+		angles.z = 0;
+
+//		float[] inverse = new float[16];
+//		float[] v1 = new float[4];
+//		float[] v2 = new float[4];
+//		Matrix.transposeM(inverse, 0, matrix, 0);
+
+		if (order == BVHOrderType.BVH_XYZ) {
+//			vector v1 = zaxis * quat = matrix[8, 9, 10];
+//			vector v2 = xaxis * inverse = matrix[0, 4, 8];
+//			angles.x = llAtan2(-v1.y, v1.z);
+//			angles.y = llAsin(v2.z);
+//			angles.z = llAtan2(-v2.y, v2.x);
+			angles.x = (float)Math.atan2(-matrix[9], matrix[10]);
+			angles.y = (float)Math.asin(matrix[8]);
+			angles.z = (float)Math.atan2(-matrix[4], matrix[0]);
+		}
+
+		else if (order == BVHOrderType.BVH_XZY) {
+//			vector v1 = yaxis * quat = matrix[4, 5, 6];
+//			vector v2 = xaxis * inverse = matrix[0, 4, 8];
+//			angles.x = llAtan2(v1.z, v1.y);
+//			angles.y = -llAsin(v2.y);
+//			angles.z = llAtan2(v2.z, v2.x);
+			angles.x = (float)Math.atan2(matrix[6], matrix[5]);
+			angles.z = -(float)Math.asin(matrix[4]);
+			angles.y = (float)Math.atan2(matrix[8], matrix[0]);
+}
+
+		else if (order == BVHOrderType.BVH_YXZ) {
+//			vector v1 = zaxis * quat = matrix[8, 9, 10];
+//			vector v2 = yaxis * inverse = matrix[1, 5, 9];
+//			angles.x = llAtan2(v1.x, v1.z);
+//			angles.y = -llAsin(v2.z);
+//			angles.z = llAtan2(v2.x, v2.y);
+			angles.y = (float)Math.atan2(matrix[8], matrix[10]);
+			angles.x = -(float)Math.asin(matrix[9]);
+			angles.z = (float)Math.atan2(matrix[1], matrix[5]);
+		}
+
+		else if (order == BVHOrderType.BVH_YZX) {
+//			vector v1 = xaxis * quat = matrix[0, 1, 2];
+//			vector v2 = yaxis * inverse = matrix[1, 5, 9];
+//			angles.x = llAtan2(-v1.z, v1.x);
+//			angles.y = llAsin(v2.x);
+//			angles.z = llAtan2(-v2.z, v2.y);
+			angles.y = (float)Math.atan2(-matrix[2], matrix[0]);
+			angles.z = (float)Math.asin(matrix[1]);
+			angles.x = (float)Math.atan2(-matrix[9], matrix[5]);
+		}
+
+		else if (order == BVHOrderType.BVH_ZXY) {
+//			vector v1 = yaxis * quat = matrix[4, 5, 6];
+//			vector v2 = zaxis * inverse = matrix[2, 6, 10];
+//			angles.x = llAtan2(-v1.x, v1.y);
+//			angles.y = llAsin(v2.y);
+//			angles.z = llAtan2(-v2.x, v2.z);
+			angles.z = (float)Math.atan2(-matrix[4], matrix[5]);
+			angles.x = (float)Math.asin(matrix[6]);
+			angles.y = (float)Math.atan2(-matrix[2], matrix[10]);
+		}
+
+		else if (order == BVHOrderType.BVH_ZYX) {
+//			vector v1 = xaxis * quat = matrix[0, 1, 2];
+//			vector v2 = zaxis * inverse = matrix[2, 6, 10];
+//			angles.x = llAtan2(v1.y, v1.x);
+//			angles.y = -llAsin(v2.x);
+//			angles.z = llAtan2(v2.y, v2.z);
+			angles.z = (float)Math.atan2(matrix[1], matrix[0]);
+			angles.y = -(float)Math.asin(matrix[2]);
+			angles.x = (float)Math.atan2(matrix[6], matrix[10]);
+	    }
+
+	    angles.x *= 180.0f / Math.PI;
+	    angles.y *= 180.0f / Math.PI;
+	    angles.z *= 180.0f / Math.PI;
+	    return angles;
 	}
 }

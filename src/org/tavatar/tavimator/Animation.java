@@ -513,6 +513,14 @@ public class Animation {
 */
 
 	public void setRotation(BVHNode node, float x, float y, float z) {
+		setRotation(node, new Rotation(x,y,z));
+	}
+	
+	public void setRotationFromMatrix(BVHNode node, float[] matrix) {
+		setRotation(node, Math3D.toEulerAngles(new Rotation(), matrix, node.channelOrder));
+	}
+
+	public void setRotation(BVHNode node, Rotation rot) {
 		if (node != null) {
 			//Log.d(TAG, String("Animation.setRotation(")+jointName+")");
 
@@ -528,9 +536,9 @@ public class Animation {
 */
 
 			if(node.isKeyframe(frame)) {
-				node.setKeyframeRotation(frame, new Rotation(x,y,z));
+				node.setKeyframeRotation(frame, rot);
 			} else {
-				node.addKeyframe(frame,node.frameData(frame).position(), new Rotation(x,y,z));
+				node.addKeyframe(frame,node.frameData(frame).position(), rot);
 				setEaseIn(node, frame, Settings.easeIn());
 				setEaseOut(node, frame, Settings.easeOut());
 			}
@@ -538,11 +546,12 @@ public class Animation {
 			//      node.dumpKeyframes();
 			BVHNode mirrorNode=node.getMirror();
 			if(mirrored && mirrorNode != null) {
+				Rotation mirrorRot = new Rotation(rot.x, -rot.y, -rot.z);
 				// new keyframe system
 				if(mirrorNode.isKeyframe(frame)) {
-					mirrorNode.setKeyframeRotation(frame, new Rotation(x,-y,-z));
+					mirrorNode.setKeyframeRotation(frame, mirrorRot);
 				} else {
-					mirrorNode.addKeyframe(frame,node.frameData(frame).position(), new Rotation(x,-y,-z));
+					mirrorNode.addKeyframe(frame,node.frameData(frame).position(), mirrorRot);
 					setEaseIn(mirrorNode,frame,Settings.easeIn());
 					setEaseOut(mirrorNode,frame,Settings.easeOut());
 				}

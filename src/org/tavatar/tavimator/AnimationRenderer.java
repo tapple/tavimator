@@ -418,6 +418,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	{
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+		
+		mView.updateSelectionOrientation();
 		updateAnimationsTransforms();
 
 		BVHNode selectedNode = mView.getSelectedPart();
@@ -460,11 +462,13 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         if (selectedNode != null) {
         	float[] selectedOrigin = selectedNode.cachedOrigin();
         	Matrix.setIdentityM(mModelMatrix, 0);
-//        	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
-        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
+        	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
+//        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
+        	System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
+        	Matrix.multiplyMM(mModelMatrix, 0, tempViewMatrix, 0, mView.getSelectionTrackball().getOrientation(), 0);
         	GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
         	updateUniforms();
-        	figureRenderer.drawPartNamed("rFoot");
+        	figureRenderer.drawPartNamed(selectedNode.name());
         }
         
         Matrix.setIdentityM(mModelMatrix, 0);
@@ -564,33 +568,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			motion = motion.child(0);
 		}
 
-		Rotation rot = motion.frameData(frame).rotation();
-		for(int i = 0; i < motion.numChannels; i++) {
-			/*
-		      float value;
-		      if(motion->ikOn)
-		        value = motion->frame[frame][i] + motion->ikRot[i];
-		      else
-		        value = motion->frame[frame][i];
-
-		      switch(motion->channelType[i]) {
-		        case BVH_XROT: glRotatef(value, 1, 0, 0); break;
-		        case BVH_YROT: glRotatef(value, 0, 1, 0); break;
-		        case BVH_ZROT: glRotatef(value, 0, 0, 1); break;
-		        default: break;
-		      } */
-
-			Rotation ikRot = new Rotation();
-			if(motion.ikOn) ikRot = motion.ikRot;
-
-			// need to do rotations in the right order
-			switch(motion.channelType[i]) {
-				case BVH_XROT: Matrix.rotateM(motion.cachedTransform, 0, rot.x+ikRot.x, 1, 0, 0); break;
-				case BVH_YROT: Matrix.rotateM(motion.cachedTransform, 0, rot.y+ikRot.y, 0, 1, 0); break;
-				case BVH_ZROT: Matrix.rotateM(motion.cachedTransform, 0, rot.z+ikRot.z, 0, 0, 1); break;
-				default: break;
-			}
-		}
+		motion.rotateMatrixForFrame(motion.cachedTransform, frame);
 
 		for(int i = 0; i < motion.numChildren(); i++) {
 			updatePartTransforms(frame, motion.child(i), joints.child(i), motion.cachedTransform);

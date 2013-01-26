@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+import android.opengl.Matrix;
 import android.util.Log;
 
 /**
@@ -141,6 +142,37 @@ public class BVHNode {
 
 	  // return interpolated frame data here
 	  return new FrameData(frame,iPos,iRot);
+	}
+	
+	public float[] rotateMatrixForFrame(float[] matrix, int frame) {
+		Rotation rot = this.frameData(frame).rotation();
+		for(int i = 0; i < this.numChannels; i++) {
+			/*
+		      float value;
+		      if(this->ikOn)
+		        value = this->frame[frame][i] + this->ikRot[i];
+		      else
+		        value = this->frame[frame][i];
+
+		      switch(this->channelType[i]) {
+		        case BVH_XROT: glRotatef(value, 1, 0, 0); break;
+		        case BVH_YROT: glRotatef(value, 0, 1, 0); break;
+		        case BVH_ZROT: glRotatef(value, 0, 0, 1); break;
+		        default: break;
+		      } */
+
+			Rotation ikRot = new Rotation();
+			if(this.ikOn) ikRot = this.ikRot;
+
+			// need to do rotations in the right order
+			switch(this.channelType[i]) {
+				case BVH_XROT: Matrix.rotateM(matrix, 0, rot.x+ikRot.x, 1, 0, 0); break;
+				case BVH_YROT: Matrix.rotateM(matrix, 0, rot.y+ikRot.y, 0, 1, 0); break;
+				case BVH_ZROT: Matrix.rotateM(matrix, 0, rot.z+ikRot.z, 0, 0, 1); break;
+				default: break;
+			}
+		}
+		return matrix;
 	}
 
 	public FrameData keyframeDataByIndex(int index) {

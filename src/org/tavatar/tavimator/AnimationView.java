@@ -50,6 +50,8 @@ public class AnimationView extends GLSurfaceView
     private int mirrorSelected = -1;
 //    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
 //    private int propDragging;  // holds the actual drag handle id
+    
+    private TwoFingerTrackball selectionTrackball;
 
     /**
 	 * True if the user is currently dragging this ScrollView around. This is
@@ -118,6 +120,9 @@ public class AnimationView extends GLSurfaceView
 	
 	private void initialize() {
 		if (isInEditMode()) return;
+		
+		selectionTrackball = new TwoFingerTrackball(getContext());
+		
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
 		try {
@@ -152,8 +157,10 @@ public class AnimationView extends GLSurfaceView
 
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
 		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
-		touchDispatcher.setTwoFingerDragHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
+//		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
+		touchDispatcher.setOneFingerDragHandler(selectionTrackball.getOneFingerDragHandler());
+//		touchDispatcher.setTwoFingerDragHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
+		touchDispatcher.setTwoFingerDragHandler(selectionTrackball.getTwoFingerDragHandler());
 
 		final ViewConfiguration configuration = ViewConfiguration.get(getContext());
 		mTouchSlop = configuration.getScaledTouchSlop();
@@ -279,6 +286,9 @@ public class AnimationView extends GLSurfaceView
     		Log.d(TAG, "AnimationView::selectPart(node): node==0!");
     		return;
     	}
+    	
+    	Matrix.setIdentityM(selectionTrackball.getOrientation(), 0);
+    	node.rotateMatrixForFrame(selectionTrackball.getOrientation(), animation.getFrame());
 
     	Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
     	// make sure no prop is selected anymore
@@ -310,6 +320,17 @@ public class AnimationView extends GLSurfaceView
     	repaint();
     }
 */
+    
+    public TwoFingerTrackball getSelectionTrackball() {
+    	return selectionTrackball;
+    }
+    
+    public void updateSelectionOrientation() {
+    	BVHNode selection = getSelectedPart();
+    	if (selection == null) return;
+    	selectionTrackball.updateOrientation();
+    	animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation());
+    }
 
     public void repaint() {
     	// do nothing
