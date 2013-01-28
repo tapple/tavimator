@@ -157,8 +157,8 @@ public class AnimationView extends GLSurfaceView
 
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
 		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-//		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
-		touchDispatcher.setOneFingerDragHandler(selectionTrackball.getOneFingerDragHandler());
+		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
+//		touchDispatcher.setOneFingerDragHandler(selectionTrackball.getOneFingerDragHandler());
 //		touchDispatcher.setTwoFingerDragHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
 		touchDispatcher.setTwoFingerDragHandler(selectionTrackball.getTwoFingerDragHandler());
 
@@ -335,15 +335,22 @@ public class AnimationView extends GLSurfaceView
     public void updateSelectionTouchOrientation() {
     	BVHNode selection = getSelectedPart();
     	if (selection == null) return;
-    	float[] tempMatrix = new float[16];
-    	Matrix.transposeM(tempMatrix, 0, selection.cachedTransform, 0);
-    	tempMatrix[ 3] = 0.0f;
-    	tempMatrix[ 7] = 0.0f;
-    	tempMatrix[11] = 0.0f;
-    	Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0, 
+    	float[] inverseGlobalSelectionOrientation = new float[16];
+    	Matrix.transposeM(inverseGlobalSelectionOrientation, 0, selection.cachedTransform, 0);
+    	inverseGlobalSelectionOrientation[ 3] = 0.0f;
+    	inverseGlobalSelectionOrientation[ 7] = 0.0f;
+    	inverseGlobalSelectionOrientation[11] = 0.0f;
+    	float[] inverseGlobalParentOrientation = new float[16];
+    	Matrix.multiplyMM(inverseGlobalParentOrientation, 0, 
     			selectionTrackball.getOrientation(), 0,
-    			tempMatrix, 0
+    			inverseGlobalSelectionOrientation, 0
     	);
+    	float[] cameraOrientation = new float[16];
+    	Matrix.transposeM(cameraOrientation, 0, getRenderer().getCamera().getInverseCameraOrientation(), 0);
+    	Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0,
+//    			getRenderer().getCamera().getInverseCameraOrientation(), 0,
+    			inverseGlobalParentOrientation, 0,
+    		cameraOrientation, 0);
     }
     
     public void repaint() {

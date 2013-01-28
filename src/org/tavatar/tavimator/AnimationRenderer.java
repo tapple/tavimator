@@ -456,11 +456,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
         //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
+    	System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
+    	Matrix.multiplyMM(mModelMatrix, 0, tempViewMatrix, 0, mCamera.getInverseCameraOrientation(), 0);
         GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
         updateUniforms();
         figureRenderer.drawPartNamed("head");
         
-        if (selectedNode != null) {
+//        if (selectedNode != null) {
+        if (false) {
         	float[] selectedOrigin = selectedNode.cachedOrigin();
         	Matrix.setIdentityM(mModelMatrix, 0);
         	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);

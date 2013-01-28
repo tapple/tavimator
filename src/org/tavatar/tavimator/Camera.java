@@ -26,9 +26,14 @@ public class Camera {
 	private static final String TAG = "Camera";
 
 	/**
-	 * The computed view matrix
+	 * The view matrix for the current frame
 	 */
 	private float[] viewMatrix = new float[16];
+	
+	/**
+	 * The orientation component of the view matrix, with no translation
+	 */
+	private float[] inverseCameraOrientation = new float[16];
 
 	private float[] temporaryMatrix = new float[16];
 	
@@ -140,15 +145,21 @@ public class Camera {
 		gyroscope.updateOrientation();
 		updateTransition();
 		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
+		
+		Matrix.multiplyMM(inverseCameraOrientation, 0, gyroscope.getOrientation(), 0, trackball.getOrientation(), 0);
 
-		Matrix.setIdentityM(viewMatrix, 0);
-		Matrix.translateM(viewMatrix, 0, 
+		Matrix.setIdentityM(temporaryMatrix, 0);
+		Matrix.translateM(temporaryMatrix, 0, 
 				transitionValue * transitionRail[0],
 				transitionValue * transitionRail[1],
 				transitionValue * transitionRail[2] - trackball.getDistance());
-		Matrix.multiplyMM(temporaryMatrix, 0, viewMatrix, 0, gyroscope.getOrientation(), 0);
-		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, trackball.getOrientation(), 0);
+		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, inverseCameraOrientation, 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
+	}
+	
+	// returns the view matrix. Copy it if you intend to pass it around; this one might change
+	public float[] getInverseCameraOrientation() {
+		return inverseCameraOrientation;
 	}
 	
 	// returns the view matrix. Copy it if you intend to pass it around; this one might change
