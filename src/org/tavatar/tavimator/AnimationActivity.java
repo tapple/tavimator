@@ -29,6 +29,8 @@ public class AnimationActivity extends Activity
 		setContentView(R.layout.animation);
 
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
+		mGLSurfaceView.initializeTouchDispatcher();
+
 		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
 		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
 	}

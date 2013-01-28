@@ -155,19 +155,22 @@ public class AnimationView extends GLSurfaceView
 			return;
 		}
 
-		touchDispatcher = new AnimationTouchDispatcher(getContext());
-		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.setOneFingerDragHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler());
-//		touchDispatcher.setOneFingerDragHandler(selectionTrackball.getOneFingerDragHandler());
-//		touchDispatcher.setTwoFingerDragHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
-		touchDispatcher.setTwoFingerDragHandler(selectionTrackball.getTwoFingerDragHandler());
-
 		final ViewConfiguration configuration = ViewConfiguration.get(getContext());
 		mTouchSlop = configuration.getScaledTouchSlop();
 		mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
 		mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
 	}
 	
+	// this code probably would be more appropriate in the activity
+	public void initializeTouchDispatcher() {
+		touchDispatcher = new AnimationTouchDispatcher(getContext());
+		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
+		touchDispatcher.getOneFingerHandlers().add(renderer.getCamera().getTrackball().getOneFingerDragHandler());
+		touchDispatcher.getOneFingerHandlers().add(selectionTrackball.getOneFingerDragHandler());
+		touchDispatcher.getTwoFingerHandlers().add(renderer.getCamera().getTrackball().getTwoFingerDragHandler());
+		touchDispatcher.getTwoFingerHandlers().add(selectionTrackball.getTwoFingerDragHandler());
+
+	}
 	public AnimationRenderer getRenderer() {
 		return renderer;
 	}

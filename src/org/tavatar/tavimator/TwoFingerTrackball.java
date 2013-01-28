@@ -232,6 +232,11 @@ public class TwoFingerTrackball {
 			public void onCancel() {
 				mScroller.forceFinished(true);
 			}
+			
+			@Override
+			public String toString() {
+				return toolName();
+			}
 		}
 		return new OneFingerDragHandler();
 	}
@@ -263,6 +268,11 @@ public class TwoFingerTrackball {
 			@Override
 			public void onCancel() {
 				mScroller.forceFinished(true);
+			}
+			
+			@Override
+			public String toString() {
+				return toolName();
 			}
 		}
 		return new TwoFingerDragHandler();

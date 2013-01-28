@@ -3,6 +3,8 @@ package org.tavatar.tavimator;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 public class AnimationTouchDispatcher {
@@ -12,11 +14,41 @@ public class AnimationTouchDispatcher {
 	private Context mContext;
 	
 	private AnimationTapHandler tapHandler;
-	private AnimationOneFingerDragHandler oneFingerDragHandler;
-	private AnimationTwoFingerDragHandler twoFingerDragHandler;
+	private ArrayAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
+	private Spinner oneFingerSpinner;
+	private ArrayAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
+	private Spinner twoFingerSpinner;
 
 	public AnimationTouchDispatcher(Context context) {
 		mContext = context;
+
+		oneFingerHandlers = new ArrayAdapter<AnimationOneFingerDragHandler>(context, android.R.layout.simple_spinner_item);
+		oneFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		oneFingerSpinner = ((Spinner) ((Activity) mContext)
+				.findViewById(R.id.button_one_finger_action));
+		oneFingerSpinner.setAdapter(oneFingerHandlers);
+
+		twoFingerHandlers = new ArrayAdapter<AnimationTwoFingerDragHandler>(context, android.R.layout.simple_spinner_item);
+		twoFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		twoFingerSpinner = ((Spinner) ((Activity) mContext)
+				.findViewById(R.id.button_two_finger_action));
+		twoFingerSpinner.setAdapter(twoFingerHandlers);
+	}
+	
+	public ArrayAdapter<AnimationOneFingerDragHandler> getOneFingerHandlers() {
+		return oneFingerHandlers;
+	}
+
+	public Spinner getOneFingerSpinner() {
+		return oneFingerSpinner;
+	}
+
+	public ArrayAdapter<AnimationTwoFingerDragHandler> getTwoFingerHandlers() {
+		return twoFingerHandlers;
+	}
+
+	public Spinner getTwoFingerSpinner() {
+		return twoFingerSpinner;
 	}
 
 	private void debug(String message) {
@@ -34,19 +66,11 @@ public class AnimationTouchDispatcher {
 	}
 
 	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
-		return oneFingerDragHandler;
-	}
-
-	public void setOneFingerDragHandler(AnimationOneFingerDragHandler oneFingerDragHandler) {
-		this.oneFingerDragHandler = oneFingerDragHandler;
+		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
 	}
 
 	public AnimationTwoFingerDragHandler getTwoFingerDragHandler() {
-		return twoFingerDragHandler;
-	}
-
-	public void setTwoFingerDragHandler(AnimationTwoFingerDragHandler twoFingerDragHandler) {
-		this.twoFingerDragHandler = twoFingerDragHandler;
+		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
 	}
 
 	public void onFingerDown(int x, int y) {
@@ -66,12 +90,12 @@ public class AnimationTouchDispatcher {
 
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
 		debug("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
-		if (oneFingerDragHandler != null) oneFingerDragHandler.onOneFingerMove(x, y, dx, dy);
+		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
 	}
 
 	public void onOneFingerFling(int x, int y, float vx, float vy) {
 		debug("onOneFingerFling(" + x + ", " + y + ", " + vx + ", " + vy + ")");
-		if (oneFingerDragHandler != null) oneFingerDragHandler.onOneFingerFling(x, y, vx, vy);
+		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
 	}
 
 	/**
@@ -79,25 +103,25 @@ public class AnimationTouchDispatcher {
 	 */
 	public void onOneFingerMoveCancel() {
 		debug("onOneFingerMoveCancel()");
-		if (oneFingerDragHandler != null) oneFingerDragHandler.onCancel();
+		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onCancel();
 	}
 
 	public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
 		debug("onTwoFingerMove(" + 
 				x1 + ", " + y1 + ", " + dx1 + ", " + dy1 + ", "  + 
 				x2 + ", " + y2 + ", " + dx2 + ", " + dy2 + ")");
-		if (twoFingerDragHandler != null) twoFingerDragHandler.onTwoFingerMove(x1, y1, dx1, dy1, x2, y2, dx2, dy2);
+		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(x1, y1, dx1, dy1, x2, y2, dx2, dy2);
 	}
 
 	public void onTwoFingerFling(int x1, int y1, float vx1, float vy1, int x2, int y2, float vx2, float vy2) {
 		debug("onTwoFingerFling(" + 
 				x1 + ", " + y1 + ", " + vx1 + ", " + vy1 + ", "  + 
 				x2 + ", " + y2 + ", " + vx2 + ", " + vy2 + ")");
-		if (twoFingerDragHandler != null) twoFingerDragHandler.onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
+		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
 	}
 
 	public void onTwoFingerMoveCancel() {
 		debug("onTwoFingerMoveCancel()");
-		if (twoFingerDragHandler != null) twoFingerDragHandler.onCancel();
+		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onCancel();
 	}
 }

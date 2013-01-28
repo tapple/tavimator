@@ -24,14 +24,14 @@
 		    android:textOff="@string/button_tracking_off"
 		    android:textOn="@string/button_tracking_on" />
 	
-	    <Button
+	    <Spinner
 		    android:id="@+id/button_one_finger_action"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
 			android:text="@string/short_tool_name_orbit_camera"
 		/>
 		
-		<Button
+		<Spinner
 			android:id="@+id/button_two_finger_action"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"					
