@@ -429,6 +429,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 		
 		mCamera.updateViewMatrix();
+		mView.updateSelectionTouchOrientation();
                 
         // Do a complete rotation every 10 seconds.
         long time = SystemClock.uptimeMillis() % 10000L;        

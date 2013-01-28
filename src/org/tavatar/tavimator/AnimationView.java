@@ -332,6 +332,20 @@ public class AnimationView extends GLSurfaceView
     	animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation());
     }
 
+    public void updateSelectionTouchOrientation() {
+    	BVHNode selection = getSelectedPart();
+    	if (selection == null) return;
+    	float[] tempMatrix = new float[16];
+    	Matrix.transposeM(tempMatrix, 0, selection.cachedTransform, 0);
+    	tempMatrix[ 3] = 0.0f;
+    	tempMatrix[ 7] = 0.0f;
+    	tempMatrix[11] = 0.0f;
+    	Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0, 
+    			selectionTrackball.getOrientation(), 0,
+    			tempMatrix, 0
+    	);
+    }
+    
     public void repaint() {
     	// do nothing
     }
