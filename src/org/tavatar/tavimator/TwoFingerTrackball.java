@@ -204,18 +204,12 @@ public class TwoFingerTrackball {
 		System.arraycopy(anOrientationMatrix, 0, orientation, 0, 16);
 	}
 
-	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
-		class OneFingerDragHandler implements AnimationOneFingerDragHandler {
-			@Override
-			public String shortToolName() {
-				return mContext.getResources().getString(R.string.short_tool_name_orbit_camera);
+	public AnimationOneFingerDragHandler getOneFingerDragHandler(int nameId, int shortNameId) {
+		class OneFingerDragHandler extends AbsTouchHandler implements AnimationOneFingerDragHandler {
+			public OneFingerDragHandler(Context context, int nameId, int shortNameId) {
+				super(context, nameId, shortNameId);
 			}
-	
-			@Override
-			public String toolName() {
-				return mContext.getResources().getString(R.string.one_finger_tool_name_orbit_camera);
-			}
-	
+
 			@Override
 			public void onOneFingerMove(int x, int y, int dx, int dy) {
 				oneFingerDragToAngularVelocity(scrollVelocity, dx, dy);
@@ -232,27 +226,16 @@ public class TwoFingerTrackball {
 			public void onCancel() {
 				mScroller.forceFinished(true);
 			}
-			
-			@Override
-			public String toString() {
-				return toolName();
-			}
 		}
-		return new OneFingerDragHandler();
+		return new OneFingerDragHandler(mContext, nameId, shortNameId);
 	}
 
-	public AnimationTwoFingerDragHandler getTwoFingerDragHandler() {
-		class TwoFingerDragHandler implements AnimationTwoFingerDragHandler {
-			@Override
-			public String shortToolName() {
-				return mContext.getResources().getString(R.string.short_tool_name_orbit_camera);
+	public AnimationTwoFingerDragHandler getTwoFingerDragHandler(int nameId, int shortNameId) {
+		class TwoFingerDragHandler extends AbsTouchHandler implements AnimationTwoFingerDragHandler {
+			public TwoFingerDragHandler(Context context, int nameId, int shortNameId) {
+				super(context, nameId, shortNameId);
 			}
-	
-			@Override
-			public String toolName() {
-				return mContext.getResources().getString(R.string.two_finger_tool_name_orbit_camera);
-			}
-	
+
 			@Override
 			public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
 				twoFingerDragToAngularVelocity(scrollVelocity, x1, y1, dx1, dy1, x2, y2, dx2, dy2);
@@ -269,13 +252,8 @@ public class TwoFingerTrackball {
 			public void onCancel() {
 				mScroller.forceFinished(true);
 			}
-			
-			@Override
-			public String toString() {
-				return toolName();
-			}
 		}
-		return new TwoFingerDragHandler();
+		return new TwoFingerDragHandler(mContext, nameId, shortNameId);
 	}
 
 	private void scrollBy(float[] angularVelocity) {

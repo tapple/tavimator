@@ -3,6 +3,8 @@ package org.tavatar.tavimator;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -13,22 +15,40 @@ public class AnimationTouchDispatcher {
 	
 	private Context mContext;
 	
+	private class FingerAdapter<T> extends ArrayAdapter<T> {
+		private int mFieldId;
+
+		public FingerAdapter(Context context, int resource, int textViewResourceId) {
+			super(context, resource, textViewResourceId);
+			mFieldId = textViewResourceId;
+		}
+		
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			View view = super.getView(position, convertView, parent);
+            TextView text = (TextView) view.findViewById(mFieldId);
+            AnimationTouchHandler item = (AnimationTouchHandler)getItem(position);
+			text.setText(item.shortToolName());
+			return view;
+		}
+	}
+	
 	private AnimationTapHandler tapHandler;
-	private ArrayAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
+	private FingerAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
 	private Spinner oneFingerSpinner;
-	private ArrayAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
+	private FingerAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
 	private Spinner twoFingerSpinner;
 
 	public AnimationTouchDispatcher(Context context) {
 		mContext = context;
 
-		oneFingerHandlers = new ArrayAdapter<AnimationOneFingerDragHandler>(context, android.R.layout.simple_spinner_item);
+		oneFingerHandlers = new FingerAdapter<AnimationOneFingerDragHandler>(context, R.layout.one_finger_spinner_item, android.R.id.text1);
 		oneFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		oneFingerSpinner = ((Spinner) ((Activity) mContext)
 				.findViewById(R.id.button_one_finger_action));
 		oneFingerSpinner.setAdapter(oneFingerHandlers);
 
-		twoFingerHandlers = new ArrayAdapter<AnimationTwoFingerDragHandler>(context, android.R.layout.simple_spinner_item);
+		twoFingerHandlers = new FingerAdapter<AnimationTwoFingerDragHandler>(context, R.layout.two_finger_spinner_item, android.R.id.text1);
 		twoFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		twoFingerSpinner = ((Spinner) ((Activity) mContext)
 				.findViewById(R.id.button_two_finger_action));
