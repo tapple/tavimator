@@ -2,6 +2,7 @@ package org.tavatar.tavimator;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,11 +111,13 @@ public class AnimationTouchDispatcher {
 
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
 		debug("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
+		oneFingerSpinner.setPressed(true);
 		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
 	}
 
 	public void onOneFingerFling(int x, int y, float vx, float vy) {
 		debug("onOneFingerFling(" + x + ", " + y + ", " + vx + ", " + vy + ")");
+		oneFingerSpinner.setPressed(false);
 		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
 	}
 
@@ -123,6 +126,7 @@ public class AnimationTouchDispatcher {
 	 */
 	public void onOneFingerMoveCancel() {
 		debug("onOneFingerMoveCancel()");
+		oneFingerSpinner.setPressed(false);
 		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onCancel();
 	}
 
@@ -130,6 +134,7 @@ public class AnimationTouchDispatcher {
 		debug("onTwoFingerMove(" + 
 				x1 + ", " + y1 + ", " + dx1 + ", " + dy1 + ", "  + 
 				x2 + ", " + y2 + ", " + dx2 + ", " + dy2 + ")");
+		twoFingerSpinner.setPressed(true);
 		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(x1, y1, dx1, dy1, x2, y2, dx2, dy2);
 	}
 
@@ -137,11 +142,13 @@ public class AnimationTouchDispatcher {
 		debug("onTwoFingerFling(" + 
 				x1 + ", " + y1 + ", " + vx1 + ", " + vy1 + ", "  + 
 				x2 + ", " + y2 + ", " + vx2 + ", " + vy2 + ")");
+		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
 	}
 
 	public void onTwoFingerMoveCancel() {
 		debug("onTwoFingerMoveCancel()");
+		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onCancel();
 	}
 }

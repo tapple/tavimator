@@ -506,6 +506,8 @@ public class AnimationView extends GLSurfaceView
 				if (Matrix.length(velocityX, velocityY, 0.0f) > mMinimumVelocity) {
 					touchDispatcher.onOneFingerFling(mLastMotionX1, mLastMotionY1, velocityX, velocityY);
 					wasFlinging = true;
+				} else {
+					touchDispatcher.onOneFingerMoveCancel();
 				}
 
 				endDrag();
@@ -572,6 +574,8 @@ public class AnimationView extends GLSurfaceView
 								mLastMotionX1, mLastMotionY1, vx1, vy1,
 								mLastMotionX2, mLastMotionY2, vx2, vy2);
 						wasFlinging = true;
+					} else {
+						touchDispatcher.onTwoFingerMoveCancel();
 					}
 
 					endDrag();
