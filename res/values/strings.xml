@@ -1,11 +1,15 @@
 <resources>
 
     <string name="app_name">Tavimator</string>
-    <string name="button_tracking_on" >Rotate Camera</string>
+    <string name="button_tracking_on">Rotate Camera</string>
     <string name="button_tracking_off">Hold Camera</string>
     <string name="button_grab_camera">Grab Camera</string>
     <string name="button_grab_part">Grab Part</string>
     <string name="button_grab_constrain">Constrain</string>
+
+    <string name="one_finger_tool_prompt">Choose one-finger action</string>
+    <string name="two_finger_tool_prompt">Choose two-finger action</string>
+    
     <string name="short_tool_name_orbit_camera">Orbit</string>
     <string name="short_tool_name_rotate_bone">Rotate</string>
     <string name="short_tool_name_move_object">Move</string>
