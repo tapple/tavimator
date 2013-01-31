@@ -389,9 +389,45 @@ public class AnimationView extends GLSurfaceView
 		});
 	}
 	
+	private void debug(String message) {
+		Log.d(TAG, message);
+		((TextView) ((Activity) getContext())
+				.findViewById(R.id.debugLabel)).setText(message);
+	}
+
+	private String printMotionEvent(MotionEvent ev) {
+		StringBuilder s = new StringBuilder();
+		switch (ev.getActionMasked()) {
+		case MotionEvent.ACTION_DOWN:
+			s.append("Down");
+			break;
+		case MotionEvent.ACTION_MOVE:
+			s.append("Move");
+			break;
+		case MotionEvent.ACTION_UP:
+			s.append("Up");
+			break;
+		case MotionEvent.ACTION_POINTER_DOWN:
+			s.append("Pointer Down");
+			break;
+		case MotionEvent.ACTION_POINTER_UP:
+			s.append("Pointer Up");
+			break;
+		case MotionEvent.ACTION_CANCEL:
+			s.append("Cancel");
+			break;
+		default:
+			s.append("Unknown");
+			break;
+		}
+		s.append(' ').append(ev.getPointerCount());
+		return s.toString();
+	}
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
 		final int action = ev.getAction();
+//		if (action != MotionEvent.ACTION_MOVE) debug(printMotionEvent(ev));
 		final int actionMask = action & MotionEvent.ACTION_MASK;
 		final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
 
