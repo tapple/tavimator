@@ -163,15 +163,18 @@ public class Gyroscope implements SensorEventListener {
 		
 //		if (true) return;
 
+		angular[0] = (float)(event.values[0] * 180 / Math.PI);
+		angular[1] = (float)(event.values[1] * 180 / Math.PI);
+		angular[2] = (float)(event.values[2] * 180 / Math.PI);
+		angular[3] = 1.0f;
+		
 		final float dT = (event.timestamp - timestamp) * NS2S;
 		if(0.0f < dT && dT < 0.5f) {
-			System.arraycopy(event.values, 0, angular, 0, 3);
-			angular[3] = 1.0f;
-			float angularSpeed = Matrix.length(event.values[0], event.values[1], event.values[2]);
+			float angularSpeed = Matrix.length(angular[0], angular[1], angular[2]);
 			if(angularSpeed > EPSILON) {
 				Matrix.transposeM(inverseGyroOrientation, 0, gyroOrientation, 0);
-				Matrix.rotateM(inverseGyroOrientation, 0, (float) (angularSpeed * dT * 180 / Math.PI),
-						event.values[0], event.values[1], event.values[2]);
+				Matrix.rotateM(inverseGyroOrientation, 0, angularSpeed * dT,
+						angular[0], angular[1], angular[2]);
 				Matrix.transposeM(gyroOrientation, 0, inverseGyroOrientation, 0);
 			}
 		}
@@ -193,9 +196,6 @@ public class Gyroscope implements SensorEventListener {
 			angular[2] = 0.0f;
 			angular[3] = 1.0f;
 		}
-		angular[0] *= 180/Math.PI;
-		angular[1] *= 180/Math.PI;
-		angular[2] *= 180/Math.PI;
 		return angular;
 	}
 	
