@@ -2,7 +2,7 @@
 
     <string name="app_name">Tavimator</string>
     
-    <string name="no_gyroscope">No gyroscope detected. Orientation changes will be slightly laggy</string>
+    <string name="no_gyroscope">No gyroscope detected</string>
     
     <string name="button_tracking_on">Rotate Camera</string>
     <string name="button_tracking_off">Hold Camera</string>

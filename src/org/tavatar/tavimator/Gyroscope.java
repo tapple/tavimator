@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,6 +15,7 @@ public class Gyroscope implements SensorEventListener {
 	private static final String TAG = "Gyroscope";
     public static final float EPSILON = 0.000000001f;
     private static final float NS2S = 1.0f / 1000000000.0f;
+    private static final float MS2S = 1.0f / 1000.0f;
 
     private SensorManager sensorManager;
 	private Sensor accelerometer;
@@ -22,7 +24,7 @@ public class Gyroscope implements SensorEventListener {
 	
 	private float[] gravity  = null;
 	private float[] magnetic = null;
-	private float[] angular  = new float[3];
+	private float[] angular  = new float[4];
 	
 	private int stabilityCountDown = 0;
 	
@@ -83,7 +85,7 @@ public class Gyroscope implements SensorEventListener {
     
     private void basicSetSensing(boolean sensing) {
     	if (sensing) {
-    		stabilityCountDown = 3;
+    		stabilityCountDown = 5;
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
             sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_GAME);
             if (hasGyroscope) {
@@ -147,7 +149,6 @@ public class Gyroscope implements SensorEventListener {
 				magnetic[2] = magnetic[2] * (1.0f - smoothing) + evt.values[2] * smoothing;
 			}
 		} else if (evt.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-			Log.d(TAG, "gyroEvent");
 	        gyroFunction(evt);
 		}
 
@@ -164,6 +165,8 @@ public class Gyroscope implements SensorEventListener {
 
 		final float dT = (event.timestamp - timestamp) * NS2S;
 		if(0.0f < dT && dT < 0.5f) {
+			System.arraycopy(event.values, 0, angular, 0, 3);
+			angular[3] = 1.0f;
 			float angularSpeed = Matrix.length(event.values[0], event.values[1], event.values[2]);
 			if(angularSpeed > EPSILON) {
 				Matrix.transposeM(inverseGyroOrientation, 0, gyroOrientation, 0);
@@ -179,6 +182,21 @@ public class Gyroscope implements SensorEventListener {
     
 	public float[] getOrientation() {
 		return orientation;
+	}
+	
+	public float[] getAngularVelocity() {
+		float dT = SystemClock.uptimeMillis() * MS2S - timestamp * NS2S;
+		// if last gyro event was over half a second ago, device is not moving
+		if (dT <= 0.0f || 0.5f < dT) {
+			angular[0] = 0.0f;
+			angular[1] = 0.0f;
+			angular[2] = 0.0f;
+			angular[3] = 1.0f;
+		}
+		angular[0] *= 180/Math.PI;
+		angular[1] *= 180/Math.PI;
+		angular[2] *= 180/Math.PI;
+		return angular;
 	}
 	
 	public void fuseSensorData() {

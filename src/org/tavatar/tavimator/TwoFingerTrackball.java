@@ -220,7 +220,7 @@ public class TwoFingerTrackball {
 		
 			@Override
 			public void onCancel() {
-				mScroller.forceFinished(true);
+				stopFling();
 			}
 		}
 		return new OneFingerDragHandler(mContext, nameId, shortNameId);
@@ -246,7 +246,7 @@ public class TwoFingerTrackball {
 
 			@Override
 			public void onCancel() {
-				mScroller.forceFinished(true);
+				stopFling();
 			}
 		}
 		return new TwoFingerDragHandler(mContext, nameId, shortNameId);
@@ -272,7 +272,7 @@ public class TwoFingerTrackball {
 		setOrientation(newOrientation);
 	}
 
-	private void fling(float[] angularVelocity) {
+	public void fling(float[] angularVelocity) {
 //		Log.d(TAG, "fling(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 
@@ -284,5 +284,8 @@ public class TwoFingerTrackball {
 				(int) (Math.log(angularVelocity[3]) * ZOOM_FACTOR), 
 				0, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
-
+	
+	public void stopFling() {
+		mScroller.forceFinished(true);
+	}
 }
