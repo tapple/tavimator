@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.widget.Toast;
 
 public class Gyroscope implements SensorEventListener {
 	
@@ -59,9 +60,11 @@ public class Gyroscope implements SensorEventListener {
 		magnetometer  = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         gyrometer     = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        hasGyroscope = true;
-        // uncomment to disable gyro
-//        	hasGyroscope = false;
+        hasGyroscope = sensorManager.getSensorList(Sensor.TYPE_GYROSCOPE).size() > 0;
+        
+        if (!hasGyroscope) {
+        	Toast.makeText(context, R.string.no_gyroscope, Toast.LENGTH_LONG).show();
+        }
 	}
 	
 	protected void onResume() {
