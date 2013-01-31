@@ -133,7 +133,10 @@ public class AnimationActivity extends Activity
 	    // Is the toggle on?
 	    boolean on = ((ToggleButton) view).isChecked();
 	    
+	    
 	    mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(on);
+	    mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(on);
+	    
 	    if (on) {
 	        Log.d(TAG, "Tracking on");
 	    } else {
