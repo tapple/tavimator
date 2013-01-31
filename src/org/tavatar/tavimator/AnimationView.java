@@ -425,6 +425,7 @@ public class AnimationView extends GLSurfaceView
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
+			if (isTwoFingerGesture && activePointer2Id == INVALID_POINTER) break; // two finger drag ended, but one finger is still on screen
 			final int index1 = ev.findPointerIndex(activePointer1Id);
 			final int x1 = (int) ev.getX(index1);
 			final int y1 = (int) ev.getY(index1);
