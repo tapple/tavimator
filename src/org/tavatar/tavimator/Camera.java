@@ -141,10 +141,10 @@ public class Camera {
 	}
 
 	public void updateViewMatrix() {
-		trackball.updateOrientation();
 		gyroscope.updateOrientation();
+		trackball.updateOrientation();
 		updateTransition();
-		Matrix.transposeM(trackball.getCameraToTrackballOrientation(), 0, gyroscope.getOrientation(), 0);
+		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
 		
 		Matrix.multiplyMM(inverseCameraOrientation, 0, gyroscope.getOrientation(), 0, trackball.getOrientation(), 0);
 

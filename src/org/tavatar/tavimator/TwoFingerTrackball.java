@@ -44,6 +44,10 @@ public class TwoFingerTrackball {
 	private static final float ZOOM_FACTOR = 100.0f;
 	
 	private float zoomRate = 1.0f; // per second
+	
+	private Gyroscope trackingGyroscope = null;
+	private float[] gyroOffset = new float[16];
+	private boolean invertGyro = false;
 
 	private int prevFlingX;
 	private int prevFlingY;
@@ -173,13 +177,51 @@ public class TwoFingerTrackball {
 	public float[] getCameraToTrackballOrientation() {
 		return cameraToTrackball;
 	}
+	
+	public void trackGyroscope(Gyroscope newTrackingGyroscope, boolean newInvert) {
+		if (trackingGyroscope != null) {
+			float[] angularVelocity = new float[4];
+			System.arraycopy(trackingGyroscope.getAngularVelocity(), 0, angularVelocity, 0, 4);
+			if (!invertGyro) {
+				angularVelocity[0] *= -1;
+				angularVelocity[1] *= -1;
+				angularVelocity[2] *= -1;
+			}
+			fling(angularVelocity);
+		}
+		
+		trackingGyroscope = newTrackingGyroscope;
+		invertGyro = newInvert;
+		
+		if (trackingGyroscope != null) {
+			stopFling();
+		}
+		
+		updateGyroOffset();
+	}
 
 	public void setZoomRate(float zoomRate) {
 		this.zoomRate = zoomRate;
 		prevZoomTime = SystemClock.uptimeMillis();
 	}
 	
-	public void updateOrientation() {
+	private void updateGyroTracking() {
+		if (trackingGyroscope == null) return;
+		
+		float[] gyroOrientation = trackingGyroscope.getOrientation();
+		if (invertGyro) gyroOrientation = trackingGyroscope.getInverseOrientation();
+		Matrix.multiplyMM(orientation, 0, gyroOrientation, 0, gyroOffset, 0);
+	}
+
+	private void updateGyroOffset() {
+		if (trackingGyroscope == null) return;
+		
+		float[] inverseGyroOrientation = trackingGyroscope.getInverseOrientation();
+		if (invertGyro) inverseGyroOrientation = trackingGyroscope.getOrientation();
+		Matrix.multiplyMM(gyroOffset, 0, inverseGyroOrientation, 0, orientation, 0);
+	}
+	
+	public void basicUpdateOrientation() {
 		mScroller.computeScrollOffset();
 		int x = mScroller.getCurrX();
 		int y = mScroller.getCurrY();
@@ -196,6 +238,12 @@ public class TwoFingerTrackball {
 		prevZoomTime = time;
 	}
 
+	public void updateOrientation() {
+		updateGyroTracking();
+		basicUpdateOrientation();
+		updateGyroOffset();
+	}
+	
 	public void setOrientation(float[] anOrientationMatrix) {
 		System.arraycopy(anOrientationMatrix, 0, orientation, 0, 16);
 	}

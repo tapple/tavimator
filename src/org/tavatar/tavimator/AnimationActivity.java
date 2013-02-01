@@ -106,14 +106,17 @@ public class AnimationActivity extends Activity
 			switch (event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				Log.d(TAG, "Grab Camera");
-				mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
-				mGLSurfaceView.getRenderer().getCamera().getTrackball().stopFling();
+//				mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
+//				mGLSurfaceView.getRenderer().getCamera().getTrackball().stopFling();
+				mGLSurfaceView.getRenderer().getCamera().getTrackball().trackGyroscope(
+						mGLSurfaceView.getRenderer().getCamera().getGyroscope(), true);
 				break;
 			case MotionEvent.ACTION_UP:
 				Log.d(TAG, "Release Camera");
-				mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
-				mGLSurfaceView.getRenderer().getCamera().getTrackball().fling(
-						mGLSurfaceView.getRenderer().getCamera().getGyroscope().getAngularVelocity());				
+//				mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
+//				mGLSurfaceView.getRenderer().getCamera().getTrackball().fling(
+//						mGLSurfaceView.getRenderer().getCamera().getGyroscope().getAngularVelocity());				
+				mGLSurfaceView.getRenderer().getCamera().getTrackball().trackGyroscope(null, false);
 				break;
 			}
 			return false;

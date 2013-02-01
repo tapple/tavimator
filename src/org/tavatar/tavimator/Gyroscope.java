@@ -42,6 +42,7 @@ public class Gyroscope implements SensorEventListener {
 	private float[] deviceOrientation = null;
 	private float[] orientationOffset = null;
 	private float[] orientation = new float [16];
+	private float[] inverseOrientation = new float[16];
 	
 	/**
 	 * True if receiving sensor data
@@ -56,6 +57,7 @@ public class Gyroscope implements SensorEventListener {
 	
 	public Gyroscope(Context context) {
 		Matrix.setIdentityM(orientation, 0);
+		Matrix.setIdentityM(inverseOrientation, 0);
 		
 		sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
 		accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -187,6 +189,10 @@ public class Gyroscope implements SensorEventListener {
 		return orientation;
 	}
 	
+	public float[] getInverseOrientation() {
+		return inverseOrientation;
+	}
+	
 	public float[] getAngularVelocity() {
 		float dT = SystemClock.uptimeMillis() * MS2S - timestamp * NS2S;
 		// if last gyro event was over half a second ago, device is not moving
@@ -268,6 +274,7 @@ public class Gyroscope implements SensorEventListener {
 			}
 
 			Matrix.multiplyMM(orientation, 0, deviceOrientation, 0, orientationOffset, 0);
+			Matrix.transposeM(inverseOrientation, 0, orientation, 0);
 		}
 	}
 
