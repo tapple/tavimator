@@ -30,6 +30,8 @@ public class TwoFingerTrackball {
 	 * touch processing
 	 */
 	private float[] cameraToTrackball = new float[16];
+	private float[] gyroToTrackball = new float[16];
+	private float[] trackballToGyro = new float[16];
 
 	/**
 	 * The rotation that happened since the last frame
@@ -47,6 +49,8 @@ public class TwoFingerTrackball {
 	
 	private Gyroscope trackingGyroscope = null;
 	private float[] gyroOffset = new float[16];
+	private float[] localGyroOrientation = new float[16];
+	private float[] inverseLocalGyroOrientation = new float[16];
 	private boolean invertGyro = false;
 
 	private int prevFlingX;
@@ -133,6 +137,7 @@ public class TwoFingerTrackball {
 
 		Matrix.setIdentityM(orientation, 0);
 		Matrix.setIdentityM(cameraToTrackball, 0);
+		Matrix.setIdentityM(getGyroToTrackball(), 0);
 
 		mScroller = new Scroller(mContext);
 
@@ -208,17 +213,25 @@ public class TwoFingerTrackball {
 	private void updateGyroTracking() {
 		if (trackingGyroscope == null) return;
 		
-		float[] gyroOrientation = trackingGyroscope.getOrientation();
-		if (invertGyro) gyroOrientation = trackingGyroscope.getInverseOrientation();
-		Matrix.multiplyMM(orientation, 0, gyroOrientation, 0, gyroOffset, 0);
+		if (invertGyro) {
+			Matrix.multiplyMM(localGyroOrientation, 0, getGyroToTrackball(), 0, trackingGyroscope.getInverseOrientation(), 0);
+		} else {
+			Matrix.multiplyMM(localGyroOrientation, 0, getGyroToTrackball(), 0, trackingGyroscope.getOrientation(), 0);
+		}
+		Matrix.multiplyMM(orientation, 0, localGyroOrientation, 0, gyroOffset, 0);
 	}
 
 	private void updateGyroOffset() {
 		if (trackingGyroscope == null) return;
 		
-		float[] inverseGyroOrientation = trackingGyroscope.getInverseOrientation();
-		if (invertGyro) inverseGyroOrientation = trackingGyroscope.getOrientation();
-		Matrix.multiplyMM(gyroOffset, 0, inverseGyroOrientation, 0, orientation, 0);
+		Matrix.transposeM(trackballToGyro, 0, getGyroToTrackball(), 0);
+		
+		if (invertGyro) {
+			Matrix.multiplyMM(inverseLocalGyroOrientation, 0, trackingGyroscope.getOrientation(), 0, trackballToGyro, 0);
+		} else {
+			Matrix.multiplyMM(inverseLocalGyroOrientation, 0, trackingGyroscope.getInverseOrientation(), 0, trackballToGyro, 0);
+		}
+		Matrix.multiplyMM(gyroOffset, 0, inverseLocalGyroOrientation, 0, orientation, 0);
 	}
 	
 	public void basicUpdateOrientation() {
@@ -335,5 +348,13 @@ public class TwoFingerTrackball {
 	
 	public void stopFling() {
 		mScroller.forceFinished(true);
+	}
+
+	public float[] getGyroToTrackball() {
+		return gyroToTrackball;
+	}
+
+	public void setGyroToTrackball(float[] gyroToTrackball) {
+		this.gyroToTrackball = gyroToTrackball;
 	}
 }

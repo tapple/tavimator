@@ -358,6 +358,7 @@ public class AnimationView extends GLSurfaceView
 //    			getRenderer().getCamera().getInverseCameraOrientation(), 0,
     			inverseGlobalParentOrientation, 0,
     		cameraOrientation, 0);
+//    	System.arraycopy(selectionTrackball.getCameraToTrackballOrientation(), 0, selectionTrackball.getGyroToTrackball(), 0, 16);
     }
     
     public void repaint() {

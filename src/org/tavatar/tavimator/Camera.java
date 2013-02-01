@@ -60,12 +60,12 @@ public class Camera {
 	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
-	TwoFingerTrackball trackball;
+	private TwoFingerTrackball trackball;
 	
 	/**
 	 * Gyroscope that keeps track of orientation set by device orientation
 	 */
-	Gyroscope gyroscope;
+	private Gyroscope gyroscope;
 	
 	public Camera(Context context) {
 		trackball = new TwoFingerTrackball(context);
@@ -141,7 +141,6 @@ public class Camera {
 	}
 
 	public void updateViewMatrix() {
-		gyroscope.updateOrientation();
 		trackball.updateOrientation();
 		updateTransition();
 		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
