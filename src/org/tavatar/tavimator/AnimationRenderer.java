@@ -564,9 +564,17 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
 	    updatePartTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
 	}
+	
+	float[] inverseGlobalParentOrientation = new float[16];
 
 	private void updatePartTransforms(int frame, BVHNode motion, BVHNode joints, float[] parentMatrix) {
 		if(motion == null || joints == null) return;
+		if (motion == mView.getSelectedPart()) {
+			Matrix.invertM(inverseGlobalParentOrientation, 0, parentMatrix, 0);
+	    	inverseGlobalParentOrientation[12] = 0.0f;
+	    	inverseGlobalParentOrientation[13] = 0.0f;
+	    	inverseGlobalParentOrientation[14] = 0.0f;
+		}
 		System.arraycopy(parentMatrix, 0, motion.cachedTransform, 0, 16);
 		Matrix.translateM(motion.cachedTransform, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
 		if(motion.type==BVHNodeType.BVH_NO_SL) {

@@ -61,6 +61,17 @@ public class TwoFingerTrackball {
 
 	private Context mContext;
 	
+	public void dumpMatrices() {
+		Log.d(TAG, "gyroToTrackball:");
+		AnimationRenderer.printMatrix(gyroToTrackball);
+		Log.d(TAG, "trackballToGyro:\n");
+		AnimationRenderer.printMatrix(trackballToGyro);
+		Log.d(TAG, "gyroOffset:\n");
+		AnimationRenderer.printMatrix(gyroOffset);
+		Log.d(TAG, "orientation:\n");
+		AnimationRenderer.printMatrix(orientation);
+	}
+	
 	public static String arrayToString(float[] array) {
 		String ans = "[";
 		for (int i = 0; i < array.length; i++) {			
@@ -137,7 +148,7 @@ public class TwoFingerTrackball {
 
 		Matrix.setIdentityM(orientation, 0);
 		Matrix.setIdentityM(cameraToTrackball, 0);
-		Matrix.setIdentityM(getGyroToTrackball(), 0);
+		Matrix.setIdentityM(gyroToTrackball, 0);
 
 		mScroller = new Scroller(mContext);
 
@@ -214,9 +225,9 @@ public class TwoFingerTrackball {
 		if (trackingGyroscope == null) return;
 		
 		if (invertGyro) {
-			Matrix.multiplyMM(localGyroOrientation, 0, getGyroToTrackball(), 0, trackingGyroscope.getInverseOrientation(), 0);
+			Matrix.multiplyMM(localGyroOrientation, 0, gyroToTrackball, 0, trackingGyroscope.getInverseOrientation(), 0);
 		} else {
-			Matrix.multiplyMM(localGyroOrientation, 0, getGyroToTrackball(), 0, trackingGyroscope.getOrientation(), 0);
+			Matrix.multiplyMM(localGyroOrientation, 0, gyroToTrackball, 0, trackingGyroscope.getOrientation(), 0);
 		}
 		Matrix.multiplyMM(orientation, 0, localGyroOrientation, 0, gyroOffset, 0);
 	}
@@ -224,8 +235,8 @@ public class TwoFingerTrackball {
 	private void updateGyroOffset() {
 		if (trackingGyroscope == null) return;
 		
-		Matrix.transposeM(trackballToGyro, 0, getGyroToTrackball(), 0);
-		
+		Matrix.transposeM(trackballToGyro, 0, gyroToTrackball, 0);
+
 		if (invertGyro) {
 			Matrix.multiplyMM(inverseLocalGyroOrientation, 0, trackingGyroscope.getOrientation(), 0, trackballToGyro, 0);
 		} else {

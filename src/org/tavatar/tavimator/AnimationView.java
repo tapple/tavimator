@@ -342,23 +342,16 @@ public class AnimationView extends GLSurfaceView
     public void updateSelectionTouchOrientation() {
     	BVHNode selection = getSelectedPart();
     	if (selection == null) return;
-    	float[] inverseGlobalSelectionOrientation = new float[16];
-    	Matrix.transposeM(inverseGlobalSelectionOrientation, 0, selection.cachedTransform, 0);
-    	inverseGlobalSelectionOrientation[ 3] = 0.0f;
-    	inverseGlobalSelectionOrientation[ 7] = 0.0f;
-    	inverseGlobalSelectionOrientation[11] = 0.0f;
-    	float[] inverseGlobalParentOrientation = new float[16];
-    	Matrix.multiplyMM(inverseGlobalParentOrientation, 0, 
-    			selectionTrackball.getOrientation(), 0,
-    			inverseGlobalSelectionOrientation, 0
-    	);
     	float[] cameraOrientation = new float[16];
     	Matrix.transposeM(cameraOrientation, 0, getRenderer().getCamera().getInverseCameraOrientation(), 0);
     	Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0,
-//    			getRenderer().getCamera().getInverseCameraOrientation(), 0,
-    			inverseGlobalParentOrientation, 0,
-    		cameraOrientation, 0);
-    	Matrix.transposeM(selectionTrackball.getGyroToTrackball(), 0, getRenderer().getCamera().getTrackball().getOrientation(), 0);
+    			renderer.inverseGlobalParentOrientation, 0,
+    			cameraOrientation, 0);
+    	float[] cameraTrackballOrientation = new float[16];
+    	Matrix.transposeM(cameraTrackballOrientation, 0, getRenderer().getCamera().getTrackball().getOrientation(), 0);
+    	Matrix.multiplyMM(selectionTrackball.getGyroToTrackball(), 0,
+    			renderer.inverseGlobalParentOrientation, 0,
+    			cameraTrackballOrientation, 0);
     }
     
     public void repaint() {
