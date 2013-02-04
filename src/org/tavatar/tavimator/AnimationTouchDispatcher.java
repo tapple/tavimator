@@ -34,7 +34,11 @@ public class AnimationTouchDispatcher {
 		}
 	}
 	
-	private AnimationTapHandler tapHandler;
+	private AnimationPartSelector tapHandler;
+	private AnimationOneFingerDragHandler oneFingerCameraHandler;
+	private AnimationOneFingerDragHandler oneFingerPartHandler;
+	private AnimationTwoFingerDragHandler twoFingerCameraHandler;
+	private AnimationTwoFingerDragHandler twoFingerPartHandler;
 	private FingerAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
 	private Spinner oneFingerSpinner;
 	private FingerAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
@@ -82,31 +86,43 @@ public class AnimationTouchDispatcher {
 		return tapHandler;
 	}
 
-	public void setTapHandler(AnimationTapHandler tapHandler) {
+	public void setTapHandler(AnimationPartSelector tapHandler) {
 		this.tapHandler = tapHandler;
 	}
 
 	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
-		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
+//		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
+		if (!tapHandler.isPickResultReady) return null;
+		if (tapHandler.pickResult < 0) {
+			return oneFingerCameraHandler;
+		} else {
+			return oneFingerPartHandler;
+		}
 	}
 
 	public AnimationTwoFingerDragHandler getTwoFingerDragHandler() {
-		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
+//		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
+		if (!tapHandler.isPickResultReady) return null;
+		if (tapHandler.pickResult < 0) {
+			return twoFingerCameraHandler;
+		} else {
+			return twoFingerPartHandler;
+		}
 	}
 
 	public void onFingerDown(int x, int y) {
 		debug("onFingerDown(" + x + ", " + y + ")");		
-		if (tapHandler != null) tapHandler.onFingerDown(x, y);
+		if (getTapHandler() != null) getTapHandler().onFingerDown(x, y);
 	}
 
 	public void onTap(int x, int y) {
 		debug("onTap(" + x + ", " + y + ")");
-		if (tapHandler != null) tapHandler.onTap(x, y);
+		if (getTapHandler() != null) getTapHandler().onTap(x, y);
 	}
 
 	public void onTapCancel() {
 		debug("onTapCancel()");
-		if (tapHandler != null) tapHandler.onCancel();
+		if (getTapHandler() != null) getTapHandler().onCancel();
 	}
 
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
@@ -150,5 +166,37 @@ public class AnimationTouchDispatcher {
 		debug("onTwoFingerMoveCancel()");
 		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onCancel();
+	}
+
+	public AnimationOneFingerDragHandler getOneFingerCameraHandler() {
+		return oneFingerCameraHandler;
+	}
+
+	public void setOneFingerCameraHandler(AnimationOneFingerDragHandler oneFingerCameraHandler) {
+		this.oneFingerCameraHandler = oneFingerCameraHandler;
+	}
+
+	public AnimationOneFingerDragHandler getOneFingerPartHandler() {
+		return oneFingerPartHandler;
+	}
+
+	public void setOneFingerPartHandler(AnimationOneFingerDragHandler oneFingerPartHandler) {
+		this.oneFingerPartHandler = oneFingerPartHandler;
+	}
+
+	public AnimationTwoFingerDragHandler getTwoFingerCameraHandler() {
+		return twoFingerCameraHandler;
+	}
+
+	public void setTwoFingerCameraHandler(AnimationTwoFingerDragHandler twoFingerCameraHandler) {
+		this.twoFingerCameraHandler = twoFingerCameraHandler;
+	}
+
+	public AnimationTwoFingerDragHandler getTwoFingerPartHandler() {
+		return twoFingerPartHandler;
+	}
+
+	public void setTwoFingerPartHandler(AnimationTwoFingerDragHandler twoFingerPartHandler) {
+		this.twoFingerPartHandler = twoFingerPartHandler;
 	}
 }

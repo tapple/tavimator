@@ -12,9 +12,9 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		DOWN, FINISHED, CANCELED
 	}
 	
-	private boolean isPickResultReady = false;
+	public boolean isPickResultReady = false;
 	private TapStatus status = TapStatus.CANCELED;
-	private int pickResult;
+	public int pickResult;
 
 	public AnimationPartSelector(AnimationView view) {
 		this.view = view;
@@ -61,17 +61,17 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	
 	private void update() {
 		if (!isPickResultReady) return;
-		switch (status) {
-		case DOWN:
-			view.setPartHighlighted(pickResult);
-			break;
-		case FINISHED:
+//		switch (status) {
+//		case DOWN:
+//			view.setPartHighlighted(pickResult);
+//			break;
+//		case FINISHED:
 			view.selectPart(pickResult);
 			if (view.getSelectedPart() != null) {
 				view.getRenderer().getCamera().moveToOrigin(view.getSelectedPart().cachedOrigin());
 			}
-		case CANCELED:
-			view.setPartHighlighted(-1);	
-		}
+//		case CANCELED:
+//			view.setPartHighlighted(-1);	
+//		}
 	}
 }

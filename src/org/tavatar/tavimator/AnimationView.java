@@ -165,15 +165,19 @@ public class AnimationView extends GLSurfaceView
 	public void initializeTouchDispatcher() {
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
 		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.getOneFingerHandlers().add(renderer.getCamera().getTrackball().getOneFingerDragHandler(
+		touchDispatcher.setOneFingerCameraHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler(
 				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.getOneFingerHandlers().add(selectionTrackball.getOneFingerDragHandler(
+		touchDispatcher.setOneFingerPartHandler(selectionTrackball.getOneFingerDragHandler(
 				R.string.one_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-		touchDispatcher.getTwoFingerHandlers().add(renderer.getCamera().getTrackball().getTwoFingerDragHandler(
+		touchDispatcher.setTwoFingerCameraHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler(
 				R.string.two_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.getTwoFingerHandlers().add(selectionTrackball.getTwoFingerDragHandler(
+		touchDispatcher.setTwoFingerPartHandler(selectionTrackball.getTwoFingerDragHandler(
 				R.string.two_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-
+		
+		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerCameraHandler());
+		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerPartHandler());
+		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerCameraHandler());
+		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerPartHandler());
 	}
 	public AnimationRenderer getRenderer() {
 		return renderer;
