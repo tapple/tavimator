@@ -179,8 +179,21 @@ public class AnimationView extends GLSurfaceView
 		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerCameraHandler());
 		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerPartHandler());
 	}
+	
 	public AnimationRenderer getRenderer() {
 		return renderer;
+	}
+	
+	public Camera getCamera() {
+		return getRenderer().getCamera();
+	}
+	
+	public TwoFingerTrackball getCameraTrackball() {
+		return getCamera().getTrackball();
+	}
+
+	public Gyroscope getGyroscope() {
+		return getCamera().getGyroscope();
 	}
 
     public Animation getSelectedAnimation() {

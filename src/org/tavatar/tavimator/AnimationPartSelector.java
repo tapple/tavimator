@@ -5,7 +5,7 @@ import android.os.Message;
 
 public class AnimationPartSelector implements AnimationTapHandler, Handler.Callback {
 	
-	private AnimationView view;
+	AnimationView view;
 	private Handler pickResultHandler = new Handler(this);
 	
 	private enum TapStatus {
@@ -61,17 +61,27 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	
 	private void update() {
 		if (!isPickResultReady) return;
-//		switch (status) {
-//		case DOWN:
-//			view.setPartHighlighted(pickResult);
-//			break;
-//		case FINISHED:
+		switch (status) {
+		case DOWN:
 			view.selectPart(pickResult);
 			if (view.getSelectedPart() != null) {
 				view.getRenderer().getCamera().moveToOrigin(view.getSelectedPart().cachedOrigin());
+				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
+			} else {
+				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				
 			}
-//		case CANCELED:
-//			view.setPartHighlighted(-1);	
-//		}
+			break;
+		case FINISHED:
+		case CANCELED:
+			endGyroGrab();	
+		}
+	}
+	
+	public void endGyroGrab() {
+		if (pickResult < 0) {
+			view.getCameraTrackball().trackGyroscope(null, false);
+		} else {
+			view.getSelectionTrackball().trackGyroscope(null, false);
+		}
 	}
 }

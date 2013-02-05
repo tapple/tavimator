@@ -342,6 +342,7 @@ public class TwoFingerTrackball {
 		// set the accumulated rotation to the result.
 		Matrix.multiplyMM(newOrientation, 0, globalFrameRotation, 0, orientation, 0);
 		setOrientation(newOrientation);
+		updateGyroOffset();
 	}
 
 	public void fling(float[] angularVelocity) {

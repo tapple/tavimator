@@ -77,9 +77,9 @@ public class AnimationTouchDispatcher {
 	}
 
 	private void debug(String message) {
-//		Log.d(TAG, message);
-//		((TextView) ((Activity) mContext)
-//				.findViewById(R.id.debugLabel)).setText(message);
+		Log.d(TAG, message);
+		((TextView) ((Activity) mContext)
+				.findViewById(R.id.debugLabel)).setText(message);
 	}
 
 	public AnimationTapHandler getTapHandler() {
@@ -90,6 +90,15 @@ public class AnimationTouchDispatcher {
 		this.tapHandler = tapHandler;
 	}
 
+	public TwoFingerTrackball getTrackball() {
+		if (!tapHandler.isPickResultReady) return null;
+		if (tapHandler.pickResult < 0) {
+			return tapHandler.view.getCameraTrackball();
+		} else {
+			return tapHandler.view.getSelectionTrackball();
+		}		
+	}
+	
 	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
 //		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
 		if (!tapHandler.isPickResultReady) return null;
@@ -128,13 +137,16 @@ public class AnimationTouchDispatcher {
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
 		debug("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
 		oneFingerSpinner.setPressed(true);
-		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
+		if (getOneFingerDragHandler() == null) return;
+		getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
 	}
 
 	public void onOneFingerFling(int x, int y, float vx, float vy) {
 		debug("onOneFingerFling(" + x + ", " + y + ", " + vx + ", " + vy + ")");
 		oneFingerSpinner.setPressed(false);
-		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
+		if (getOneFingerDragHandler() == null) return;
+		getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
+		tapHandler.endGyroGrab();
 	}
 
 	/**
@@ -143,7 +155,9 @@ public class AnimationTouchDispatcher {
 	public void onOneFingerMoveCancel() {
 		debug("onOneFingerMoveCancel()");
 		oneFingerSpinner.setPressed(false);
-		if (getOneFingerDragHandler() != null) getOneFingerDragHandler().onCancel();
+		if (getOneFingerDragHandler() == null) return;
+		getOneFingerDragHandler().onCancel();
+		tapHandler.endGyroGrab();
 	}
 
 	public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
@@ -159,13 +173,17 @@ public class AnimationTouchDispatcher {
 				x1 + ", " + y1 + ", " + vx1 + ", " + vy1 + ", "  + 
 				x2 + ", " + y2 + ", " + vx2 + ", " + vy2 + ")");
 		twoFingerSpinner.setPressed(false);
-		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
+		if (getTwoFingerDragHandler() == null) return;
+		getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
+		tapHandler.endGyroGrab();
 	}
 
 	public void onTwoFingerMoveCancel() {
 		debug("onTwoFingerMoveCancel()");
 		twoFingerSpinner.setPressed(false);
-		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onCancel();
+		if (getTwoFingerDragHandler() == null) return;
+		getTwoFingerDragHandler().onCancel();
+		tapHandler.endGyroGrab();
 	}
 
 	public AnimationOneFingerDragHandler getOneFingerCameraHandler() {
