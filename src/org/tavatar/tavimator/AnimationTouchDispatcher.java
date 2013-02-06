@@ -82,6 +82,12 @@ public class AnimationTouchDispatcher {
 				.findViewById(R.id.debugLabel)).setText(message);
 	}
 
+	private void verbose(String message) {
+		Log.v(TAG, message);
+		((TextView) ((Activity) mContext)
+				.findViewById(R.id.debugLabel)).setText(message);
+	}
+
 	public AnimationTapHandler getTapHandler() {
 		return tapHandler;
 	}
@@ -135,7 +141,7 @@ public class AnimationTouchDispatcher {
 	}
 
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
-		debug("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
+		verbose("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
 		oneFingerSpinner.setPressed(true);
 		if (getOneFingerDragHandler() == null) return;
 		getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
@@ -161,7 +167,7 @@ public class AnimationTouchDispatcher {
 	}
 
 	public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
-		debug("onTwoFingerMove(" + 
+		verbose("onTwoFingerMove(" + 
 				x1 + ", " + y1 + ", " + dx1 + ", " + dy1 + ", "  + 
 				x2 + ", " + y2 + ", " + dx2 + ", " + dy2 + ")");
 		twoFingerSpinner.setPressed(true);

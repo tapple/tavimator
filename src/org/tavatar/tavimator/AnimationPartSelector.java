@@ -2,8 +2,11 @@ package org.tavatar.tavimator;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 public class AnimationPartSelector implements AnimationTapHandler, Handler.Callback {
+	
+	private static String TAG = "AnimationPartSelector";
 	
 	AnimationView view;
 	private Handler pickResultHandler = new Handler(this);
@@ -61,11 +64,24 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	
 	private void update() {
 		if (!isPickResultReady) return;
+		
+		Log.d(TAG, "selection update from thread " + Thread.currentThread().hashCode());
+		
 		switch (status) {
 		case DOWN:
 			view.selectPart(pickResult);
-			if (view.getSelectedPart() != null) {
-				view.getRenderer().getCamera().moveToOrigin(view.getSelectedPart().cachedOrigin());
+			BVHNode safeSelectedPart = view.getSelectedPart();
+			if (safeSelectedPart != null) {
+				int nullCount = 0;
+				for (int i = 0; i < 1000; i++) {
+					if (view.getSelectedPart() == null) {
+						nullCount++;
+					}
+				}
+				Log.d(TAG, nullCount + " of 1000 queries were null");
+
+				float[] origin = safeSelectedPart.cachedOrigin();
+				view.getRenderer().getCamera().moveToOrigin(origin);
 				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
 			} else {
 				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				

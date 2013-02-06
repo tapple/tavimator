@@ -24,7 +24,7 @@ public class AnimationActivity extends Activity
 		super.onCreate(savedInstanceState);
 		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//		this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		
 		setContentView(R.layout.animation);
 

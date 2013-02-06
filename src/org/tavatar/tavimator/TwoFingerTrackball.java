@@ -203,7 +203,7 @@ public class TwoFingerTrackball {
 				angularVelocity[1] *= -1;
 				angularVelocity[2] *= -1;
 			}
-			fling(angularVelocity);
+//			fling(angularVelocity);
 		}
 		
 		trackingGyroscope = newTrackingGyroscope;
