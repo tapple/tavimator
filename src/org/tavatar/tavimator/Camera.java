@@ -145,7 +145,7 @@ public class Camera {
 		updateTransition();
 		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
 		
-		Matrix.multiplyMM(inverseCameraOrientation, 0, gyroscope.getOrientation(), 0, trackball.getOrientation(), 0);
+		trackball.rotateMatrix(inverseCameraOrientation, gyroscope.getOrientation());
 
 		Matrix.setIdentityM(temporaryMatrix, 0);
 		Matrix.translateM(temporaryMatrix, 0, 

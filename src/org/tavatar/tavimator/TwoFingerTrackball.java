@@ -162,7 +162,7 @@ public class TwoFingerTrackball {
 				.getSystemService(Context.WINDOW_SERVICE));
 	}
 
-	public void setLookAt(float eyeX, float eyeY, float eyeZ, float lookX,
+	public synchronized void setLookAt(float eyeX, float eyeY, float eyeZ, float lookX,
 			float lookY, float lookZ, float upX, float upY, float upZ) {
 		Matrix.setLookAtM(orientation, 0, eyeX, eyeY, eyeZ, lookX, lookY,
 				lookZ, upX, upY, upZ);
@@ -173,20 +173,35 @@ public class TwoFingerTrackball {
 				lookZ - eyeZ);
 	}
 
-	/**
-	 * make a copy if you intend to share the result
-	 * 
-	 * @return
-	 */
-	public float[] getOrientation() {
-		return orientation;
+	public synchronized float[] getOrientation(float[] dest) {
+		System.arraycopy(orientation, 0, dest, 0, 16);
+		return dest;
 	}
 	
-	public float getDistance() {
+	public synchronized float[] getInverseOrientation(float[] dest) {
+		Matrix.transposeM(dest, 0, orientation, 0);
+		return dest;
+	}
+	
+	public synchronized float[] setOrientation(float[] src) {
+		System.arraycopy(src, 0, orientation, 0, 16);
+		return src;
+	}
+	
+	public synchronized void setIdentity() {
+		Matrix.setIdentityM(orientation, 0);
+	}
+	
+	public synchronized float[] rotateMatrix (float[] dest, float[] lhs) {
+		Matrix.multiplyMM(dest, 0, lhs, 0, orientation, 0);
+		return dest;
+	}
+	
+	public synchronized float getDistance() {
 		return distance;
 	}
 
-	public void setDistance(float distance) {
+	public synchronized void setDistance(float distance) {
 		this.distance = distance;
 	}
 
@@ -221,7 +236,7 @@ public class TwoFingerTrackball {
 		prevZoomTime = SystemClock.uptimeMillis();
 	}
 	
-	private void updateGyroTracking() {
+	private synchronized void updateGyroTracking() {
 		if (trackingGyroscope == null) return;
 		
 		if (invertGyro) {
@@ -232,7 +247,7 @@ public class TwoFingerTrackball {
 		Matrix.multiplyMM(orientation, 0, localGyroOrientation, 0, gyroOffset, 0);
 	}
 
-	private void updateGyroOffset() {
+	private synchronized void updateGyroOffset() {
 		if (trackingGyroscope == null) return;
 		
 		Matrix.transposeM(trackballToGyro, 0, gyroToTrackball, 0);
@@ -245,7 +260,7 @@ public class TwoFingerTrackball {
 		Matrix.multiplyMM(gyroOffset, 0, inverseLocalGyroOrientation, 0, orientation, 0);
 	}
 	
-	public void basicUpdateOrientation() {
+	public synchronized void basicUpdateOrientation() {
 		mScroller.computeScrollOffset();
 		int x = mScroller.getCurrX();
 		int y = mScroller.getCurrY();
@@ -262,16 +277,12 @@ public class TwoFingerTrackball {
 		prevZoomTime = time;
 	}
 
-	public void updateOrientation() {
+	public synchronized void updateOrientation() {
 		updateGyroTracking();
 		basicUpdateOrientation();
 		updateGyroOffset();
 	}
 	
-	public void setOrientation(float[] anOrientationMatrix) {
-		System.arraycopy(anOrientationMatrix, 0, orientation, 0, 16);
-	}
-
 	public AnimationOneFingerDragHandler getOneFingerDragHandler(int nameId, int shortNameId) {
 		class OneFingerDragHandler extends AbsTouchHandler implements AnimationOneFingerDragHandler {
 			public OneFingerDragHandler(Context context, int nameId, int shortNameId) {
@@ -324,7 +335,7 @@ public class TwoFingerTrackball {
 		return new TwoFingerDragHandler(mContext, nameId, shortNameId);
 	}
 
-	private void scrollBy(float[] angularVelocity) {
+	private synchronized void scrollBy(float[] angularVelocity) {
 //		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 		rotateAboutCameraAxis(
@@ -333,15 +344,14 @@ public class TwoFingerTrackball {
 		distance /= angularVelocity[3];
 	}
 
-	private void rotateAboutCameraAxis(float angle, float[] axis) {
+	private synchronized void rotateAboutCameraAxis(float angle, float[] axis) {
 		if (angle == 0.0f) return; // axis is likely to be zero in this case as well. avoids divide by zero errors in rotateM
 		Matrix.setIdentityM(globalFrameRotation, 0);
 		Matrix.rotateM(globalFrameRotation, 0, angle, axis[0], axis[1], axis[2]);
 
 		// Multiply the current rotation by the accumulated rotation, and then
 		// set the accumulated rotation to the result.
-		Matrix.multiplyMM(newOrientation, 0, globalFrameRotation, 0, orientation, 0);
-		setOrientation(newOrientation);
+		Matrix.multiplyMM(orientation, 0, globalFrameRotation, 0, orientation, 0);
 		updateGyroOffset();
 	}
 

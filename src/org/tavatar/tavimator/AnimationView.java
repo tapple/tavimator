@@ -313,8 +313,12 @@ public class AnimationView extends GLSurfaceView
     		return;
     	}
     	
-    	Matrix.setIdentityM(selectionTrackball.getOrientation(), 0);
-    	node.rotateMatrixForFrame(selectionTrackball.getOrientation(), animation.getFrame());
+    	float[] newOrientation = new float[16];
+    	Matrix.setIdentityM(newOrientation, 0);
+    	synchronized(selectionTrackball) {
+    		node.rotateMatrixForFrame(selectionTrackball.getOrientation(newOrientation), animation.getFrame());
+    		selectionTrackball.setOrientation(newOrientation);
+    	}
 
     	Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
     	// make sure no prop is selected anymore
@@ -355,7 +359,8 @@ public class AnimationView extends GLSurfaceView
     	BVHNode selection = getSelectedPart();
     	if (selection == null) return;
     	selectionTrackball.updateOrientation();
-    	animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation());
+    	float[] newOrientation = new float[16];
+    	animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation(newOrientation));
     }
 
     public void updateSelectionTouchOrientation() {
@@ -367,7 +372,7 @@ public class AnimationView extends GLSurfaceView
     			renderer.inverseGlobalParentOrientation, 0,
     			cameraOrientation, 0);
     	float[] cameraTrackballOrientation = new float[16];
-    	Matrix.transposeM(cameraTrackballOrientation, 0, getRenderer().getCamera().getTrackball().getOrientation(), 0);
+    	getRenderer().getCamera().getTrackball().getInverseOrientation(cameraTrackballOrientation);
     	Matrix.multiplyMM(selectionTrackball.getGyroToTrackball(), 0,
     			renderer.inverseGlobalParentOrientation, 0,
     			cameraTrackballOrientation, 0);

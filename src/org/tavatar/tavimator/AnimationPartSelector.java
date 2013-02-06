@@ -62,6 +62,11 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		return false;
 	}
 	
+	public String dumpNode(BVHNode node) {
+		if (node == null) return null;
+		return node.name();
+	}
+	
 	private void update() {
 		if (!isPickResultReady) return;
 		
@@ -78,18 +83,18 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 						nullCount++;
 					}
 				}
-				Log.d(TAG, nullCount + " of 1000 queries were null");
+				Log.d(TAG, "selection: " + dumpNode(view.getSelectedPart()) + "; null: " + nullCount);
 
 				float[] origin = safeSelectedPart.cachedOrigin();
 				view.getRenderer().getCamera().moveToOrigin(origin);
-				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
+//				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
 			} else {
-				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				
+//				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				
 			}
 			break;
 		case FINISHED:
 		case CANCELED:
-			endGyroGrab();	
+//			endGyroGrab();	
 		}
 	}
 	

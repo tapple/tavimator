@@ -470,7 +470,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
 //        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
         	System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
-        	Matrix.multiplyMM(mModelMatrix, 0, tempViewMatrix, 0, mView.getSelectionTrackball().getOrientation(), 0);
+        	mView.getSelectionTrackball().rotateMatrix(mModelMatrix, tempViewMatrix);
         	GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
         	updateUniforms();
         	figureRenderer.drawPartNamed(selectedNode.name());
