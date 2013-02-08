@@ -75,26 +75,18 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		switch (status) {
 		case DOWN:
 			view.selectPart(pickResult);
-			BVHNode safeSelectedPart = view.getSelectedPart();
-			if (safeSelectedPart != null) {
-				int nullCount = 0;
-				for (int i = 0; i < 1000; i++) {
-					if (view.getSelectedPart() == null) {
-						nullCount++;
-					}
-				}
-				Log.d(TAG, "selection: " + dumpNode(view.getSelectedPart()) + "; null: " + nullCount);
-
-				float[] origin = safeSelectedPart.cachedOrigin();
+			BVHNode selectedPart = view.getSelectedPart();
+			if (selectedPart != null) {
+				float[] origin = selectedPart.cachedOrigin();
 				view.getRenderer().getCamera().moveToOrigin(origin);
-//				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
+				view.getSelectionTrackball().trackGyroscope(view.getGyroscope(), true);
 			} else {
-//				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				
+				view.getCameraTrackball().trackGyroscope(view.getGyroscope(), true);				
 			}
 			break;
 		case FINISHED:
 		case CANCELED:
-//			endGyroGrab();	
+			endGyroGrab();	
 		}
 	}
 	

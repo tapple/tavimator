@@ -17,8 +17,6 @@ public class Gyroscope implements SensorEventListener {
     private static final float NS2S = 1.0f / 1000000000.0f;
     private static final float MS2S = 1.0f / 1000.0f;
 
-    private static final boolean DISABLED = true;
-    
     private SensorManager sensorManager;
 	private Sensor accelerometer;
 	private Sensor magnetometer;
@@ -88,7 +86,6 @@ public class Gyroscope implements SensorEventListener {
     }
     
     private void basicSetSensing(boolean sensing) {
-    	if (DISABLED) return;
     	if (sensing) {
     		stabilityCountDown = 5;
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
@@ -189,7 +186,6 @@ public class Gyroscope implements SensorEventListener {
 	}
     
 	public float[] getOrientation() {
-		if (DISABLED) Matrix.setIdentityM(orientation, 0);
 		return orientation;
 	}
 	
@@ -249,10 +245,6 @@ public class Gyroscope implements SensorEventListener {
 	}
 	
 	public void updateOrientation() {
-		if (DISABLED) {
-			Matrix.setIdentityM(orientation, 0);
-			return;
-		}
 		if (sensing && gravity != null && magnetic != null) {
 			SensorManager.getRotationMatrix(accelMagOrientation, null, gravity, magnetic);
 			if (gyroOrientation == null) {
