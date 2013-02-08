@@ -49,7 +49,8 @@ public class BVH {
     public Animation.FigureType lastLoadedFigureType;
     public BVHNode lastLoadedPositionNode;
 
-    public int nodeCount;
+    // very not thread safe
+//    public int nodeCount;
 
     public List<Rotation> rotationCopyBuffer = new ArrayList<Rotation>();
     public Position positionCopyBuffer;
@@ -342,13 +343,11 @@ public class BVH {
 
 
     public String bvhGetName(BVHNode node, int index) {
-    	nodeCount=0;
-    	return bvhGetNameHelper(node, index);
+    	return bvhGetNameHelper(node, index,0);
     }
 
     public int bvhGetIndex(BVHNode node, String name) {
-    	nodeCount=0;
-    	return bvhGetIndexHelper(node, name);
+    	return bvhGetIndexHelper(node, name,0);
     }
 
     public void bvhCopyOffsets(BVHNode dst, BVHNode src) {
@@ -937,24 +936,24 @@ public class BVH {
     		setAllKeyFramesHelper(node.child(i),numberOfFrames);
     }
 
-    private String bvhGetNameHelper(BVHNode node,int index) {
+    private String bvhGetNameHelper(BVHNode node,int index,int nodeCount) {
     	nodeCount++;
     	if(nodeCount==index) return node.name();
 
     	for(int i = 0; i < node.numChildren(); i++) {
-    		final String val=bvhGetNameHelper(node.child(i),index);
+    		final String val=bvhGetNameHelper(node.child(i),index,nodeCount);
     		if(val.length() != 0) return val;
     	}
     	return "";
     }
 
-    private int bvhGetIndexHelper(BVHNode node, String name) {
+    private int bvhGetIndexHelper(BVHNode node, String name, int nodeCount) {
     	nodeCount++;
     	if(node.name().equals(name)) return nodeCount;
 
     	for(int i = 0; i < node.numChildren(); i++) {
     		int val;
-    		if((val = bvhGetIndexHelper(node.child(i), name)) != 0)
+    		if((val = bvhGetIndexHelper(node.child(i), name, nodeCount)) != 0)
     			return val;
     	}
     	return 0;
