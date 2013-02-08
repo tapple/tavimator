@@ -1,11 +1,13 @@
 package org.tavatar.tavimator;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.Matrix;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
@@ -16,6 +18,8 @@ public class Gyroscope implements SensorEventListener {
 	public static final float EPSILON = 0.000000001f;
 	private static final float NS2S = 1.0f / 1000000000.0f;
 	private static final float MS2S = 1.0f / 1000.0f;
+	private static final long S2NS = 1000000000;
+	private static final long MS2NS = 1000000;
 
 	private static final boolean USE_SENSOR_FUSION = false;
 
@@ -209,10 +213,39 @@ public class Gyroscope implements SensorEventListener {
 		return inverseOrientation;
 	}
 
+	/**
+	 * Answers true if timestamp is now or up to windowSec in the past
+	 */
+	public boolean isTimestampWithin(long timestamp, float windowSec) {
+		long window = (long)(windowSec * S2NS);
+
+		// Gingerbread seems to use the uptime clock for event timestamps
+		long maxTime = SystemClock.uptimeMillis() * MS2NS;
+		long minTime = maxTime - window;
+		if (minTime <= timestamp && timestamp <= maxTime) return true;
+
+		// Jellybean seems to use the wall clock for event timestamps
+		maxTime = System.currentTimeMillis() * MS2NS;
+		minTime = maxTime - window;
+		if (minTime <= timestamp && timestamp <= maxTime) return true;
+
+		// I don't know if any android uses the realtime clock for timestamps, but I test it anyway
+		maxTime = SystemClock.elapsedRealtime() * MS2NS;
+		minTime = maxTime - window;
+		if (minTime <= timestamp && timestamp <= maxTime) return true;
+
+		Log.d(TAG, "out of range; window: " + window
+				+ "; timestamp: " + timestamp
+				+ "; wall time: " + System.currentTimeMillis() * MS2NS
+				+ "; uptime: " + SystemClock.uptimeMillis() * MS2NS
+				+ "; realtime: " + SystemClock.elapsedRealtime() * MS2NS);
+		return false;
+	}
+
+	@TargetApi(17)
 	public float[] getAngularVelocity() {
-		float dT = SystemClock.uptimeMillis() * MS2S - timestamp * NS2S;
 		// if last gyro event was over half a second ago, device is not moving
-		if (dT <= 0.0f || 0.5f < dT) {
+		if (!isTimestampWithin(timestamp, 0.5f)) {
 			angular[0] = 0.0f;
 			angular[1] = 0.0f;
 			angular[2] = 0.0f;
