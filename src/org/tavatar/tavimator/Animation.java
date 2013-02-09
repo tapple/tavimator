@@ -522,7 +522,7 @@ public class Animation {
 
 	public void setRotation(BVHNode node, Rotation rot) {
 		if (node != null) {
-			//Log.d(TAG, String("Animation.setRotation(")+jointName+")");
+//			Log.v(TAG, "Animation.setRotation(" + node.name() + ")");
 
 /* ###IK###
 			for(int i=0;i<NUM_IK;i++)
@@ -919,6 +919,7 @@ public class Animation {
 		// joint number 0 needs to return the hip position pseudonode
 		if(jointNumber==0) return positionNode;
 		// get the joint structure
+//		Log.v(TAG, "getNode " + jointNumber + " " + getPartName(jointNumber));
 		return bvh.bvhFindNode(frames,getPartName(jointNumber));
 	}
 

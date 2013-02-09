@@ -1,7 +1,9 @@
 package org.tavatar.tavimator;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.opengl.Matrix;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -218,7 +220,7 @@ public class TwoFingerTrackball {
 				angularVelocity[1] *= -1;
 				angularVelocity[2] *= -1;
 			}
-//			fling(angularVelocity);
+			fling(angularVelocity);
 		}
 		
 		trackingGyroscope = newTrackingGyroscope;
@@ -238,6 +240,9 @@ public class TwoFingerTrackball {
 	
 	private synchronized void updateGyroTracking() {
 		if (trackingGyroscope == null) return;
+		
+		if (localGyroOrientation == null) Log.d(TAG, "localGyroOrientation is null");
+		if (gyroToTrackball == null) Log.d(TAG, "gyroToTrackball is null");
 		
 		if (invertGyro) {
 			Matrix.multiplyMM(localGyroOrientation, 0, gyroToTrackball, 0, trackingGyroscope.getInverseOrientation(), 0);
@@ -369,6 +374,7 @@ public class TwoFingerTrackball {
 	}
 	
 	public void stopFling() {
+//		Log.d(TAG, "stopFling();");
 		mScroller.forceFinished(true);
 	}
 
