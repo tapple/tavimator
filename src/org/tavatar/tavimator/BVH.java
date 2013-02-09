@@ -49,8 +49,9 @@ public class BVH {
     public Animation.FigureType lastLoadedFigureType;
     public BVHNode lastLoadedPositionNode;
 
-    // very not thread safe
-//    public int nodeCount;
+    public class NodeCounter {
+    	int nodeCount = 0;
+    }
 
     public List<Rotation> rotationCopyBuffer = new ArrayList<Rotation>();
     public Position positionCopyBuffer;
@@ -343,11 +344,11 @@ public class BVH {
 
 
     public String bvhGetName(BVHNode node, int index) {
-    	return bvhGetNameHelper(node, index,0);
+    	return bvhGetNameHelper(node, index, new NodeCounter());
     }
 
     public int bvhGetIndex(BVHNode node, String name) {
-    	return bvhGetIndexHelper(node, name,0);
+    	return bvhGetIndexHelper(node, name, new NodeCounter());
     }
 
     public void bvhCopyOffsets(BVHNode dst, BVHNode src) {
@@ -936,24 +937,24 @@ public class BVH {
     		setAllKeyFramesHelper(node.child(i),numberOfFrames);
     }
 
-    private String bvhGetNameHelper(BVHNode node,int index,int nodeCount) {
-    	nodeCount++;
-    	if(nodeCount==index) return node.name();
+    private String bvhGetNameHelper(BVHNode node,int index,NodeCounter nodeCounter) {
+    	nodeCounter.nodeCount++;
+    	if(nodeCounter.nodeCount==index) return node.name();
 
     	for(int i = 0; i < node.numChildren(); i++) {
-    		final String val=bvhGetNameHelper(node.child(i),index,nodeCount);
+    		final String val=bvhGetNameHelper(node.child(i),index,nodeCounter);
     		if(val.length() != 0) return val;
     	}
     	return "";
     }
 
-    private int bvhGetIndexHelper(BVHNode node, String name, int nodeCount) {
-    	nodeCount++;
-    	if(node.name().equals(name)) return nodeCount;
+    private int bvhGetIndexHelper(BVHNode node, String name, NodeCounter nodeCounter) {
+    	nodeCounter.nodeCount++;
+    	if(node.name().equals(name)) return nodeCounter.nodeCount;
 
     	for(int i = 0; i < node.numChildren(); i++) {
     		int val;
-    		if((val = bvhGetIndexHelper(node.child(i), name, nodeCount)) != 0)
+    		if((val = bvhGetIndexHelper(node.child(i), name, nodeCounter)) != 0)
     			return val;
     	}
     	return 0;
