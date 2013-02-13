@@ -18,7 +18,8 @@ const vec4 light1DiffuseColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 const vec4  ambientColor = vec4(0.6, 0.6, 0.6, 1.0);
 const vec4 specularColor = vec4(0.6, 0.6, 0.6, 0.0);
-const vec4      fogColor = vec4(0.5, 0.5, 0.5, 0.3);
+//const vec4      fogColor = vec4(0.5, 0.5, 0.5, 0.3);
+uniform vec4      fogColor;
 
 const float shininess = 100.0;
 

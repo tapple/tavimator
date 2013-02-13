@@ -8,11 +8,13 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
 
 import org.tavatar.tavimator.R;
 import com.learnopengles.android.common.RawResourceReader;
@@ -56,6 +58,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	/** Allocate storage for the final combined matrix. This will be passed into the shader program. */
 	private float[] mMVPMatrix = new float[16];
 	
+	private float[] backgroundColor = new float[4];
+	
 	/** Store our model data in a float buffer. */
 	private final FloatBuffer mCubePositions;
 	private final FloatBuffer mCubeNormals;
@@ -77,6 +81,8 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	
 	/** This will be used to pass in model normal information. */
 	private int mNormalHandle;
+
+	private int mFogColorHandle;
 
 	/** How many bytes per float. */
 	private final int mBytesPerFloat = 4;	
@@ -230,6 +236,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		
 		figureRenderer.load();
 		loadFloor();
+		
+		TypedValue colorRef = new TypedValue();
+		mActivityContext.getTheme().resolveAttribute(android.R.attr.colorBackground, colorRef, true);
+		backgroundColor[0] = Color.red  (colorRef.data) / 255f;
+		backgroundColor[1] = Color.green(colorRef.data) / 255f;
+		backgroundColor[2] = Color.blue (colorRef.data) / 255f;
+		backgroundColor[3] = Color.alpha(colorRef.data) / 255f;
+
 	}
 	
 	public void onResume() {
@@ -300,6 +314,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
         mLightingHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Lighting");
         mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
         mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal");
+        mFogColorHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "fogColor");
+
+        GLES20.glUniform4f(mFogColorHandle, 0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
+		GLES20.glUniform4f(mFogColorHandle, backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 	}	
 
 //*
@@ -417,6 +435,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	public void onDrawFrame(GL10 glUnused) 
 	{
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
+		GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 		
 		getCamera().getGyroscope().updateOrientation();
