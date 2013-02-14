@@ -72,6 +72,7 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		
 		Log.d(TAG, "selection update: " + pickResult + " from thread " + Thread.currentThread().hashCode());
 		
+		view.setPartHighlighted(pickResult);
 		view.selectPart(pickResult);
 		BVHNode selectedPart = view.getSelectedPart();
 		if (selectedPart != null) {

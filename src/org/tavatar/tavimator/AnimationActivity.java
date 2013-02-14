@@ -1,6 +1,8 @@
 package org.tavatar.tavimator;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -8,9 +10,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class AnimationActivity extends Activity 
+public class AnimationActivity extends Activity implements NumberPicker.OnValueChangeListener
 {
 	private static final String TAG = "AnimationActivity";
 	/** Hold a reference to our GLSurfaceView */
@@ -23,7 +26,7 @@ public class AnimationActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+//		requestWindowFeature(Window.FEATURE_NO_TITLE);
 //		this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		
 		setContentView(R.layout.animation);
@@ -31,8 +34,15 @@ public class AnimationActivity extends Activity
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
 
+
 		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
 		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
+		
+		NumberPicker framePicker = (NumberPicker) findViewById(R.id.frame_picker);
+		framePicker.setMaxValue(120);
+		framePicker.setWrapSelectorWheel(true);
+		framePicker.setOnLongPressUpdateInterval(33);
+		framePicker.setOnValueChangedListener(this);
 	}
 
 	@Override
@@ -154,4 +164,13 @@ public class AnimationActivity extends Activity
 		mGLSurfaceView.requestRender();
         Log.d(TAG, "grab constrain");
 	}
+
+//*
+	@Override
+	public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+		// TODO Auto-generated method stub
+		((TextView) findViewById(R.id.debugLabel)).setText("frame " + newVal);
+
+	}
+//*/
 }
