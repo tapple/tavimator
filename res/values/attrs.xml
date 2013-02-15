@@ -3,6 +3,9 @@
     <declare-styleable name="Theme">
         <!-- NumberPicker style. -->
         <attr name="numberPickerStyle" format="reference" />
+        
+        <!-- NumberPicker style. -->
+        <attr name="framePickerStyle" format="reference" />
     </declare-styleable>
         
     <declare-styleable name="NumberPicker">
@@ -26,5 +29,28 @@
         <attr name="internalLayout" format="reference"/>
         <!-- @hide The drawable for pressed virtual (increment/decrement) buttons. -->
         <attr name="virtualButtonPressedDrawable" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="FramePicker">
+        <!-- @hide Color for the solid color background if such for optimized rendering. -->
+        <attr name="solidColor" />
+        <!-- @hide The divider for making the selection area. -->
+        <attr name="selectionDivider" />
+        <!-- @hide The width of the selection divider. -->
+        <attr name="selectionDividerWidth" format="dimension" />
+        <!-- @hide The distance between the two selection dividers. -->
+        <attr name="selectionDividersDistance" />
+        <!-- @hide The min height of the NumberPicker. -->
+        <attr name="internalMinHeight" />
+        <!-- @hide The max height of the NumberPicker. -->
+        <attr name="internalMaxHeight" />
+        <!-- @hide The min width of the NumberPicker. -->
+        <attr name="internalMinWidth" />
+        <!-- @hide The max width of the NumberPicker. -->
+        <attr name="internalMaxWidth" />
+        <!-- @hide The layout of the number picker. -->
+        <attr name="internalLayout" />
+        <!-- @hide The drawable for pressed virtual (increment/decrement) buttons. -->
+        <attr name="virtualButtonPressedDrawable" />
     </declare-styleable>
 </resources>

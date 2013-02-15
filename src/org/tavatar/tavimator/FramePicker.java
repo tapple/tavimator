@@ -124,12 +124,12 @@ public class FramePicker extends LinearLayout {
     /**
      * The strength of fading in the top and bottom while drawing the selector.
      */
-    private static final float TOP_AND_BOTTOM_FADING_EDGE_STRENGTH = 0.9f;
+    private static final float LEFT_AND_RIGHT_FADING_EDGE_STRENGTH = 0.9f;
 
     /**
      * The default unscaled height of the selection divider.
      */
-    private static final int UNSCALED_DEFAULT_SELECTION_DIVIDER_HEIGHT = 2;
+    private static final int UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH = 2;
 
     /**
      * The default unscaled distance between the selection dividers.
@@ -164,7 +164,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The max height of this widget.
      */
-    private final int mMaxHeight;
+    private int mMaxHeight;
 
     /**
      * The max width of this widget.
@@ -174,12 +174,12 @@ public class FramePicker extends LinearLayout {
     /**
      * The max width of this widget.
      */
-    private int mMaxWidth;
+    private final int mMaxWidth;
 
     /**
      * Flag whether to compute the max width.
      */
-    private final boolean mComputeMaxWidth;
+    private final boolean mComputeMaxHeight;
 
     /**
      * The height of the text.
@@ -189,7 +189,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The height of the gap between text elements if the selector wheel.
      */
-    private int mSelectorTextGapHeight;
+    private int mSelectorTextGapWidth;
 
     /**
      * The values to be displayed instead the indices.
@@ -254,7 +254,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The height of a selector element (text + gap).
      */
-    private int mSelectorElementHeight;
+    private int mSelectorElementWidth;
 
     /**
      * The initial offset of the scroll selector.
@@ -279,7 +279,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The previous Y coordinate while scrolling the selector.
      */
-    private int mPreviousScrollerY;
+    private int mPreviousScrollerX;
 
     /**
      * Handle to the reusable command for setting the input text selection.
@@ -300,7 +300,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The Y position of the last down event.
      */
-    private float mLastDownEventY;
+    private float mLastDownEventX;
 
     /**
      * The time of the last down event.
@@ -310,7 +310,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The Y position of the last down or move event.
      */
-    private float mLastDownOrMoveEventY;
+    private float mLastDownOrMoveEventX;
 
     /**
      * Determines speed during touch scrolling.
@@ -350,7 +350,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The height of the selection divider.
      */
-    private final int mSelectionDividerHeight;
+    private final int mSelectionDividerWidth;
 
     /**
      * The current scroll state of the number picker.
@@ -371,17 +371,12 @@ public class FramePicker extends LinearLayout {
     /**
      * The top of the top selection divider.
      */
-    private int mTopSelectionDividerTop;
+    private int mLeftSelectionDividerLeft;
 
     /**
      * The bottom of the bottom selection divider.
      */
-    private int mBottomSelectionDividerBottom;
-
-    /**
-     * The virtual id of the last hovered child.
-     */
-    private int mLastHoveredChildVirtualViewId;
+    private int mRightSelectionDividerRight;
 
     /**
      * Whether the increment virtual button is pressed.
@@ -479,49 +474,49 @@ public class FramePicker extends LinearLayout {
 
         // process style attributes
         TypedArray attributesArray = context.obtainStyledAttributes(
-                attrs, R.styleable.NumberPicker, R.attr.numberPickerStyle, 0);
+                attrs, R.styleable.FramePicker, R.attr.framePickerStyle, 0);
         final int layoutResId = DEFAULT_LAYOUT_RESOURCE_ID;
 
-        mSolidColor = attributesArray.getColor(R.styleable.NumberPicker_solidColor, 0);
+        mSolidColor = attributesArray.getColor(R.styleable.FramePicker_solidColor, 0);
 
-        mSelectionDivider = attributesArray.getDrawable(R.styleable.NumberPicker_selectionDivider);
+        mSelectionDivider = attributesArray.getDrawable(R.styleable.FramePicker_selectionDivider);
 
-        final int defSelectionDividerHeight = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, UNSCALED_DEFAULT_SELECTION_DIVIDER_HEIGHT,
+        final int defSelectionDividerWidth = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH,
                 getResources().getDisplayMetrics());
-        mSelectionDividerHeight = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_selectionDividerHeight, defSelectionDividerHeight);
+        mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
+                R.styleable.FramePicker_selectionDividerWidth, defSelectionDividerWidth);
 
         final int defSelectionDividerDistance = (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE,
                 getResources().getDisplayMetrics());
         mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_selectionDividersDistance, defSelectionDividerDistance);
+                R.styleable.FramePicker_selectionDividersDistance, defSelectionDividerDistance);
 
         mMinHeight = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_internalMinHeight, SIZE_UNSPECIFIED);
+                R.styleable.FramePicker_internalMinHeight, SIZE_UNSPECIFIED);
 
         mMaxHeight = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_internalMaxHeight, SIZE_UNSPECIFIED);
+                R.styleable.FramePicker_internalMaxHeight, SIZE_UNSPECIFIED);
         if (mMinHeight != SIZE_UNSPECIFIED && mMaxHeight != SIZE_UNSPECIFIED
                 && mMinHeight > mMaxHeight) {
             throw new IllegalArgumentException("minHeight > maxHeight");
         }
 
         mMinWidth = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_internalMinWidth, SIZE_UNSPECIFIED);
+                R.styleable.FramePicker_internalMinWidth, SIZE_UNSPECIFIED);
 
         mMaxWidth = attributesArray.getDimensionPixelSize(
-                R.styleable.NumberPicker_internalMaxWidth, SIZE_UNSPECIFIED);
+                R.styleable.FramePicker_internalMaxWidth, SIZE_UNSPECIFIED);
         if (mMinWidth != SIZE_UNSPECIFIED && mMaxWidth != SIZE_UNSPECIFIED
                 && mMinWidth > mMaxWidth) {
             throw new IllegalArgumentException("minWidth > maxWidth");
         }
 
-        mComputeMaxWidth = (mMaxWidth == SIZE_UNSPECIFIED);
+        mComputeMaxHeight = (mMaxHeight == SIZE_UNSPECIFIED);
 
         mVirtualButtonPressedDrawable = attributesArray.getDrawable(
-                R.styleable.NumberPicker_virtualButtonPressedDrawable);
+                R.styleable.FramePicker_virtualButtonPressedDrawable);
 
         attributesArray.recycle();
 
@@ -585,10 +580,6 @@ public class FramePicker extends LinearLayout {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        if (!true) {
-            super.onLayout(changed, left, top, right, bottom);
-            return;
-        }
         final int msrdWdth = getMeasuredWidth();
         final int msrdHght = getMeasuredHeight();
 
@@ -605,19 +596,15 @@ public class FramePicker extends LinearLayout {
             // need to do all this when we know our size
             initializeSelectorWheel();
             initializeFadingEdges();
-            mTopSelectionDividerTop = (getHeight() - mSelectionDividersDistance) / 2
-                    - mSelectionDividerHeight;
-            mBottomSelectionDividerBottom = mTopSelectionDividerTop + 2 * mSelectionDividerHeight
+            mLeftSelectionDividerLeft = (getWidth() - mSelectionDividersDistance) / 2
+                    - mSelectionDividerWidth;
+            mRightSelectionDividerRight = mLeftSelectionDividerLeft + 2 * mSelectionDividerWidth
                     + mSelectionDividersDistance;
         }
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (!true) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            return;
-        }
         // Try greedily to fit the max width and height.
         final int newWidthMeasureSpec = makeMeasureSpec(widthMeasureSpec, mMaxWidth);
         final int newHeightMeasureSpec = makeMeasureSpec(heightMeasureSpec, mMaxHeight);
@@ -640,19 +627,19 @@ public class FramePicker extends LinearLayout {
      */
     private boolean moveToFinalScrollerPosition(Scroller scroller) {
         scroller.forceFinished(true);
-        int amountToScroll = scroller.getFinalY() - scroller.getCurrY();
-        int futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mSelectorElementHeight;
+        int amountToScroll = scroller.getFinalX() - scroller.getCurrX();
+        int futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mSelectorElementWidth;
         int overshootAdjustment = mInitialScrollOffset - futureScrollOffset;
         if (overshootAdjustment != 0) {
-            if (Math.abs(overshootAdjustment) > mSelectorElementHeight / 2) {
+            if (Math.abs(overshootAdjustment) > mSelectorElementWidth / 2) {
                 if (overshootAdjustment > 0) {
-                    overshootAdjustment -= mSelectorElementHeight;
+                    overshootAdjustment -= mSelectorElementWidth;
                 } else {
-                    overshootAdjustment += mSelectorElementHeight;
+                    overshootAdjustment += mSelectorElementWidth;
                 }
             }
             amountToScroll += overshootAdjustment;
-            scrollBy(0, amountToScroll);
+            scrollBy(amountToScroll, 0);
             return true;
         }
         return false;
@@ -660,7 +647,7 @@ public class FramePicker extends LinearLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (!true || !isEnabled()) {
+        if (!isEnabled()) {
             return false;
         }
         final int action = event.getActionMasked();
@@ -668,17 +655,17 @@ public class FramePicker extends LinearLayout {
             case MotionEvent.ACTION_DOWN: {
                 removeAllCallbacks();
                 mInputText.setVisibility(View.INVISIBLE);
-                mLastDownOrMoveEventY = mLastDownEventY = event.getY();
+                mLastDownOrMoveEventX = mLastDownEventX = event.getX();
                 mLastDownEventTime = event.getEventTime();
                 mIngonreMoveEvents = false;
                 mShowSoftInputOnTap = false;
                 // Handle pressed state before any state change.
-                if (mLastDownEventY < mTopSelectionDividerTop) {
+                if (mLastDownEventX < mLeftSelectionDividerLeft) {
                     if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
                         mPressedStateHelper.buttonPressDelayed(
                                 PressedStateHelper.BUTTON_DECREMENT);
                     }
-                } else if (mLastDownEventY > mBottomSelectionDividerBottom) {
+                } else if (mLastDownEventX > mRightSelectionDividerRight) {
                     if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
                         mPressedStateHelper.buttonPressDelayed(
                                 PressedStateHelper.BUTTON_INCREMENT);
@@ -693,11 +680,11 @@ public class FramePicker extends LinearLayout {
                 } else if (!mAdjustScroller.isFinished()) {
                     mFlingScroller.forceFinished(true);
                     mAdjustScroller.forceFinished(true);
-                } else if (mLastDownEventY < mTopSelectionDividerTop) {
+                } else if (mLastDownEventX < mLeftSelectionDividerLeft) {
                     hideSoftInput();
                     postChangeCurrentByOneFromLongPress(
                             false, ViewConfiguration.getLongPressTimeout());
-                } else if (mLastDownEventY > mBottomSelectionDividerBottom) {
+                } else if (mLastDownEventX > mRightSelectionDividerRight) {
                     hideSoftInput();
                     postChangeCurrentByOneFromLongPress(
                             true, ViewConfiguration.getLongPressTimeout());
@@ -713,7 +700,7 @@ public class FramePicker extends LinearLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!isEnabled() || !true) {
+        if (!isEnabled()) {
             return false;
         }
         if (mVelocityTracker == null) {
@@ -726,19 +713,19 @@ public class FramePicker extends LinearLayout {
                 if (mIngonreMoveEvents) {
                     break;
                 }
-                float currentMoveY = event.getY();
+                float currentMoveX = event.getX();
                 if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                    int deltaDownY = (int) Math.abs(currentMoveY - mLastDownEventY);
-                    if (deltaDownY > mTouchSlop) {
+                    int deltaDownX = (int) Math.abs(currentMoveX - mLastDownEventX);
+                    if (deltaDownX > mTouchSlop) {
                         removeAllCallbacks();
                         onScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                     }
                 } else {
-                    int deltaMoveY = (int) ((currentMoveY - mLastDownOrMoveEventY));
-                    scrollBy(0, deltaMoveY);
+                    int deltaMoveX = (int) ((currentMoveX - mLastDownOrMoveEventX));
+                    scrollBy(deltaMoveX, 0);
                     invalidate();
                 }
-                mLastDownOrMoveEventY = currentMoveY;
+                mLastDownOrMoveEventX = currentMoveX;
             } break;
             case MotionEvent.ACTION_UP: {
                 removeBeginSoftInputCommand();
@@ -746,20 +733,20 @@ public class FramePicker extends LinearLayout {
                 mPressedStateHelper.cancel();
                 VelocityTracker velocityTracker = mVelocityTracker;
                 velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
-                int initialVelocity = (int) velocityTracker.getYVelocity();
+                int initialVelocity = (int) velocityTracker.getXVelocity();
                 if (Math.abs(initialVelocity) > mMinimumFlingVelocity) {
                     fling(initialVelocity);
                     onScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
                 } else {
-                    int eventY = (int) event.getY();
-                    int deltaMoveY = (int) Math.abs(eventY - mLastDownEventY);
+                    int eventX = (int) event.getX();
+                    int deltaMoveX = (int) Math.abs(eventX - mLastDownEventX);
                     long deltaTime = event.getEventTime() - mLastDownEventTime;
-                    if (deltaMoveY <= mTouchSlop && deltaTime < ViewConfiguration.getTapTimeout()) {
+                    if (deltaMoveX <= mTouchSlop && deltaTime < ViewConfiguration.getTapTimeout()) {
                         if (mShowSoftInputOnTap) {
                             mShowSoftInputOnTap = false;
                             showSoftInput();
                         } else {
-                            int selectorIndexOffset = (eventY / mSelectorElementHeight)
+                            int selectorIndexOffset = (eventX / mSelectorElementWidth)
                                     - SELECTOR_MIDDLE_ITEM_INDEX;
                             if (selectorIndexOffset > 0) {
                                 changeValueByOne(true);
@@ -834,12 +821,12 @@ public class FramePicker extends LinearLayout {
             }
         }
         scroller.computeScrollOffset();
-        int currentScrollerY = scroller.getCurrY();
-        if (mPreviousScrollerY == 0) {
-            mPreviousScrollerY = scroller.getStartY();
+        int currentScrollerX = scroller.getCurrX();
+        if (mPreviousScrollerX == 0) {
+            mPreviousScrollerX = scroller.getStartX();
         }
-        scrollBy(0, currentScrollerY - mPreviousScrollerY);
-        mPreviousScrollerY = currentScrollerY;
+        scrollBy(currentScrollerX - mPreviousScrollerX, 0);
+        mPreviousScrollerX = currentScrollerX;
         if (scroller.isFinished()) {
             onScrollerFinished(scroller);
         } else {
@@ -856,27 +843,27 @@ public class FramePicker extends LinearLayout {
     @Override
     public void scrollBy(int x, int y) {
         int[] selectorIndices = mSelectorIndices;
-        if (!mWrapSelectorWheel && y > 0
+        if (!mWrapSelectorWheel && x > 0
                 && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
             mCurrentScrollOffset = mInitialScrollOffset;
             return;
         }
-        if (!mWrapSelectorWheel && y < 0
+        if (!mWrapSelectorWheel && x < 0
                 && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
             mCurrentScrollOffset = mInitialScrollOffset;
             return;
         }
-        mCurrentScrollOffset += y;
-        while (mCurrentScrollOffset - mInitialScrollOffset > mSelectorTextGapHeight) {
-            mCurrentScrollOffset -= mSelectorElementHeight;
+        mCurrentScrollOffset += x;
+        while (mCurrentScrollOffset - mInitialScrollOffset > mSelectorTextGapWidth) {
+            mCurrentScrollOffset -= mSelectorElementWidth;
             decrementSelectorIndices(selectorIndices);
             setValueInternal(selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX], true);
             if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
                 mCurrentScrollOffset = mInitialScrollOffset;
             }
         }
-        while (mCurrentScrollOffset - mInitialScrollOffset < -mSelectorTextGapHeight) {
-            mCurrentScrollOffset += mSelectorElementHeight;
+        while (mCurrentScrollOffset - mInitialScrollOffset < -mSelectorTextGapWidth) {
+            mCurrentScrollOffset += mSelectorElementWidth;
             incrementSelectorIndices(selectorIndices);
             setValueInternal(selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX], true);
             if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
@@ -986,10 +973,12 @@ public class FramePicker extends LinearLayout {
     /**
      * Computes the max width if no such specified as an attribute.
      */
-    private void tryComputeMaxWidth() {
-        if (!mComputeMaxWidth) {
+    private void tryComputeMaxHeight() {
+    	// Text Height is constant, in mTextSize
+        if (!mComputeMaxHeight) {
             return;
         }
+/*
         int maxTextWidth = 0;
         if (mDisplayedValues == null) {
             float maxDigitWidth = 0;
@@ -1021,6 +1010,16 @@ public class FramePicker extends LinearLayout {
                 mMaxWidth = maxTextWidth;
             } else {
                 mMaxWidth = mMinWidth;
+            }
+            invalidate();
+        }
+*/
+        int maxTextHeight = mTextSize + mInputText.getPaddingTop() + mInputText.getPaddingBottom();
+        if (mMaxHeight != maxTextHeight) {
+            if (maxTextHeight > mMinHeight) {
+                mMaxHeight = maxTextHeight;
+            } else {
+                mMaxHeight = mMinHeight;
             }
             invalidate();
         }
@@ -1114,7 +1113,7 @@ public class FramePicker extends LinearLayout {
         setWrapSelectorWheel(wrapSelectorWheel);
         initializeSelectorWheelIndices();
         updateInputTextView();
-        tryComputeMaxWidth();
+        tryComputeMaxHeight();
         invalidate();
     }
 
@@ -1147,7 +1146,7 @@ public class FramePicker extends LinearLayout {
         setWrapSelectorWheel(wrapSelectorWheel);
         initializeSelectorWheelIndices();
         updateInputTextView();
-        tryComputeMaxWidth();
+        tryComputeMaxHeight();
         invalidate();
     }
 
@@ -1187,17 +1186,17 @@ public class FramePicker extends LinearLayout {
         }
         updateInputTextView();
         initializeSelectorWheelIndices();
-        tryComputeMaxWidth();
+        tryComputeMaxHeight();
     }
 
     @Override
-    protected float getTopFadingEdgeStrength() {
-        return TOP_AND_BOTTOM_FADING_EDGE_STRENGTH;
+    protected float getLeftFadingEdgeStrength() {
+        return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
     }
 
     @Override
-    protected float getBottomFadingEdgeStrength() {
-        return TOP_AND_BOTTOM_FADING_EDGE_STRENGTH;
+    protected float getRightFadingEdgeStrength() {
+        return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
     }
 
     @Override
@@ -1209,24 +1208,20 @@ public class FramePicker extends LinearLayout {
     
     @Override
     protected void onDraw(Canvas canvas) {
-        if (!true) {
-            super.onDraw(canvas);
-            return;
-        }
-        float x = getWidth() / 2;
-        float y = mCurrentScrollOffset;
+        float x = mCurrentScrollOffset;
+        float y = mInputText.getBaseline() + mInputText.getTop();
 
         // draw the virtual buttons pressed state if needed
         if (mVirtualButtonPressedDrawable != null
                 && mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
             if (mDecrementVirtualButtonPressed) {
                 mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-                mVirtualButtonPressedDrawable.setBounds(0, 0, getRight(), mTopSelectionDividerTop);
+                mVirtualButtonPressedDrawable.setBounds(0, 0, mLeftSelectionDividerLeft, getBottom());
                 mVirtualButtonPressedDrawable.draw(canvas);
             }
             if (mIncrementVirtualButtonPressed) {
                 mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-                mVirtualButtonPressedDrawable.setBounds(0, mBottomSelectionDividerBottom, getRight(),
+                mVirtualButtonPressedDrawable.setBounds(mRightSelectionDividerRight, 0, getRight(),
                         getBottom());
                 mVirtualButtonPressedDrawable.draw(canvas);
             }
@@ -1245,21 +1240,21 @@ public class FramePicker extends LinearLayout {
             if (i != SELECTOR_MIDDLE_ITEM_INDEX || mInputText.getVisibility() != VISIBLE) {
                 canvas.drawText(scrollSelectorValue, x, y, mSelectorWheelPaint);
             }
-            y += mSelectorElementHeight;
+            x += mSelectorElementWidth;
         }
 
         // draw the selection dividers
         if (mSelectionDivider != null) {
             // draw the top divider
-            int topOfTopDivider = mTopSelectionDividerTop;
-            int bottomOfTopDivider = topOfTopDivider + mSelectionDividerHeight;
-            mSelectionDivider.setBounds(0, topOfTopDivider, getRight(), bottomOfTopDivider);
+            int leftOfLeftDivider = mLeftSelectionDividerLeft;
+            int rightOfLeftDivider = leftOfLeftDivider + mSelectionDividerWidth;
+            mSelectionDivider.setBounds(leftOfLeftDivider, 0, rightOfLeftDivider, getBottom());
             mSelectionDivider.draw(canvas);
 
             // draw the bottom divider
-            int bottomOfBottomDivider = mBottomSelectionDividerBottom;
-            int topOfBottomDivider = bottomOfBottomDivider - mSelectionDividerHeight;
-            mSelectionDivider.setBounds(0, topOfBottomDivider, getRight(), bottomOfBottomDivider);
+            int rightOfRightDivider = mRightSelectionDividerRight;
+            int leftOfRightDivider = rightOfRightDivider - mSelectionDividerWidth;
+            mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
             mSelectionDivider.draw(canvas);
         }
     }
@@ -1362,47 +1357,40 @@ public class FramePicker extends LinearLayout {
      * @param increment True to increment, false to decrement.
      */
      private void changeValueByOne(boolean increment) {
-        if (true) {
             mInputText.setVisibility(View.INVISIBLE);
             if (!moveToFinalScrollerPosition(mFlingScroller)) {
                 moveToFinalScrollerPosition(mAdjustScroller);
             }
-            mPreviousScrollerY = 0;
+            mPreviousScrollerX = 0;
             if (increment) {
-                mFlingScroller.startScroll(0, 0, 0, -mSelectorElementHeight, SNAP_SCROLL_DURATION);
+                mFlingScroller.startScroll(0, 0, -mSelectorElementWidth, 0, SNAP_SCROLL_DURATION);
             } else {
-                mFlingScroller.startScroll(0, 0, 0, mSelectorElementHeight, SNAP_SCROLL_DURATION);
+                mFlingScroller.startScroll(0, 0, mSelectorElementWidth, 0, SNAP_SCROLL_DURATION);
             }
             invalidate();
-        } else {
-            if (increment) {
-                setValueInternal(mValue + 1, true);
-            } else {
-                setValueInternal(mValue - 1, true);
-            }
-        }
     }
 
     private void initializeSelectorWheel() {
         initializeSelectorWheelIndices();
         int[] selectorIndices = mSelectorIndices;
-        int totalTextHeight = selectorIndices.length * mTextSize;
-        float totalTextGapHeight = getHeight() - totalTextHeight;
+        // TODO: use a better number than mTextSize (the height) for the width of the elements. probably a constant
+        int totalTextWidth = selectorIndices.length * mTextSize;
+        float totalTextGapWidth = getWidth() - totalTextWidth;
         float textGapCount = selectorIndices.length;
-        mSelectorTextGapHeight = (int) (totalTextGapHeight / textGapCount + 0.5f);
-        mSelectorElementHeight = mTextSize + mSelectorTextGapHeight;
+        mSelectorTextGapWidth = (int) (totalTextGapWidth / textGapCount + 0.5f);
+        mSelectorElementWidth = mTextSize + mSelectorTextGapWidth;
         // Ensure that the middle item is positioned the same as the text in
         // mInputText
-        int editTextTextPosition = mInputText.getBaseline() + mInputText.getTop();
+        int editTextTextPosition = mInputText.getWidth()/2 + mInputText.getLeft();
         mInitialScrollOffset = editTextTextPosition
-                - (mSelectorElementHeight * SELECTOR_MIDDLE_ITEM_INDEX);
+                - (mSelectorElementWidth * SELECTOR_MIDDLE_ITEM_INDEX);
         mCurrentScrollOffset = mInitialScrollOffset;
         updateInputTextView();
     }
 
     private void initializeFadingEdges() {
-        setVerticalFadingEdgeEnabled(true);
-        setFadingEdgeLength((getHeight() - mTextSize) / 2);
+        setHorizontalFadingEdgeEnabled(true);
+        setFadingEdgeLength((getWidth() - mTextSize) / 2);
     }
 
     /**
@@ -1437,13 +1425,13 @@ public class FramePicker extends LinearLayout {
     /**
      * Flings the selector with the given <code>velocityY</code>.
      */
-    private void fling(int velocityY) {
-        mPreviousScrollerY = 0;
+    private void fling(int velocityX) {
+        mPreviousScrollerX = 0;
 
-        if (velocityY > 0) {
-            mFlingScroller.fling(0, 0, 0, velocityY, 0, 0, 0, Integer.MAX_VALUE);
+        if (velocityX > 0) {
+            mFlingScroller.fling(0, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
         } else {
-            mFlingScroller.fling(0, Integer.MAX_VALUE, 0, velocityY, 0, 0, 0, Integer.MAX_VALUE);
+            mFlingScroller.fling(Integer.MAX_VALUE, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
         }
 
         invalidate();
@@ -1762,13 +1750,13 @@ public class FramePicker extends LinearLayout {
      */
     private boolean ensureScrollWheelAdjusted() {
         // adjust to the closest value
-        int deltaY = mInitialScrollOffset - mCurrentScrollOffset;
-        if (deltaY != 0) {
-            mPreviousScrollerY = 0;
-            if (Math.abs(deltaY) > mSelectorElementHeight / 2) {
-                deltaY += (deltaY > 0) ? -mSelectorElementHeight : mSelectorElementHeight;
+        int deltaX = mInitialScrollOffset - mCurrentScrollOffset;
+        if (deltaX != 0) {
+            mPreviousScrollerX = 0;
+            if (Math.abs(deltaX) > mSelectorElementWidth / 2) {
+                deltaX += (deltaX > 0) ? -mSelectorElementWidth : mSelectorElementWidth;
             }
-            mAdjustScroller.startScroll(0, 0, 0, deltaY, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
+            mAdjustScroller.startScroll(0, 0, deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
             invalidate();
             return true;
         }
@@ -1791,11 +1779,11 @@ public class FramePicker extends LinearLayout {
             FramePicker.this.removeCallbacks(this);
             if (mIncrementVirtualButtonPressed) {
                 mIncrementVirtualButtonPressed = false;
-                invalidate(0, mBottomSelectionDividerBottom, getRight(), getBottom());
+                invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
             }
             mDecrementVirtualButtonPressed = false;
             if (mDecrementVirtualButtonPressed) {
-                invalidate(0, 0, getRight(), mTopSelectionDividerTop);
+                invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
             }
         }
 
@@ -1820,11 +1808,11 @@ public class FramePicker extends LinearLayout {
                     switch (mManagedButton) {
                         case BUTTON_INCREMENT: {
                             mIncrementVirtualButtonPressed = true;
-                            invalidate(0, mBottomSelectionDividerBottom, getRight(), getBottom());
+                            invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
                         } break;
                         case BUTTON_DECREMENT: {
                             mDecrementVirtualButtonPressed = true;
-                            invalidate(0, 0, getRight(), mTopSelectionDividerTop);
+                            invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
                         }
                     }
                 } break;
@@ -1836,7 +1824,7 @@ public class FramePicker extends LinearLayout {
                                         ViewConfiguration.getPressedStateDuration());
                             }
                             mIncrementVirtualButtonPressed ^= true;
-                            invalidate(0, mBottomSelectionDividerBottom, getRight(), getBottom());
+                            invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
                         } break;
                         case BUTTON_DECREMENT: {
                             if (!mDecrementVirtualButtonPressed) {
@@ -1844,7 +1832,7 @@ public class FramePicker extends LinearLayout {
                                         ViewConfiguration.getPressedStateDuration());
                             }
                             mDecrementVirtualButtonPressed ^= true;
-                            invalidate(0, 0, getRight(), mTopSelectionDividerTop);
+                            invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
                         }
                     }
                 } break;
