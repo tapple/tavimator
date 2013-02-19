@@ -13,7 +13,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class AnimationActivity extends Activity implements FramePicker.OnValueChangeListener
+public class AnimationActivity extends Activity implements HNumberPicker.OnValueChangeListener
 {
 	private static final String TAG = "AnimationActivity";
 	/** Hold a reference to our GLSurfaceView */
@@ -39,7 +39,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
 		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
 		
-		FramePicker framePicker = (FramePicker) findViewById(R.id.frame_picker);
+		HNumberPicker framePicker = (HNumberPicker) findViewById(R.id.frame_picker);
 		framePicker.setMaxValue(120);
 		framePicker.setWrapSelectorWheel(true);
 		framePicker.setOnLongPressUpdateInterval(33);
@@ -173,7 +173,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 	}
 
 	@Override
-	public void onValueChange(FramePicker picker, int oldVal, int newVal) {
+	public void onValueChange(HNumberPicker picker, int oldVal, int newVal) {
 		// TODO Auto-generated method stub
 		((TextView) findViewById(R.id.debugLabel)).setText("frame " + newVal);
 
