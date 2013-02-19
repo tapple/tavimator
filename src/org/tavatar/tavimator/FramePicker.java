@@ -139,7 +139,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The resource id for the default layout.
      */
-    private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.number_picker_with_selector_wheel;
+    private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.frame_picker;
 
     /**
      * Constant for unspecified size.
@@ -481,15 +481,11 @@ public class FramePicker extends LinearLayout {
 
         mSelectionDivider = attributesArray.getDrawable(R.styleable.FramePicker_selectionDivider);
 
-        final int defSelectionDividerWidth = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH,
-                getResources().getDisplayMetrics());
+        final int defSelectionDividerWidth = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH);
         mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
                 R.styleable.FramePicker_selectionDividerWidth, defSelectionDividerWidth);
 
-        final int defSelectionDividerDistance = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE,
-                getResources().getDisplayMetrics());
+        final int defSelectionDividerDistance = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE);
         mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
                 R.styleable.FramePicker_selectionDividersDistance, defSelectionDividerDistance);
 
@@ -576,6 +572,10 @@ public class FramePicker extends LinearLayout {
         mAdjustScroller = new Scroller(getContext(), new DecelerateInterpolator(2.5f));
 
         updateInputTextView();
+    }
+    
+    private float dp2px(float dp) {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
 
     @Override
@@ -1204,6 +1204,35 @@ public class FramePicker extends LinearLayout {
         removeAllCallbacks();
     }
 
+    private float frameSpacing; // pixels per frame
+    private float[] frameTicks;
+    
+    private void updateCachedMetrics() {
+    	frameSpacing = dp2px(10);
+    	float bottom = getHeight();
+    	float minorTop = bottom - dp2px(10);
+    	float majorTop = bottom - dp2px(20);
+    	int minorEvery = 1; // frames / marker
+    	int majorEvery = 5; // frames / marker
+    	int count = 101;
+    	float x = getWidth() / 2 - count * frameSpacing / 2;
+    	frameTicks = new float[count * 4];
+    	
+    	for (int i = 0; i < count; i++) {
+    		float top;
+    		if (i % majorEvery == 0) top = majorTop;
+    		else if (i % minorEvery == 0) top = minorTop;
+    		else continue;
+    		
+    		frameTicks[i*4 + 0] = x;
+    		frameTicks[i*4 + 1] = bottom;
+    		frameTicks[i*4 + 2] = x;
+    		frameTicks[i*4 + 3] = top;
+    		
+    		x += frameSpacing;
+    	}
+    }
+    
     protected int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
     
     @Override
@@ -1257,6 +1286,9 @@ public class FramePicker extends LinearLayout {
             mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
             mSelectionDivider.draw(canvas);
         }
+        
+        updateCachedMetrics();
+        canvas.drawLines(frameTicks, mSelectorWheelPaint);
     }
 
     /**
