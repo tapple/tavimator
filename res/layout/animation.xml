@@ -16,7 +16,7 @@
 		android:orientation="horizontal"
 	/>
 	
-	<org.tavatar.tavimator.HNumberPicker		
+	<org.tavatar.tavimator.FramePicker		
 		android:id="@+id/frame_picker"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
