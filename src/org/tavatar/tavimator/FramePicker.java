@@ -1205,7 +1205,8 @@ public class FramePicker extends LinearLayout {
     }
 
     private float frameSpacing; // pixels per frame
-    private float[] frameTicks;
+    private float[] frameTicks; // pixel coordinates of the frame tick marks. Pass this directly to Canvas.drawLines();
+    private float[] textPositions; // x pixel coordinates of the start of the tick mark labels
     
     private void updateCachedMetrics() {
     	frameSpacing = dp2px(10);
@@ -1217,12 +1218,16 @@ public class FramePicker extends LinearLayout {
     	int count = 101;
     	float x = getWidth() / 2 - count * frameSpacing / 2;
     	frameTicks = new float[count * 4];
+    	textPositions = new float[count / majorEvery + 1];
     	
     	for (int i = 0; i < count; i++) {
     		float top;
-    		if (i % majorEvery == 0) top = majorTop;
-    		else if (i % minorEvery == 0) top = minorTop;
-    		else continue;
+    		if (i % majorEvery == 0) {
+    			top = majorTop;
+    			textPositions[i/majorEvery] = x + dp2px(2);
+    		} else if (i % minorEvery == 0) {
+    			top = minorTop;
+    		} else continue;
     		
     		frameTicks[i*4 + 0] = x;
     		frameTicks[i*4 + 1] = bottom;
@@ -1288,7 +1293,14 @@ public class FramePicker extends LinearLayout {
         }
         
         updateCachedMetrics();
-        canvas.drawLines(frameTicks, mSelectorWheelPaint);
+        Paint rulerPaint = new Paint(mSelectorWheelPaint);
+        rulerPaint.setTextAlign(Paint.Align.LEFT);
+        canvas.drawLines(frameTicks, rulerPaint);
+        float textBottom = getHeight() - dp2px(15);
+        for (int i = 0; i < textPositions.length; i++) {
+                canvas.drawText(Integer.toString(i), textPositions[i], textBottom, rulerPaint);
+                canvas.drawPoint(textPositions[i], textBottom, rulerPaint);
+        }
     }
 
     /**
