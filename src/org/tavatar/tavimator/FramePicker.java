@@ -1216,7 +1216,7 @@ public class FramePicker extends LinearLayout {
     	int minorEvery = 1; // frames / marker
     	int majorEvery = 5; // frames / marker
     	int count = 101;
-    	float x = getWidth() / 2 - count * frameSpacing / 2;
+    	float x = 0;
     	frameTicks = new float[count * 4];
     	textPositions = new float[count / majorEvery + 1];
     	
@@ -1242,7 +1242,7 @@ public class FramePicker extends LinearLayout {
     
     @Override
     protected void onDraw(Canvas canvas) {
-        float x = mCurrentScrollOffset;
+        float x = 0;
         float y = mInputText.getBaseline() + mInputText.getTop();
 
         // draw the virtual buttons pressed state if needed
@@ -1261,7 +1261,10 @@ public class FramePicker extends LinearLayout {
             }
         }
 
-        // draw the selector wheel
+    	canvas.save();
+    	canvas.translate(mCurrentScrollOffset, 0);
+
+    	// draw the selector wheel
         int[] selectorIndices = mSelectorIndices;
         for (int i = 0; i < selectorIndices.length; i++) {
             int selectorIndex = selectorIndices[i];
@@ -1277,6 +1280,17 @@ public class FramePicker extends LinearLayout {
             x += mSelectorElementWidth;
         }
 
+        updateCachedMetrics();
+        Paint rulerPaint = new Paint(mSelectorWheelPaint);
+        rulerPaint.setTextAlign(Paint.Align.LEFT);
+        canvas.drawLines(frameTicks, rulerPaint);
+        float textBottom = getHeight() - dp2px(15);
+        for (int i = 0; i < textPositions.length; i++) {
+                canvas.drawText(Integer.toString(i), textPositions[i], textBottom, rulerPaint);
+                canvas.drawPoint(textPositions[i], textBottom, rulerPaint);
+        }
+        canvas.restore();
+
         // draw the selection dividers
         if (mSelectionDivider != null) {
             // draw the top divider
@@ -1290,16 +1304,6 @@ public class FramePicker extends LinearLayout {
             int leftOfRightDivider = rightOfRightDivider - mSelectionDividerWidth;
             mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
             mSelectionDivider.draw(canvas);
-        }
-        
-        updateCachedMetrics();
-        Paint rulerPaint = new Paint(mSelectorWheelPaint);
-        rulerPaint.setTextAlign(Paint.Align.LEFT);
-        canvas.drawLines(frameTicks, rulerPaint);
-        float textBottom = getHeight() - dp2px(15);
-        for (int i = 0; i < textPositions.length; i++) {
-                canvas.drawText(Integer.toString(i), textPositions[i], textBottom, rulerPaint);
-                canvas.drawPoint(textPositions[i], textBottom, rulerPaint);
         }
     }
 
