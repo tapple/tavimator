@@ -91,893 +91,893 @@ import java.util.Locale;
 
 public class FramePicker extends LinearLayout {
 
-    /**
-     * The number of items show in the selector wheel.
-     */
-    private int SELECTOR_WHEEL_ITEM_COUNT = 3;
-
-    /**
-     * The default update interval during long press.
-     */
-    private static final long DEFAULT_LONG_PRESS_UPDATE_INTERVAL = 300;
-
-    /**
-     * The index of the middle selector item.
-     */
-    private int SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
-
-    /**
-     * The coefficient by which to adjust (divide) the max fling velocity.
-     */
-    private static final int SELECTOR_MAX_FLING_VELOCITY_ADJUSTMENT = 8;
-
-    /**
-     * The the duration for adjusting the selector wheel.
-     */
-    private static final int SELECTOR_ADJUSTMENT_DURATION_MILLIS = 800;
-
-    /**
-     * The duration of scrolling while snapping to a given position.
-     */
-    private static final int SNAP_SCROLL_DURATION = 300;
-
-    /**
-     * The strength of fading in the top and bottom while drawing the selector.
-     */
-    private static final float LEFT_AND_RIGHT_FADING_EDGE_STRENGTH = 0.9f;
-
-    /**
-     * The default unscaled height of the selection divider.
-     */
-    private static final int UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH = 2;
-
-    /**
-     * The default unscaled distance between the selection dividers.
-     */
-    private static final int UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE = 48;
-
-    /**
-     * The resource id for the default layout.
-     */
-    private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.frame_picker;
-
-    /**
-     * Constant for unspecified size.
-     */
-    private static final int SIZE_UNSPECIFIED = -1;
-
-    /**
-     * The text for showing the current value.
-     */
-    private final EditText mInputText;
-
-    /**
-     * The distance between the two selection dividers.
-     */
-    private final int mSelectionDividersDistance;
-
-    /**
-     * The min height of this widget.
-     */
-    private final int mMinHeight;
-
-    /**
-     * The max height of this widget.
-     */
-    private int mMaxHeight;
-
-    /**
-     * The max width of this widget.
-     */
-    private final int mMinWidth;
-
-    /**
-     * The max width of this widget.
-     */
-    private final int mMaxWidth;
-
-    /**
-     * Flag whether to compute the max width.
-     */
-    private final boolean mComputeMaxHeight;
-
-    /**
-     * The height of the text.
-     */
-    private final int mTextSize;
-
-    /**
-     * The values to be displayed instead the indices.
-     */
-    private String[] mDisplayedValues;
-
-    /**
-     * Lower value of the range of numbers allowed for the NumberPicker
-     */
-    private int mMinValue;
-
-    /**
-     * Upper value of the range of numbers allowed for the NumberPicker
-     */
-    private int mMaxValue;
-
-    /**
-     * Current value of this NumberPicker
-     */
-    private int mValue;
-
-    /**
-     * Listener to be notified upon current value change.
-     */
-    private OnValueChangeListener mOnValueChangeListener;
-
-    /**
-     * Listener to be notified upon scroll state change.
-     */
-    private OnScrollListener mOnScrollListener;
-
-    /**
-     * Formatter for for displaying the current value.
-     */
-    private Formatter mFormatter;
-
-    /**
-     * The speed for updating the value form long press.
-     */
-    private long mLongPressUpdateInterval = DEFAULT_LONG_PRESS_UPDATE_INTERVAL;
-
-    /**
-     * Cache for the string representation of selector indices.
-     */
-    private final SparseArray<String> mSelectorIndexToStringCache = new SparseArray<String>();
-
-    /**
-     * The selector indices whose value are show by the selector.
-     */
-    private final int[] mSelectorIndices = new int[SELECTOR_WHEEL_ITEM_COUNT];
-
-    /**
-     * The difference from one text display to the next.
-     */
-    private int mFramesPerSegment = 5;
-
-    /**
-     * The {@link Paint} for drawing the selector.
-     */
-    private final Paint mSelectorWheelPaint;
-
-    /**
-     * The {@link Drawable} for pressed virtual (increment/decrement) buttons.
-     */
-    private final Drawable mVirtualButtonPressedDrawable;
-
-    /**
-     * The initial offset of the scroll selector.
-     */
-    private float mInitialScrollOffset = Integer.MIN_VALUE;
-
-    /**
-     * The current offset of the scroll selector.
-     */
-    private float mCurrentScrollOffset;
-
-    /**
-     * The {@link Scroller} responsible for flinging the selector.
-     */
-    private final Scroller mFlingScroller;
-
-    /**
-     * The {@link Scroller} responsible for adjusting the selector.
-     */
-    private final Scroller mAdjustScroller;
-
-    /**
-     * The previous Y coordinate while scrolling the selector.
-     */
-    private int mPreviousScrollerX;
-
-    /**
-     * Handle to the reusable command for setting the input text selection.
-     */
-    private SetSelectionCommand mSetSelectionCommand;
-
-    /**
-     * Handle to the reusable command for changing the current value from long
-     * press by one.
-     */
-    private ChangeCurrentByOneFromLongPressCommand mChangeCurrentByOneFromLongPressCommand;
-
-    /**
-     * Command for beginning an edit of the current value via IME on long press.
-     */
-    private BeginSoftInputOnLongPressCommand mBeginSoftInputOnLongPressCommand;
-
-    /**
-     * The Y position of the last down event.
-     */
-    private float mLastDownEventX;
-
-    /**
-     * The time of the last down event.
-     */
-    private long mLastDownEventTime;
-
-    /**
-     * The Y position of the last down or move event.
-     */
-    private float mLastDownOrMoveEventX;
-
-    /**
-     * Determines speed during touch scrolling.
-     */
-    private VelocityTracker mVelocityTracker;
-
-    /**
-     * @see ViewConfiguration#getScaledTouchSlop()
-     */
-    private int mTouchSlop;
-
-    /**
-     * @see ViewConfiguration#getScaledMinimumFlingVelocity()
-     */
-    private int mMinimumFlingVelocity;
-
-    /**
-     * @see ViewConfiguration#getScaledMaximumFlingVelocity()
-     */
-    private int mMaximumFlingVelocity;
-
-    /**
-     * Flag whether the selector should wrap around.
-     */
-    private boolean mWrapSelectorWheel;
-
-    /**
-     * The back ground color used to optimize scroller fading.
-     */
-    private final int mSolidColor;
-
-    /**
-     * Divider for showing item to be selected while scrolling
-     */
-    private final Drawable mSelectionDivider;
-
-    /**
-     * The height of the selection divider.
-     */
-    private final int mSelectionDividerWidth;
-
-    /**
-     * The current scroll state of the number picker.
-     */
-    private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
-
-    /**
-     * Flag whether to ignore move events - we ignore such when we show in IME
-     * to prevent the content from scrolling.
-     */
-    private boolean mIngonreMoveEvents;
-
-    /**
-     * Flag whether to show soft input on tap.
-     */
-    private boolean mShowSoftInputOnTap;
-
-    /**
-     * The top of the top selection divider.
-     */
-    private int mLeftSelectionDividerLeft;
-
-    /**
-     * The bottom of the bottom selection divider.
-     */
-    private int mRightSelectionDividerRight;
-
-    /**
-     * Whether the increment virtual button is pressed.
-     */
-    private boolean mIncrementVirtualButtonPressed;
-
-    /**
-     * Whether the decrement virtual button is pressed.
-     */
-    private boolean mDecrementVirtualButtonPressed;
-
-    /**
-     * Helper class for managing pressed state of the virtual buttons.
-     */
-    private final PressedStateHelper mPressedStateHelper;
-
-    /**
-     * Interface to listen for changes of the current value.
-     */
-    public interface OnValueChangeListener {
-
-        /**
-         * Called upon a change of the current value.
-         *
-         * @param picker The NumberPicker associated with this listener.
-         * @param oldVal The previous value.
-         * @param newVal The new value.
-         */
-        void onValueChange(FramePicker picker, int oldVal, int newVal);
-    }
-
-    /**
-     * Interface to listen for the picker scroll state.
-     */
-    public interface OnScrollListener {
-
-        /**
-         * The view is not scrolling.
-         */
-        public static int SCROLL_STATE_IDLE = 0;
-
-        /**
-         * The user is scrolling using touch, and his finger is still on the screen.
-         */
-        public static int SCROLL_STATE_TOUCH_SCROLL = 1;
-
-        /**
-         * The user had previously been scrolling using touch and performed a fling.
-         */
-        public static int SCROLL_STATE_FLING = 2;
-
-        /**
-         * Callback invoked while the number picker scroll state has changed.
-         *
-         * @param view The view whose scroll state is being reported.
-         * @param scrollState The current scroll state. One of
-         *            {@link #SCROLL_STATE_IDLE},
-         *            {@link #SCROLL_STATE_TOUCH_SCROLL} or
-         *            {@link #SCROLL_STATE_IDLE}.
-         */
-        public void onScrollStateChange(FramePicker view, int scrollState);
-    }
-
-    /**
-     * Interface used to format current value into a string for presentation.
-     */
-    public interface Formatter {
-
-        /**
-         * Formats a string representation of the current value.
-         *
-         * @param value The currently selected value.
-         * @return A formatted string representation.
-         */
-        public String format(int value);
-    }
-
-    /**
-     * Create a new number picker.
-     *
-     * @param context The application environment.
-     */
-    public FramePicker(Context context) {
-        this(context, null);
-    }
-
-    /**
-     * Create a new number picker.
-     *
-     * @param context The application environment.
-     * @param attrs A collection of attributes.
-     */
-    public FramePicker(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        // process style attributes
-        TypedArray attributesArray = context.obtainStyledAttributes(
-                attrs, R.styleable.FramePicker, R.attr.framePickerStyle, 0);
-        final int layoutResId = DEFAULT_LAYOUT_RESOURCE_ID;
-
-        mSolidColor = attributesArray.getColor(R.styleable.FramePicker_solidColor, 0);
-
-        mSelectionDivider = attributesArray.getDrawable(R.styleable.FramePicker_selectionDivider);
-
-        final int defSelectionDividerWidth = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH);
-        mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_selectionDividerWidth, defSelectionDividerWidth);
-
-        final int defSelectionDividerDistance = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE);
-        mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_selectionDividersDistance, defSelectionDividerDistance);
-
-        mMinHeight = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_internalMinHeight, SIZE_UNSPECIFIED);
-
-        mMaxHeight = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_internalMaxHeight, SIZE_UNSPECIFIED);
-        if (mMinHeight != SIZE_UNSPECIFIED && mMaxHeight != SIZE_UNSPECIFIED
-                && mMinHeight > mMaxHeight) {
-            throw new IllegalArgumentException("minHeight > maxHeight");
-        }
-
-        mMinWidth = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_internalMinWidth, SIZE_UNSPECIFIED);
-
-        mMaxWidth = attributesArray.getDimensionPixelSize(
-                R.styleable.FramePicker_internalMaxWidth, SIZE_UNSPECIFIED);
-        if (mMinWidth != SIZE_UNSPECIFIED && mMaxWidth != SIZE_UNSPECIFIED
-                && mMinWidth > mMaxWidth) {
-            throw new IllegalArgumentException("minWidth > maxWidth");
-        }
-
-        mComputeMaxHeight = (mMaxHeight == SIZE_UNSPECIFIED);
-
-        mVirtualButtonPressedDrawable = attributesArray.getDrawable(
-                R.styleable.FramePicker_virtualButtonPressedDrawable);
-
-        attributesArray.recycle();
-
-        mPressedStateHelper = new PressedStateHelper();
-
-        // By default Linearlayout that we extend is not drawn. This is
-        // its draw() method is not called but dispatchDraw() is called
-        // directly (see ViewGroup.drawChild()). However, this class uses
-        // the fading edge effect implemented by View and we need our
-        // draw() method to be called. Therefore, we declare we will draw.
-        setWillNotDraw(false);
-
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
-                Context.LAYOUT_INFLATER_SERVICE);
-        inflater.inflate(layoutResId, this, true);
-
-        // input text
-        mInputText = (EditText) findViewById(R.id.numberpicker_input);
-        mInputText.setOnFocusChangeListener(new OnFocusChangeListener() {
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    mInputText.selectAll();
-                } else {
-                    mInputText.setSelection(0, 0);
-                    validateInputTextView(v);
-                }
-            }
-        });
-        mInputText.setFilters(new InputFilter[] {
-            new InputTextFilter()
-        });
-
-        mInputText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
-        mInputText.setImeOptions(EditorInfo.IME_ACTION_DONE);
-
-        // initialize constants
-        ViewConfiguration configuration = ViewConfiguration.get(context);
-        mTouchSlop = configuration.getScaledTouchSlop();
-        mMinimumFlingVelocity = configuration.getScaledMinimumFlingVelocity();
-        mMaximumFlingVelocity = configuration.getScaledMaximumFlingVelocity()
-                / SELECTOR_MAX_FLING_VELOCITY_ADJUSTMENT;
-        mTextSize = (int) mInputText.getTextSize();
-
-        // create the selector wheel paint
-        Paint paint = new Paint();
-        paint.setAntiAlias(true);
-        paint.setTextAlign(Align.CENTER);
-        paint.setTextSize(mTextSize);
-        paint.setTypeface(mInputText.getTypeface());
-        ColorStateList colors = mInputText.getTextColors();
-        int color = colors.getColorForState(ENABLED_STATE_SET, Color.WHITE);
-        paint.setColor(color);
-        mSelectorWheelPaint = paint;
-
-        // create the fling and adjust scrollers
-        mFlingScroller = new Scroller(getContext(), null);
-        mAdjustScroller = new Scroller(getContext(), new DecelerateInterpolator(2.5f));
-
-        updateInputTextView();
-    }
-    
-    private float dp2px(float dp) {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        final int msrdWdth = getMeasuredWidth();
-        final int msrdHght = getMeasuredHeight();
-
-        // Input text centered horizontally.
-        final int inptTxtMsrdWdth = mInputText.getMeasuredWidth();
-        final int inptTxtMsrdHght = mInputText.getMeasuredHeight();
-        final int inptTxtLeft = (msrdWdth - inptTxtMsrdWdth) / 2;
-        final int inptTxtTop = (msrdHght - inptTxtMsrdHght) / 2;
-        final int inptTxtRight = inptTxtLeft + inptTxtMsrdWdth;
-        final int inptTxtBottom = inptTxtTop + inptTxtMsrdHght;
-        mInputText.layout(inptTxtLeft, inptTxtTop, inptTxtRight, inptTxtBottom);
-
-        if (changed) {
-            // need to do all this when we know our size
-            initializeSelectorWheel();
-            initializeFadingEdges();
-            mLeftSelectionDividerLeft = (getWidth() - mSelectionDividersDistance) / 2
-                    - mSelectionDividerWidth;
-            mRightSelectionDividerRight = mLeftSelectionDividerLeft + 2 * mSelectionDividerWidth
-                    + mSelectionDividersDistance;
-        }
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // Try greedily to fit the max width and height.
-        final int newWidthMeasureSpec = makeMeasureSpec(widthMeasureSpec, mMaxWidth);
-        final int newHeightMeasureSpec = makeMeasureSpec(heightMeasureSpec, mMaxHeight);
-        super.onMeasure(newWidthMeasureSpec, newHeightMeasureSpec);
-        // Flag if we are measured with width or height less than the respective min.
-        final int widthSize = resolveSizeAndStateRespectingMinSize(mMinWidth, getMeasuredWidth(),
-                widthMeasureSpec);
-        final int heightSize = resolveSizeAndStateRespectingMinSize(mMinHeight, getMeasuredHeight(),
-                heightMeasureSpec);
-        setMeasuredDimension(widthSize, heightSize);
-    }
-
-    /**
-     * Move to the final position of a scroller. Ensures to force finish the scroller
-     * and if it is not at its final position a scroll of the selector wheel is
-     * performed to fast forward to the final position.
-     *
-     * @param scroller The scroller to whose final position to get.
-     * @return True of the a move was performed, i.e. the scroller was not in final position.
-     */
-    private boolean moveToFinalScrollerPosition(Scroller scroller) {
-        scroller.forceFinished(true);
-        float amountToScroll = scroller.getFinalX() - scroller.getCurrX();
-        float futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mFrameSpacing;
-        float overshootAdjustment = mInitialScrollOffset - futureScrollOffset;
-        if (overshootAdjustment != 0) {
-            if (Math.abs(overshootAdjustment) > mFrameSpacing / 2) {
-                if (overshootAdjustment > 0) {
-                    overshootAdjustment -= mFrameSpacing;
-                } else {
-                    overshootAdjustment += mFrameSpacing;
-                }
-            }
-            amountToScroll += overshootAdjustment;
-            scrollBy(amountToScroll, 0);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (!isEnabled()) {
-            return false;
-        }
-        final int action = event.getActionMasked();
-        switch (action) {
-            case MotionEvent.ACTION_DOWN: {
-                removeAllCallbacks();
-                mInputText.setVisibility(View.INVISIBLE);
-                mLastDownOrMoveEventX = mLastDownEventX = event.getX();
-                mLastDownEventTime = event.getEventTime();
-                mIngonreMoveEvents = false;
-                mShowSoftInputOnTap = false;
-                // Handle pressed state before any state change.
-                if (mLastDownEventX < mLeftSelectionDividerLeft) {
-                    if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-                        mPressedStateHelper.buttonPressDelayed(
-                                PressedStateHelper.BUTTON_DECREMENT);
-                    }
-                } else if (mLastDownEventX > mRightSelectionDividerRight) {
-                    if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-                        mPressedStateHelper.buttonPressDelayed(
-                                PressedStateHelper.BUTTON_INCREMENT);
-                    }
-                }
-                // Make sure we support flinging inside scrollables.
-                getParent().requestDisallowInterceptTouchEvent(true);
-                if (!mFlingScroller.isFinished()) {
-                    mFlingScroller.forceFinished(true);
-                    mAdjustScroller.forceFinished(true);
-                    onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-                } else if (!mAdjustScroller.isFinished()) {
-                    mFlingScroller.forceFinished(true);
-                    mAdjustScroller.forceFinished(true);
-                } else if (mLastDownEventX < mLeftSelectionDividerLeft) {
-                    hideSoftInput();
-                    postChangeCurrentByOneFromLongPress(
-                            false, ViewConfiguration.getLongPressTimeout());
-                } else if (mLastDownEventX > mRightSelectionDividerRight) {
-                    hideSoftInput();
-                    postChangeCurrentByOneFromLongPress(
-                            true, ViewConfiguration.getLongPressTimeout());
-                } else {
-                    mShowSoftInputOnTap = true;
-                    postBeginSoftInputOnLongPressCommand();
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!isEnabled()) {
-            return false;
-        }
-        if (mVelocityTracker == null) {
-            mVelocityTracker = VelocityTracker.obtain();
-        }
-        mVelocityTracker.addMovement(event);
-        int action = event.getActionMasked();
-        switch (action) {
-            case MotionEvent.ACTION_MOVE: {
-                if (mIngonreMoveEvents) {
-                    break;
-                }
-                float currentMoveX = event.getX();
-                if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                    int deltaDownX = (int) Math.abs(currentMoveX - mLastDownEventX);
-                    if (deltaDownX > mTouchSlop) {
-                        removeAllCallbacks();
-                        onScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-                    }
-                } else {
-                    int deltaMoveX = (int) ((currentMoveX - mLastDownOrMoveEventX));
-                    scrollBy(deltaMoveX, 0);
-                    invalidate();
-                }
-                mLastDownOrMoveEventX = currentMoveX;
-            } break;
-            case MotionEvent.ACTION_UP: {
-                removeBeginSoftInputCommand();
-                removeChangeCurrentByOneFromLongPress();
-                mPressedStateHelper.cancel();
-                VelocityTracker velocityTracker = mVelocityTracker;
-                velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
-                int initialVelocity = (int) velocityTracker.getXVelocity();
-                if (Math.abs(initialVelocity) > mMinimumFlingVelocity) {
-                    fling(initialVelocity);
-                    onScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
-                } else {
-                    int eventX = (int) event.getX();
-                    int deltaMoveX = (int) Math.abs(eventX - mLastDownEventX);
-                    long deltaTime = event.getEventTime() - mLastDownEventTime;
-                    if (deltaMoveX <= mTouchSlop && deltaTime < ViewConfiguration.getTapTimeout()) {
-                        if (mShowSoftInputOnTap) {
-                            mShowSoftInputOnTap = false;
-                            showSoftInput();
-                        } else {
-                            float selectorIndexOffset = (eventX / mFrameSpacing)
-                                    - SELECTOR_MIDDLE_ITEM_INDEX;
-                            if (selectorIndexOffset > 0) {
-                                changeValueByOne(true);
-                                mPressedStateHelper.buttonTapped(
-                                        PressedStateHelper.BUTTON_INCREMENT);
-                            } else if (selectorIndexOffset < 0) {
-                                changeValueByOne(false);
-                                mPressedStateHelper.buttonTapped(
-                                        PressedStateHelper.BUTTON_DECREMENT);
-                            }
-                        }
-                    } else {
-                        ensureScrollWheelAdjusted();
-                    }
-                    onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-                }
-                mVelocityTracker.recycle();
-                mVelocityTracker = null;
-            } break;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        final int action = event.getActionMasked();
-        switch (action) {
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                removeAllCallbacks();
-                break;
-        }
-        return super.dispatchTouchEvent(event);
-    }
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        final int keyCode = event.getKeyCode();
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_CENTER:
-            case KeyEvent.KEYCODE_ENTER:
-                removeAllCallbacks();
-                break;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    public boolean dispatchTrackballEvent(MotionEvent event) {
-        final int action = event.getActionMasked();
-        switch (action) {
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                removeAllCallbacks();
-                break;
-        }
-        return super.dispatchTrackballEvent(event);
-    }
-
-    @Override
-    protected boolean dispatchHoverEvent(MotionEvent event) {
-        return false;
-    }
-
-    @Override
-    public void computeScroll() {
-        Scroller scroller = mFlingScroller;
-        if (scroller.isFinished()) {
-            scroller = mAdjustScroller;
-            if (scroller.isFinished()) {
-                return;
-            }
-        }
-        scroller.computeScrollOffset();
-        int currentScrollerX = scroller.getCurrX();
-        if (mPreviousScrollerX == 0) {
-            mPreviousScrollerX = scroller.getStartX();
-        }
-        scrollBy(currentScrollerX - mPreviousScrollerX, 0);
-        mPreviousScrollerX = currentScrollerX;
-        if (scroller.isFinished()) {
-            onScrollerFinished(scroller);
-        } else {
-            invalidate();
-        }
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        mInputText.setEnabled(enabled);
-    }
-
-    @Override
-    public void scrollBy(int x, int y) {
-    	scrollBy((float)x, (float)y);
-    }
-
-    public void scrollBy(float x, float y) {
-        int[] selectorIndices = mSelectorIndices;
-        if (!mWrapSelectorWheel && x > 0
-                && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
-            mCurrentScrollOffset = mInitialScrollOffset;
-            return;
-        }
-        if (!mWrapSelectorWheel && x < 0
-                && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
-            mCurrentScrollOffset = mInitialScrollOffset;
-            return;
-        }
-        mCurrentScrollOffset += x;
-        while (mCurrentScrollOffset - mInitialScrollOffset > mFrameSpacing) {
-            mCurrentScrollOffset -= mFrameSpacing;
-            decrementSelectorIndices(selectorIndices);
-            setValueInternal(mValue - 1, true);
-            if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
-                mCurrentScrollOffset = mInitialScrollOffset;
-            }
-        }
-        while (mCurrentScrollOffset - mInitialScrollOffset < -mFrameSpacing) {
-            mCurrentScrollOffset += mFrameSpacing;
-            incrementSelectorIndices(selectorIndices);
-            setValueInternal(mValue + 1, true);
-            if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
-                mCurrentScrollOffset = mInitialScrollOffset;
-            }
-        }
-    }
-
-    @Override
-    public int getSolidColor() {
-        return mSolidColor;
-    }
-
-    /**
-     * Sets the listener to be notified on change of the current value.
-     *
-     * @param onValueChangedListener The listener.
-     */
-    public void setOnValueChangedListener(OnValueChangeListener onValueChangedListener) {
-        mOnValueChangeListener = onValueChangedListener;
-    }
-
-    /**
-     * Set listener to be notified for scroll state changes.
-     *
-     * @param onScrollListener The listener.
-     */
-    public void setOnScrollListener(OnScrollListener onScrollListener) {
-        mOnScrollListener = onScrollListener;
-    }
-
-    /**
-     * Set the formatter to be used for formatting the current value.
-     * <p>
-     * Note: If you have provided alternative values for the values this
-     * formatter is never invoked.
-     * </p>
-     *
-     * @param formatter The formatter object. If formatter is <code>null</code>,
-     *            {@link String#valueOf(int)} will be used.
-     *@see #setDisplayedValues(String[])
-     */
-    public void setFormatter(Formatter formatter) {
-        if (formatter == mFormatter) {
-            return;
-        }
-        mFormatter = formatter;
-        initializeSelectorWheelIndices();
-        updateInputTextView();
-    }
-
-    /**
-     * Set the current value for the number picker.
-     * <p>
-     * If the argument is less than the {@link FramePicker#getMinValue()} and
-     * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
-     * current value is set to the {@link FramePicker#getMinValue()} value.
-     * </p>
-     * <p>
-     * If the argument is less than the {@link FramePicker#getMinValue()} and
-     * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
-     * current value is set to the {@link FramePicker#getMaxValue()} value.
-     * </p>
-     * <p>
-     * If the argument is less than the {@link FramePicker#getMaxValue()} and
-     * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
-     * current value is set to the {@link FramePicker#getMaxValue()} value.
-     * </p>
-     * <p>
-     * If the argument is less than the {@link FramePicker#getMaxValue()} and
-     * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
-     * current value is set to the {@link FramePicker#getMinValue()} value.
-     * </p>
-     *
-     * @param value The current value.
-     * @see #setWrapSelectorWheel(boolean)
-     * @see #setMinValue(int)
-     * @see #setMaxValue(int)
-     */
-    public void setValue(int value) {
-        setValueInternal(value, false);
-    }
-
-    /**
-     * Shows the soft input for its input text.
-     */
-    private void showSoftInput() {
-        InputMethodManager inputMethodManager = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (inputMethodManager != null) {
-        	mInputText.setVisibility(View.VISIBLE);
-        	mInputText.requestFocus();
-            inputMethodManager.showSoftInput(mInputText, 0);
-        }
-    }
-
-    /**
-     * Hides the soft input if it is active for the input text.
-     */
-    private void hideSoftInput() {
-        InputMethodManager inputMethodManager = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (inputMethodManager != null && inputMethodManager.isActive(mInputText)) {
-            inputMethodManager.hideSoftInputFromWindow(getWindowToken(), 0);
-            mInputText.setVisibility(View.INVISIBLE);
-        }
-    }
-
-    /**
-     * Computes the max width if no such specified as an attribute.
-     */
-    private void tryComputeMaxHeight() {
-    	// Text Height is constant, in mTextSize
-        if (!mComputeMaxHeight) {
-            return;
-        }
-/*
+	/**
+	 * The number of items show in the selector wheel.
+	 */
+	private int SELECTOR_WHEEL_ITEM_COUNT = 3;
+
+	/**
+	 * The default update interval during long press.
+	 */
+	private static final long DEFAULT_LONG_PRESS_UPDATE_INTERVAL = 300;
+
+	/**
+	 * The index of the middle selector item.
+	 */
+	private int SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
+
+	/**
+	 * The coefficient by which to adjust (divide) the max fling velocity.
+	 */
+	private static final int SELECTOR_MAX_FLING_VELOCITY_ADJUSTMENT = 8;
+
+	/**
+	 * The the duration for adjusting the selector wheel.
+	 */
+	private static final int SELECTOR_ADJUSTMENT_DURATION_MILLIS = 800;
+
+	/**
+	 * The duration of scrolling while snapping to a given position.
+	 */
+	private static final int SNAP_SCROLL_DURATION = 300;
+
+	/**
+	 * The strength of fading in the top and bottom while drawing the selector.
+	 */
+	private static final float LEFT_AND_RIGHT_FADING_EDGE_STRENGTH = 0.9f;
+
+	/**
+	 * The default unscaled height of the selection divider.
+	 */
+	private static final int UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH = 2;
+
+	/**
+	 * The default unscaled distance between the selection dividers.
+	 */
+	private static final int UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE = 48;
+
+	/**
+	 * The resource id for the default layout.
+	 */
+	private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.frame_picker;
+
+	/**
+	 * Constant for unspecified size.
+	 */
+	private static final int SIZE_UNSPECIFIED = -1;
+
+	/**
+	 * The text for showing the current value.
+	 */
+	private final EditText mInputText;
+
+	/**
+	 * The distance between the two selection dividers.
+	 */
+	private final int mSelectionDividersDistance;
+
+	/**
+	 * The min height of this widget.
+	 */
+	private final int mMinHeight;
+
+	/**
+	 * The max height of this widget.
+	 */
+	private int mMaxHeight;
+
+	/**
+	 * The max width of this widget.
+	 */
+	private final int mMinWidth;
+
+	/**
+	 * The max width of this widget.
+	 */
+	private final int mMaxWidth;
+
+	/**
+	 * Flag whether to compute the max width.
+	 */
+	private final boolean mComputeMaxHeight;
+
+	/**
+	 * The height of the text.
+	 */
+	private final int mTextSize;
+
+	/**
+	 * The values to be displayed instead the indices.
+	 */
+	private String[] mDisplayedValues;
+
+	/**
+	 * Lower value of the range of numbers allowed for the NumberPicker
+	 */
+	private int mMinValue;
+
+	/**
+	 * Upper value of the range of numbers allowed for the NumberPicker
+	 */
+	private int mMaxValue;
+
+	/**
+	 * Current value of this NumberPicker
+	 */
+	private int mValue;
+
+	/**
+	 * Listener to be notified upon current value change.
+	 */
+	private OnValueChangeListener mOnValueChangeListener;
+
+	/**
+	 * Listener to be notified upon scroll state change.
+	 */
+	private OnScrollListener mOnScrollListener;
+
+	/**
+	 * Formatter for for displaying the current value.
+	 */
+	private Formatter mFormatter;
+
+	/**
+	 * The speed for updating the value form long press.
+	 */
+	private long mLongPressUpdateInterval = DEFAULT_LONG_PRESS_UPDATE_INTERVAL;
+
+	/**
+	 * Cache for the string representation of selector indices.
+	 */
+	private final SparseArray<String> mSelectorIndexToStringCache = new SparseArray<String>();
+
+	/**
+	 * The selector indices whose value are show by the selector.
+	 */
+	private final int[] mSelectorIndices = new int[SELECTOR_WHEEL_ITEM_COUNT];
+
+	/**
+	 * The difference from one text display to the next.
+	 */
+	private int mFramesPerSegment = 5;
+
+	/**
+	 * The {@link Paint} for drawing the selector.
+	 */
+	private final Paint mSelectorWheelPaint;
+
+	/**
+	 * The {@link Drawable} for pressed virtual (increment/decrement) buttons.
+	 */
+	private final Drawable mVirtualButtonPressedDrawable;
+
+	/**
+	 * The initial offset of the scroll selector.
+	 */
+	private float mInitialScrollOffset = Integer.MIN_VALUE;
+
+	/**
+	 * The current offset of the scroll selector.
+	 */
+	private float mCurrentScrollOffset;
+
+	/**
+	 * The {@link Scroller} responsible for flinging the selector.
+	 */
+	private final Scroller mFlingScroller;
+
+	/**
+	 * The {@link Scroller} responsible for adjusting the selector.
+	 */
+	private final Scroller mAdjustScroller;
+
+	/**
+	 * The previous Y coordinate while scrolling the selector.
+	 */
+	private int mPreviousScrollerX;
+
+	/**
+	 * Handle to the reusable command for setting the input text selection.
+	 */
+	private SetSelectionCommand mSetSelectionCommand;
+
+	/**
+	 * Handle to the reusable command for changing the current value from long
+	 * press by one.
+	 */
+	private ChangeCurrentByOneFromLongPressCommand mChangeCurrentByOneFromLongPressCommand;
+
+	/**
+	 * Command for beginning an edit of the current value via IME on long press.
+	 */
+	private BeginSoftInputOnLongPressCommand mBeginSoftInputOnLongPressCommand;
+
+	/**
+	 * The Y position of the last down event.
+	 */
+	private float mLastDownEventX;
+
+	/**
+	 * The time of the last down event.
+	 */
+	private long mLastDownEventTime;
+
+	/**
+	 * The Y position of the last down or move event.
+	 */
+	private float mLastDownOrMoveEventX;
+
+	/**
+	 * Determines speed during touch scrolling.
+	 */
+	private VelocityTracker mVelocityTracker;
+
+	/**
+	 * @see ViewConfiguration#getScaledTouchSlop()
+	 */
+	private int mTouchSlop;
+
+	/**
+	 * @see ViewConfiguration#getScaledMinimumFlingVelocity()
+	 */
+	private int mMinimumFlingVelocity;
+
+	/**
+	 * @see ViewConfiguration#getScaledMaximumFlingVelocity()
+	 */
+	private int mMaximumFlingVelocity;
+
+	/**
+	 * Flag whether the selector should wrap around.
+	 */
+	private boolean mWrapSelectorWheel;
+
+	/**
+	 * The back ground color used to optimize scroller fading.
+	 */
+	private final int mSolidColor;
+
+	/**
+	 * Divider for showing item to be selected while scrolling
+	 */
+	private final Drawable mSelectionDivider;
+
+	/**
+	 * The height of the selection divider.
+	 */
+	private final int mSelectionDividerWidth;
+
+	/**
+	 * The current scroll state of the number picker.
+	 */
+	private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
+
+	/**
+	 * Flag whether to ignore move events - we ignore such when we show in IME
+	 * to prevent the content from scrolling.
+	 */
+	private boolean mIngonreMoveEvents;
+
+	/**
+	 * Flag whether to show soft input on tap.
+	 */
+	private boolean mShowSoftInputOnTap;
+
+	/**
+	 * The top of the top selection divider.
+	 */
+	private int mLeftSelectionDividerLeft;
+
+	/**
+	 * The bottom of the bottom selection divider.
+	 */
+	private int mRightSelectionDividerRight;
+
+	/**
+	 * Whether the increment virtual button is pressed.
+	 */
+	private boolean mIncrementVirtualButtonPressed;
+
+	/**
+	 * Whether the decrement virtual button is pressed.
+	 */
+	private boolean mDecrementVirtualButtonPressed;
+
+	/**
+	 * Helper class for managing pressed state of the virtual buttons.
+	 */
+	private final PressedStateHelper mPressedStateHelper;
+
+	/**
+	 * Interface to listen for changes of the current value.
+	 */
+	public interface OnValueChangeListener {
+
+		/**
+		 * Called upon a change of the current value.
+		 *
+		 * @param picker The NumberPicker associated with this listener.
+		 * @param oldVal The previous value.
+		 * @param newVal The new value.
+		 */
+		void onValueChange(FramePicker picker, int oldVal, int newVal);
+	}
+
+	/**
+	 * Interface to listen for the picker scroll state.
+	 */
+	public interface OnScrollListener {
+
+		/**
+		 * The view is not scrolling.
+		 */
+		public static int SCROLL_STATE_IDLE = 0;
+
+		/**
+		 * The user is scrolling using touch, and his finger is still on the screen.
+		 */
+		public static int SCROLL_STATE_TOUCH_SCROLL = 1;
+
+		/**
+		 * The user had previously been scrolling using touch and performed a fling.
+		 */
+		public static int SCROLL_STATE_FLING = 2;
+
+		/**
+		 * Callback invoked while the number picker scroll state has changed.
+		 *
+		 * @param view The view whose scroll state is being reported.
+		 * @param scrollState The current scroll state. One of
+		 *            {@link #SCROLL_STATE_IDLE},
+		 *            {@link #SCROLL_STATE_TOUCH_SCROLL} or
+		 *            {@link #SCROLL_STATE_IDLE}.
+		 */
+		public void onScrollStateChange(FramePicker view, int scrollState);
+	}
+
+	/**
+	 * Interface used to format current value into a string for presentation.
+	 */
+	public interface Formatter {
+
+		/**
+		 * Formats a string representation of the current value.
+		 *
+		 * @param value The currently selected value.
+		 * @return A formatted string representation.
+		 */
+		public String format(int value);
+	}
+
+	/**
+	 * Create a new number picker.
+	 *
+	 * @param context The application environment.
+	 */
+	public FramePicker(Context context) {
+		this(context, null);
+	}
+
+	/**
+	 * Create a new number picker.
+	 *
+	 * @param context The application environment.
+	 * @param attrs A collection of attributes.
+	 */
+	public FramePicker(Context context, AttributeSet attrs) {
+		super(context, attrs);
+
+		// process style attributes
+		TypedArray attributesArray = context.obtainStyledAttributes(
+				attrs, R.styleable.FramePicker, R.attr.framePickerStyle, 0);
+		final int layoutResId = DEFAULT_LAYOUT_RESOURCE_ID;
+
+		mSolidColor = attributesArray.getColor(R.styleable.FramePicker_solidColor, 0);
+
+		mSelectionDivider = attributesArray.getDrawable(R.styleable.FramePicker_selectionDivider);
+
+		final int defSelectionDividerWidth = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH);
+		mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_selectionDividerWidth, defSelectionDividerWidth);
+
+		final int defSelectionDividerDistance = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE);
+		mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_selectionDividersDistance, defSelectionDividerDistance);
+
+		mMinHeight = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_internalMinHeight, SIZE_UNSPECIFIED);
+
+		mMaxHeight = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_internalMaxHeight, SIZE_UNSPECIFIED);
+		if (mMinHeight != SIZE_UNSPECIFIED && mMaxHeight != SIZE_UNSPECIFIED
+				&& mMinHeight > mMaxHeight) {
+			throw new IllegalArgumentException("minHeight > maxHeight");
+		}
+
+		mMinWidth = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_internalMinWidth, SIZE_UNSPECIFIED);
+
+		mMaxWidth = attributesArray.getDimensionPixelSize(
+				R.styleable.FramePicker_internalMaxWidth, SIZE_UNSPECIFIED);
+		if (mMinWidth != SIZE_UNSPECIFIED && mMaxWidth != SIZE_UNSPECIFIED
+				&& mMinWidth > mMaxWidth) {
+			throw new IllegalArgumentException("minWidth > maxWidth");
+		}
+
+		mComputeMaxHeight = (mMaxHeight == SIZE_UNSPECIFIED);
+
+		mVirtualButtonPressedDrawable = attributesArray.getDrawable(
+				R.styleable.FramePicker_virtualButtonPressedDrawable);
+
+		attributesArray.recycle();
+
+		mPressedStateHelper = new PressedStateHelper();
+
+		// By default Linearlayout that we extend is not drawn. This is
+		// its draw() method is not called but dispatchDraw() is called
+		// directly (see ViewGroup.drawChild()). However, this class uses
+		// the fading edge effect implemented by View and we need our
+		// draw() method to be called. Therefore, we declare we will draw.
+		setWillNotDraw(false);
+
+		LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
+				Context.LAYOUT_INFLATER_SERVICE);
+		inflater.inflate(layoutResId, this, true);
+
+		// input text
+		mInputText = (EditText) findViewById(R.id.numberpicker_input);
+		mInputText.setOnFocusChangeListener(new OnFocusChangeListener() {
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus) {
+					mInputText.selectAll();
+				} else {
+					mInputText.setSelection(0, 0);
+					validateInputTextView(v);
+				}
+			}
+		});
+		mInputText.setFilters(new InputFilter[] {
+				new InputTextFilter()
+		});
+
+		mInputText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
+		mInputText.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+		// initialize constants
+		ViewConfiguration configuration = ViewConfiguration.get(context);
+		mTouchSlop = configuration.getScaledTouchSlop();
+		mMinimumFlingVelocity = configuration.getScaledMinimumFlingVelocity();
+		mMaximumFlingVelocity = configuration.getScaledMaximumFlingVelocity()
+				/ SELECTOR_MAX_FLING_VELOCITY_ADJUSTMENT;
+		mTextSize = (int) mInputText.getTextSize();
+
+		// create the selector wheel paint
+		Paint paint = new Paint();
+		paint.setAntiAlias(true);
+		paint.setTextAlign(Align.CENTER);
+		paint.setTextSize(mTextSize);
+		paint.setTypeface(mInputText.getTypeface());
+		ColorStateList colors = mInputText.getTextColors();
+		int color = colors.getColorForState(ENABLED_STATE_SET, Color.WHITE);
+		paint.setColor(color);
+		mSelectorWheelPaint = paint;
+
+		// create the fling and adjust scrollers
+		mFlingScroller = new Scroller(getContext(), null);
+		mAdjustScroller = new Scroller(getContext(), new DecelerateInterpolator(2.5f));
+
+		updateInputTextView();
+	}
+
+	private float dp2px(float dp) {
+		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
+	}
+
+	@Override
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+		final int msrdWdth = getMeasuredWidth();
+		final int msrdHght = getMeasuredHeight();
+
+		// Input text centered horizontally.
+		final int inptTxtMsrdWdth = mInputText.getMeasuredWidth();
+		final int inptTxtMsrdHght = mInputText.getMeasuredHeight();
+		final int inptTxtLeft = (msrdWdth - inptTxtMsrdWdth) / 2;
+		final int inptTxtTop = (msrdHght - inptTxtMsrdHght) / 2;
+		final int inptTxtRight = inptTxtLeft + inptTxtMsrdWdth;
+		final int inptTxtBottom = inptTxtTop + inptTxtMsrdHght;
+		mInputText.layout(inptTxtLeft, inptTxtTop, inptTxtRight, inptTxtBottom);
+
+		if (changed) {
+			// need to do all this when we know our size
+			initializeSelectorWheel();
+			initializeFadingEdges();
+			mLeftSelectionDividerLeft = (getWidth() - mSelectionDividersDistance) / 2
+					- mSelectionDividerWidth;
+			mRightSelectionDividerRight = mLeftSelectionDividerLeft + 2 * mSelectionDividerWidth
+					+ mSelectionDividersDistance;
+		}
+	}
+
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		// Try greedily to fit the max width and height.
+		final int newWidthMeasureSpec = makeMeasureSpec(widthMeasureSpec, mMaxWidth);
+		final int newHeightMeasureSpec = makeMeasureSpec(heightMeasureSpec, mMaxHeight);
+		super.onMeasure(newWidthMeasureSpec, newHeightMeasureSpec);
+		// Flag if we are measured with width or height less than the respective min.
+		final int widthSize = resolveSizeAndStateRespectingMinSize(mMinWidth, getMeasuredWidth(),
+				widthMeasureSpec);
+		final int heightSize = resolveSizeAndStateRespectingMinSize(mMinHeight, getMeasuredHeight(),
+				heightMeasureSpec);
+		setMeasuredDimension(widthSize, heightSize);
+	}
+
+	/**
+	 * Move to the final position of a scroller. Ensures to force finish the scroller
+	 * and if it is not at its final position a scroll of the selector wheel is
+	 * performed to fast forward to the final position.
+	 *
+	 * @param scroller The scroller to whose final position to get.
+	 * @return True of the a move was performed, i.e. the scroller was not in final position.
+	 */
+	private boolean moveToFinalScrollerPosition(Scroller scroller) {
+		scroller.forceFinished(true);
+		float amountToScroll = scroller.getFinalX() - scroller.getCurrX();
+		float futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mFrameSpacing;
+		float overshootAdjustment = mInitialScrollOffset - futureScrollOffset;
+		if (overshootAdjustment != 0) {
+			if (Math.abs(overshootAdjustment) > mFrameSpacing / 2) {
+				if (overshootAdjustment > 0) {
+					overshootAdjustment -= mFrameSpacing;
+				} else {
+					overshootAdjustment += mFrameSpacing;
+				}
+			}
+			amountToScroll += overshootAdjustment;
+			scrollBy(amountToScroll, 0);
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onInterceptTouchEvent(MotionEvent event) {
+		if (!isEnabled()) {
+			return false;
+		}
+		final int action = event.getActionMasked();
+		switch (action) {
+		case MotionEvent.ACTION_DOWN: {
+			removeAllCallbacks();
+			mInputText.setVisibility(View.INVISIBLE);
+			mLastDownOrMoveEventX = mLastDownEventX = event.getX();
+			mLastDownEventTime = event.getEventTime();
+			mIngonreMoveEvents = false;
+			mShowSoftInputOnTap = false;
+			// Handle pressed state before any state change.
+			if (mLastDownEventX < mLeftSelectionDividerLeft) {
+				if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
+					mPressedStateHelper.buttonPressDelayed(
+							PressedStateHelper.BUTTON_DECREMENT);
+				}
+			} else if (mLastDownEventX > mRightSelectionDividerRight) {
+				if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
+					mPressedStateHelper.buttonPressDelayed(
+							PressedStateHelper.BUTTON_INCREMENT);
+				}
+			}
+			// Make sure we support flinging inside scrollables.
+			getParent().requestDisallowInterceptTouchEvent(true);
+			if (!mFlingScroller.isFinished()) {
+				mFlingScroller.forceFinished(true);
+				mAdjustScroller.forceFinished(true);
+				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+			} else if (!mAdjustScroller.isFinished()) {
+				mFlingScroller.forceFinished(true);
+				mAdjustScroller.forceFinished(true);
+			} else if (mLastDownEventX < mLeftSelectionDividerLeft) {
+				hideSoftInput();
+				postChangeCurrentByOneFromLongPress(
+						false, ViewConfiguration.getLongPressTimeout());
+			} else if (mLastDownEventX > mRightSelectionDividerRight) {
+				hideSoftInput();
+				postChangeCurrentByOneFromLongPress(
+						true, ViewConfiguration.getLongPressTimeout());
+			} else {
+				mShowSoftInputOnTap = true;
+				postBeginSoftInputOnLongPressCommand();
+			}
+			return true;
+		}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if (!isEnabled()) {
+			return false;
+		}
+		if (mVelocityTracker == null) {
+			mVelocityTracker = VelocityTracker.obtain();
+		}
+		mVelocityTracker.addMovement(event);
+		int action = event.getActionMasked();
+		switch (action) {
+		case MotionEvent.ACTION_MOVE: {
+			if (mIngonreMoveEvents) {
+				break;
+			}
+			float currentMoveX = event.getX();
+			if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+				int deltaDownX = (int) Math.abs(currentMoveX - mLastDownEventX);
+				if (deltaDownX > mTouchSlop) {
+					removeAllCallbacks();
+					onScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+				}
+			} else {
+				int deltaMoveX = (int) ((currentMoveX - mLastDownOrMoveEventX));
+				scrollBy(deltaMoveX, 0);
+				invalidate();
+			}
+			mLastDownOrMoveEventX = currentMoveX;
+		} break;
+		case MotionEvent.ACTION_UP: {
+			removeBeginSoftInputCommand();
+			removeChangeCurrentByOneFromLongPress();
+			mPressedStateHelper.cancel();
+			VelocityTracker velocityTracker = mVelocityTracker;
+			velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
+			int initialVelocity = (int) velocityTracker.getXVelocity();
+			if (Math.abs(initialVelocity) > mMinimumFlingVelocity) {
+				fling(initialVelocity);
+				onScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
+			} else {
+				int eventX = (int) event.getX();
+				int deltaMoveX = (int) Math.abs(eventX - mLastDownEventX);
+				long deltaTime = event.getEventTime() - mLastDownEventTime;
+				if (deltaMoveX <= mTouchSlop && deltaTime < ViewConfiguration.getTapTimeout()) {
+					if (mShowSoftInputOnTap) {
+						mShowSoftInputOnTap = false;
+						showSoftInput();
+					} else {
+						float selectorIndexOffset = (eventX / mFrameSpacing)
+								- SELECTOR_MIDDLE_ITEM_INDEX;
+						if (selectorIndexOffset > 0) {
+							changeValueByOne(true);
+							mPressedStateHelper.buttonTapped(
+									PressedStateHelper.BUTTON_INCREMENT);
+						} else if (selectorIndexOffset < 0) {
+							changeValueByOne(false);
+							mPressedStateHelper.buttonTapped(
+									PressedStateHelper.BUTTON_DECREMENT);
+						}
+					}
+				} else {
+					ensureScrollWheelAdjusted();
+				}
+				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+			}
+			mVelocityTracker.recycle();
+			mVelocityTracker = null;
+		} break;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent event) {
+		final int action = event.getActionMasked();
+		switch (action) {
+		case MotionEvent.ACTION_CANCEL:
+		case MotionEvent.ACTION_UP:
+			removeAllCallbacks();
+			break;
+		}
+		return super.dispatchTouchEvent(event);
+	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		final int keyCode = event.getKeyCode();
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_DPAD_CENTER:
+		case KeyEvent.KEYCODE_ENTER:
+			removeAllCallbacks();
+			break;
+		}
+		return super.dispatchKeyEvent(event);
+	}
+
+	@Override
+	public boolean dispatchTrackballEvent(MotionEvent event) {
+		final int action = event.getActionMasked();
+		switch (action) {
+		case MotionEvent.ACTION_CANCEL:
+		case MotionEvent.ACTION_UP:
+			removeAllCallbacks();
+			break;
+		}
+		return super.dispatchTrackballEvent(event);
+	}
+
+	@Override
+	protected boolean dispatchHoverEvent(MotionEvent event) {
+		return false;
+	}
+
+	@Override
+	public void computeScroll() {
+		Scroller scroller = mFlingScroller;
+		if (scroller.isFinished()) {
+			scroller = mAdjustScroller;
+			if (scroller.isFinished()) {
+				return;
+			}
+		}
+		scroller.computeScrollOffset();
+		int currentScrollerX = scroller.getCurrX();
+		if (mPreviousScrollerX == 0) {
+			mPreviousScrollerX = scroller.getStartX();
+		}
+		scrollBy(currentScrollerX - mPreviousScrollerX, 0);
+		mPreviousScrollerX = currentScrollerX;
+		if (scroller.isFinished()) {
+			onScrollerFinished(scroller);
+		} else {
+			invalidate();
+		}
+	}
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		mInputText.setEnabled(enabled);
+	}
+
+	@Override
+	public void scrollBy(int x, int y) {
+		scrollBy((float)x, (float)y);
+	}
+
+	public void scrollBy(float x, float y) {
+		int[] selectorIndices = mSelectorIndices;
+		if (!mWrapSelectorWheel && x > 0
+				&& selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
+			mCurrentScrollOffset = mInitialScrollOffset;
+			return;
+		}
+		if (!mWrapSelectorWheel && x < 0
+				&& selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
+			mCurrentScrollOffset = mInitialScrollOffset;
+			return;
+		}
+		mCurrentScrollOffset += x;
+		while (mCurrentScrollOffset - mInitialScrollOffset > mFrameSpacing) {
+			mCurrentScrollOffset -= mFrameSpacing;
+			decrementSelectorIndices(selectorIndices);
+			setValueInternal(mValue - 1, true);
+			if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
+				mCurrentScrollOffset = mInitialScrollOffset;
+			}
+		}
+		while (mCurrentScrollOffset - mInitialScrollOffset < -mFrameSpacing) {
+			mCurrentScrollOffset += mFrameSpacing;
+			incrementSelectorIndices(selectorIndices);
+			setValueInternal(mValue + 1, true);
+			if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
+				mCurrentScrollOffset = mInitialScrollOffset;
+			}
+		}
+	}
+
+	@Override
+	public int getSolidColor() {
+		return mSolidColor;
+	}
+
+	/**
+	 * Sets the listener to be notified on change of the current value.
+	 *
+	 * @param onValueChangedListener The listener.
+	 */
+	 public void setOnValueChangedListener(OnValueChangeListener onValueChangedListener) {
+		mOnValueChangeListener = onValueChangedListener;
+	}
+
+	/**
+	 * Set listener to be notified for scroll state changes.
+	 *
+	 * @param onScrollListener The listener.
+	 */
+	 public void setOnScrollListener(OnScrollListener onScrollListener) {
+		 mOnScrollListener = onScrollListener;
+	 }
+
+	/**
+	 * Set the formatter to be used for formatting the current value.
+	 * <p>
+	 * Note: If you have provided alternative values for the values this
+	 * formatter is never invoked.
+	 * </p>
+	 *
+	 * @param formatter The formatter object. If formatter is <code>null</code>,
+	 *            {@link String#valueOf(int)} will be used.
+	 *@see #setDisplayedValues(String[])
+	 */
+	 public void setFormatter(Formatter formatter) {
+		 if (formatter == mFormatter) {
+			 return;
+		 }
+		 mFormatter = formatter;
+		 initializeSelectorWheelIndices();
+		 updateInputTextView();
+	 }
+
+	 /**
+	  * Set the current value for the number picker.
+	  * <p>
+	  * If the argument is less than the {@link FramePicker#getMinValue()} and
+	  * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
+	  * current value is set to the {@link FramePicker#getMinValue()} value.
+	  * </p>
+	  * <p>
+	  * If the argument is less than the {@link FramePicker#getMinValue()} and
+	  * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
+	  * current value is set to the {@link FramePicker#getMaxValue()} value.
+	  * </p>
+	  * <p>
+	  * If the argument is less than the {@link FramePicker#getMaxValue()} and
+	  * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
+	  * current value is set to the {@link FramePicker#getMaxValue()} value.
+	  * </p>
+	  * <p>
+	  * If the argument is less than the {@link FramePicker#getMaxValue()} and
+	  * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
+	  * current value is set to the {@link FramePicker#getMinValue()} value.
+	  * </p>
+	  *
+	  * @param value The current value.
+	  * @see #setWrapSelectorWheel(boolean)
+	  * @see #setMinValue(int)
+	  * @see #setMaxValue(int)
+	  */
+	 public void setValue(int value) {
+		 setValueInternal(value, false);
+	 }
+
+	 /**
+	  * Shows the soft input for its input text.
+	  */
+	 private void showSoftInput() {
+		 InputMethodManager inputMethodManager = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+		 if (inputMethodManager != null) {
+			 mInputText.setVisibility(View.VISIBLE);
+			 mInputText.requestFocus();
+			 inputMethodManager.showSoftInput(mInputText, 0);
+		 }
+	 }
+
+	 /**
+	  * Hides the soft input if it is active for the input text.
+	  */
+	 private void hideSoftInput() {
+		 InputMethodManager inputMethodManager = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+		 if (inputMethodManager != null && inputMethodManager.isActive(mInputText)) {
+			 inputMethodManager.hideSoftInputFromWindow(getWindowToken(), 0);
+			 mInputText.setVisibility(View.INVISIBLE);
+		 }
+	 }
+
+	 /**
+	  * Computes the max width if no such specified as an attribute.
+	  */
+	 private void tryComputeMaxHeight() {
+		 // Text Height is constant, in mTextSize
+		 if (!mComputeMaxHeight) {
+			 return;
+		 }
+		 /*
         int maxTextWidth = 0;
         if (mDisplayedValues == null) {
             float maxDigitWidth = 0;
@@ -1012,222 +1012,222 @@ public class FramePicker extends LinearLayout {
             }
             invalidate();
         }
-*/
-        int maxTextHeight = mTextSize + mInputText.getPaddingTop() + mInputText.getPaddingBottom();
-        if (mMaxHeight != maxTextHeight) {
-            if (maxTextHeight > mMinHeight) {
-                mMaxHeight = maxTextHeight;
-            } else {
-                mMaxHeight = mMinHeight;
-            }
-            invalidate();
-        }
-    }
+		  */
+		 int maxTextHeight = mTextSize + mInputText.getPaddingTop() + mInputText.getPaddingBottom();
+		 if (mMaxHeight != maxTextHeight) {
+			 if (maxTextHeight > mMinHeight) {
+				 mMaxHeight = maxTextHeight;
+			 } else {
+				 mMaxHeight = mMinHeight;
+			 }
+			 invalidate();
+		 }
+	 }
 
-    /**
-     * Gets whether the selector wheel wraps when reaching the min/max value.
-     *
-     * @return True if the selector wheel wraps.
-     *
-     * @see #getMinValue()
-     * @see #getMaxValue()
-     */
-    public boolean getWrapSelectorWheel() {
-        return mWrapSelectorWheel;
-    }
+	 /**
+	  * Gets whether the selector wheel wraps when reaching the min/max value.
+	  *
+	  * @return True if the selector wheel wraps.
+	  *
+	  * @see #getMinValue()
+	  * @see #getMaxValue()
+	  */
+	 public boolean getWrapSelectorWheel() {
+		 return mWrapSelectorWheel;
+	 }
 
-    /**
-     * Sets whether the selector wheel shown during flinging/scrolling should
-     * wrap around the {@link FramePicker#getMinValue()} and
-     * {@link FramePicker#getMaxValue()} values.
-     * <p>
-     * By default if the range (max - min) is more than the number of items shown
-     * on the selector wheel the selector wheel wrapping is enabled.
-     * </p>
-     * <p>
-     * <strong>Note:</strong> If the number of items, i.e. the range (
-     * {@link #getMaxValue()} - {@link #getMinValue()}) is less than
-     * the number of items shown on the selector wheel, the selector wheel will
-     * not wrap. Hence, in such a case calling this method is a NOP.
-     * </p>
-     *
-     * @param wrapSelectorWheel Whether to wrap.
-     */
-    public void setWrapSelectorWheel(boolean wrapSelectorWheel) {
-        final boolean wrappingAllowed = (mMaxValue - mMinValue) >= mSelectorIndices.length;
-        if ((!wrapSelectorWheel || wrappingAllowed) && wrapSelectorWheel != mWrapSelectorWheel) {
-            mWrapSelectorWheel = wrapSelectorWheel;
-        }
-    }
+	 /**
+	  * Sets whether the selector wheel shown during flinging/scrolling should
+	  * wrap around the {@link FramePicker#getMinValue()} and
+	  * {@link FramePicker#getMaxValue()} values.
+	  * <p>
+	  * By default if the range (max - min) is more than the number of items shown
+	  * on the selector wheel the selector wheel wrapping is enabled.
+	  * </p>
+	  * <p>
+	  * <strong>Note:</strong> If the number of items, i.e. the range (
+	  * {@link #getMaxValue()} - {@link #getMinValue()}) is less than
+	  * the number of items shown on the selector wheel, the selector wheel will
+	  * not wrap. Hence, in such a case calling this method is a NOP.
+	  * </p>
+	  *
+	  * @param wrapSelectorWheel Whether to wrap.
+	  */
+	 public void setWrapSelectorWheel(boolean wrapSelectorWheel) {
+		 final boolean wrappingAllowed = (mMaxValue - mMinValue) >= mSelectorIndices.length;
+		 if ((!wrapSelectorWheel || wrappingAllowed) && wrapSelectorWheel != mWrapSelectorWheel) {
+			 mWrapSelectorWheel = wrapSelectorWheel;
+		 }
+	 }
 
-    /**
-     * Sets the speed at which the numbers be incremented and decremented when
-     * the up and down buttons are long pressed respectively.
-     * <p>
-     * The default value is 300 ms.
-     * </p>
-     *
-     * @param intervalMillis The speed (in milliseconds) at which the numbers
-     *            will be incremented and decremented.
-     */
-    public void setOnLongPressUpdateInterval(long intervalMillis) {
-        mLongPressUpdateInterval = intervalMillis;
-    }
+	 /**
+	  * Sets the speed at which the numbers be incremented and decremented when
+	  * the up and down buttons are long pressed respectively.
+	  * <p>
+	  * The default value is 300 ms.
+	  * </p>
+	  *
+	  * @param intervalMillis The speed (in milliseconds) at which the numbers
+	  *            will be incremented and decremented.
+	  */
+	 public void setOnLongPressUpdateInterval(long intervalMillis) {
+		 mLongPressUpdateInterval = intervalMillis;
+	 }
 
-    /**
-     * Returns the value of the picker.
-     *
-     * @return The value.
-     */
-    public int getValue() {
-        return mValue;
-    }
+	 /**
+	  * Returns the value of the picker.
+	  *
+	  * @return The value.
+	  */
+	 public int getValue() {
+		 return mValue;
+	 }
 
-    /**
-     * Returns the min value of the picker.
-     *
-     * @return The min value
-     */
-    public int getMinValue() {
-        return mMinValue;
-    }
+	 /**
+	  * Returns the min value of the picker.
+	  *
+	  * @return The min value
+	  */
+	 public int getMinValue() {
+		 return mMinValue;
+	 }
 
-    /**
-     * Sets the min value of the picker.
-     *
-     * @param minValue The min value.
-     */
-    public void setMinValue(int minValue) {
-        if (mMinValue == minValue) {
-            return;
-        }
-        if (minValue < 0) {
-            throw new IllegalArgumentException("minValue must be >= 0");
-        }
-        mMinValue = minValue;
-        if (mMinValue > mValue) {
-            mValue = mMinValue;
-        }
-        boolean wrapSelectorWheel = mMaxValue - mMinValue > mSelectorIndices.length;
-        setWrapSelectorWheel(wrapSelectorWheel);
-        initializeSelectorWheelIndices();
-        updateInputTextView();
-        tryComputeMaxHeight();
-        invalidate();
-    }
+	 /**
+	  * Sets the min value of the picker.
+	  *
+	  * @param minValue The min value.
+	  */
+	 public void setMinValue(int minValue) {
+		 if (mMinValue == minValue) {
+			 return;
+		 }
+		 if (minValue < 0) {
+			 throw new IllegalArgumentException("minValue must be >= 0");
+		 }
+		 mMinValue = minValue;
+		 if (mMinValue > mValue) {
+			 mValue = mMinValue;
+		 }
+		 boolean wrapSelectorWheel = mMaxValue - mMinValue > mSelectorIndices.length;
+		 setWrapSelectorWheel(wrapSelectorWheel);
+		 initializeSelectorWheelIndices();
+		 updateInputTextView();
+		 tryComputeMaxHeight();
+		 invalidate();
+	 }
 
-    /**
-     * Returns the max value of the picker.
-     *
-     * @return The max value.
-     */
-    public int getMaxValue() {
-        return mMaxValue;
-    }
+	 /**
+	  * Returns the max value of the picker.
+	  *
+	  * @return The max value.
+	  */
+	 public int getMaxValue() {
+		 return mMaxValue;
+	 }
 
-    /**
-     * Sets the max value of the picker.
-     *
-     * @param maxValue The max value.
-     */
-    public void setMaxValue(int maxValue) {
-        if (mMaxValue == maxValue) {
-            return;
-        }
-        if (maxValue < 0) {
-            throw new IllegalArgumentException("maxValue must be >= 0");
-        }
-        mMaxValue = maxValue;
-        if (mMaxValue < mValue) {
-            mValue = mMaxValue;
-        }
-        boolean wrapSelectorWheel = mMaxValue - mMinValue > mSelectorIndices.length;
-        setWrapSelectorWheel(wrapSelectorWheel);
-        initializeSelectorWheelIndices();
-        updateInputTextView();
-        tryComputeMaxHeight();
-        invalidate();
-    }
+	 /**
+	  * Sets the max value of the picker.
+	  *
+	  * @param maxValue The max value.
+	  */
+	 public void setMaxValue(int maxValue) {
+		 if (mMaxValue == maxValue) {
+			 return;
+		 }
+		 if (maxValue < 0) {
+			 throw new IllegalArgumentException("maxValue must be >= 0");
+		 }
+		 mMaxValue = maxValue;
+		 if (mMaxValue < mValue) {
+			 mValue = mMaxValue;
+		 }
+		 boolean wrapSelectorWheel = mMaxValue - mMinValue > mSelectorIndices.length;
+		 setWrapSelectorWheel(wrapSelectorWheel);
+		 initializeSelectorWheelIndices();
+		 updateInputTextView();
+		 tryComputeMaxHeight();
+		 invalidate();
+	 }
 
-    /**
-     * Gets the values to be displayed instead of string values.
-     *
-     * @return The displayed values.
-     */
-    public String[] getDisplayedValues() {
-        return mDisplayedValues;
-    }
+	 /**
+	  * Gets the values to be displayed instead of string values.
+	  *
+	  * @return The displayed values.
+	  */
+	 public String[] getDisplayedValues() {
+		 return mDisplayedValues;
+	 }
 
-    /**
-     * Sets the values to be displayed.
-     *
-     * @param displayedValues The displayed values.
-     */
-    public void setDisplayedValues(String[] displayedValues) {
-        if (mDisplayedValues == displayedValues) {
-            return;
-        }
-        mDisplayedValues = displayedValues;
-        if (mDisplayedValues != null) {
-            // Allow text entry rather than strictly numeric entry.
-            mInputText.setRawInputType(InputType.TYPE_CLASS_TEXT
-                    | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-            // Make sure the min, max, respect the size of the displayed
-            // values. This will take care of the current value as well.
-            if (getMinValue() >= displayedValues.length) {
-                setMinValue(0);
-            }
-            if (getMaxValue() >= displayedValues.length) {
-                setMaxValue(displayedValues.length - 1);
-            }
-        } else {
-            mInputText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
-        }
-        updateInputTextView();
-        initializeSelectorWheelIndices();
-        tryComputeMaxHeight();
-    }
+	 /**
+	  * Sets the values to be displayed.
+	  *
+	  * @param displayedValues The displayed values.
+	  */
+	 public void setDisplayedValues(String[] displayedValues) {
+		 if (mDisplayedValues == displayedValues) {
+			 return;
+		 }
+		 mDisplayedValues = displayedValues;
+		 if (mDisplayedValues != null) {
+			 // Allow text entry rather than strictly numeric entry.
+			 mInputText.setRawInputType(InputType.TYPE_CLASS_TEXT
+					 | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+			 // Make sure the min, max, respect the size of the displayed
+			 // values. This will take care of the current value as well.
+			 if (getMinValue() >= displayedValues.length) {
+				 setMinValue(0);
+			 }
+			 if (getMaxValue() >= displayedValues.length) {
+				 setMaxValue(displayedValues.length - 1);
+			 }
+		 } else {
+			 mInputText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
+		 }
+		 updateInputTextView();
+		 initializeSelectorWheelIndices();
+		 tryComputeMaxHeight();
+	 }
 
-    @Override
-    protected float getLeftFadingEdgeStrength() {
-        return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
-    }
+	 @Override
+	 protected float getLeftFadingEdgeStrength() {
+		 return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
+	 }
 
-    @Override
-    protected float getRightFadingEdgeStrength() {
-        return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
-    }
+	 @Override
+	 protected float getRightFadingEdgeStrength() {
+		 return LEFT_AND_RIGHT_FADING_EDGE_STRENGTH;
+	 }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        removeAllCallbacks();
-    }
+	 @Override
+	 protected void onDetachedFromWindow() {
+		 removeAllCallbacks();
+	 }
 
-    
-    protected int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
-    
-    @Override
-    protected void onDraw(Canvas canvas) {
-        float x = mCurrentScrollOffset;
-        float y = mInputText.getBaseline() + mInputText.getTop();
 
-        // draw the virtual buttons pressed state if needed
-        if (mVirtualButtonPressedDrawable != null
-                && mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-            if (mDecrementVirtualButtonPressed) {
-                mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-                mVirtualButtonPressedDrawable.setBounds(0, 0, mLeftSelectionDividerLeft, getBottom());
-                mVirtualButtonPressedDrawable.draw(canvas);
-            }
-            if (mIncrementVirtualButtonPressed) {
-                mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-                mVirtualButtonPressedDrawable.setBounds(mRightSelectionDividerRight, 0, getRight(),
-                        getBottom());
-                mVirtualButtonPressedDrawable.draw(canvas);
-            }
-        }
+	 protected int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
 
-/*
+	 @Override
+	 protected void onDraw(Canvas canvas) {
+		 float x = mCurrentScrollOffset;
+		 float y = mInputText.getBaseline() + mInputText.getTop();
+
+		 // draw the virtual buttons pressed state if needed
+		 if (mVirtualButtonPressedDrawable != null
+				 && mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
+			 if (mDecrementVirtualButtonPressed) {
+				 mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
+				 mVirtualButtonPressedDrawable.setBounds(0, 0, mLeftSelectionDividerLeft, getBottom());
+				 mVirtualButtonPressedDrawable.draw(canvas);
+			 }
+			 if (mIncrementVirtualButtonPressed) {
+				 mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
+				 mVirtualButtonPressedDrawable.setBounds(mRightSelectionDividerRight, 0, getRight(),
+						 getBottom());
+				 mVirtualButtonPressedDrawable.draw(canvas);
+			 }
+		 }
+
+		 /*
     	// draw the selector wheel
         int[] selectorIndices = mSelectorIndices;
         for (int i = 0; i < selectorIndices.length; i++) {
@@ -1243,709 +1243,709 @@ public class FramePicker extends LinearLayout {
             }
             x += mSelectorElementWidth;
         }
-*/
-        
-        Paint rulerPaint = new Paint(mSelectorWheelPaint);
-        rulerPaint.setTextAlign(Paint.Align.LEFT);
-        int firstFrame = getValue() - SELECTOR_MIDDLE_ITEM_INDEX;
-        int lastFrame = firstFrame + SELECTOR_WHEEL_ITEM_COUNT;
-     	for (int i = firstFrame; i < lastFrame; i++) {
-     		float top;
-     		if (i % majorEvery == 0) {
-     			top = majorTop;
-                canvas.drawText(Integer.toString(i), x + textOffset, textBottom, rulerPaint);
-     		} else if (i % minorEvery == 0) {
-     			top = minorTop;
-     		} else continue;
-     		
-     		canvas.drawLine(x, bottom, x, top, rulerPaint);
-     		
-     		x += mFrameSpacing;
-     	}
+		  */
 
-        // draw the selection dividers
-        if (mSelectionDivider != null) {
-            // draw the top divider
-            int leftOfLeftDivider = mLeftSelectionDividerLeft;
-            int rightOfLeftDivider = leftOfLeftDivider + mSelectionDividerWidth;
-            mSelectionDivider.setBounds(leftOfLeftDivider, 0, rightOfLeftDivider, getBottom());
-            mSelectionDivider.draw(canvas);
+		 Paint rulerPaint = new Paint(mSelectorWheelPaint);
+		 rulerPaint.setTextAlign(Paint.Align.LEFT);
+		 int firstFrame = getValue() - SELECTOR_MIDDLE_ITEM_INDEX;
+		 int lastFrame = firstFrame + SELECTOR_WHEEL_ITEM_COUNT;
+		 for (int i = firstFrame; i < lastFrame; i++) {
+			 float top;
+			 if (i % majorEvery == 0) {
+				 top = majorTop;
+				 canvas.drawText(Integer.toString(i), x + textOffset, textBottom, rulerPaint);
+			 } else if (i % minorEvery == 0) {
+				 top = minorTop;
+			 } else continue;
 
-            // draw the bottom divider
-            int rightOfRightDivider = mRightSelectionDividerRight;
-            int leftOfRightDivider = rightOfRightDivider - mSelectionDividerWidth;
-            mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
-            mSelectionDivider.draw(canvas);
-        }
-    }
+			 canvas.drawLine(x, bottom, x, top, rulerPaint);
 
-    /**
-     * Makes a measure spec that tries greedily to use the max value.
-     *
-     * @param measureSpec The measure spec.
-     * @param maxSize The max value for the size.
-     * @return A measure spec greedily imposing the max size.
-     */
-    private int makeMeasureSpec(int measureSpec, int maxSize) {
-        if (maxSize == SIZE_UNSPECIFIED) {
-            return measureSpec;
-        }
-        final int size = MeasureSpec.getSize(measureSpec);
-        final int mode = MeasureSpec.getMode(measureSpec);
-        switch (mode) {
-            case MeasureSpec.EXACTLY:
-                return measureSpec;
-            case MeasureSpec.AT_MOST:
-                return MeasureSpec.makeMeasureSpec(Math.min(size, maxSize), MeasureSpec.EXACTLY);
-            case MeasureSpec.UNSPECIFIED:
-                return MeasureSpec.makeMeasureSpec(maxSize, MeasureSpec.EXACTLY);
-            default:
-                throw new IllegalArgumentException("Unknown measure mode: " + mode);
-        }
-    }
+			 x += mFrameSpacing;
+		 }
 
-    /**
-     * Utility to reconcile a desired size and state, with constraints imposed
-     * by a MeasureSpec. Tries to respect the min size, unless a different size
-     * is imposed by the constraints.
-     *
-     * @param minSize The minimal desired size.
-     * @param measuredSize The currently measured size.
-     * @param measureSpec The current measure spec.
-     * @return The resolved size and state.
-     */
-    private int resolveSizeAndStateRespectingMinSize(
-            int minSize, int measuredSize, int measureSpec) {
-        if (minSize != SIZE_UNSPECIFIED) {
-            final int desiredWidth = Math.max(minSize, measuredSize);
-            return resolveSize(desiredWidth, measureSpec);
-        } else {
-            return measuredSize;
-        }
-    }
+		 // draw the selection dividers
+		 if (mSelectionDivider != null) {
+			 // draw the top divider
+			 int leftOfLeftDivider = mLeftSelectionDividerLeft;
+			 int rightOfLeftDivider = leftOfLeftDivider + mSelectionDividerWidth;
+			 mSelectionDivider.setBounds(leftOfLeftDivider, 0, rightOfLeftDivider, getBottom());
+			 mSelectionDivider.draw(canvas);
 
-    /**
-     * Resets the selector indices and clear the cached string representation of
-     * these indices.
-     */
-    private void initializeSelectorWheelIndices() {
-        mSelectorIndexToStringCache.clear();
-        int[] selectorIndices = mSelectorIndices;
-        int current = getValue();
-        for (int i = 0; i < mSelectorIndices.length; i++) {
-            int selectorIndex = current + (i - SELECTOR_MIDDLE_ITEM_INDEX);
-            if (mWrapSelectorWheel) {
-                selectorIndex = getWrappedSelectorIndex(selectorIndex);
-            }
-            selectorIndices[i] = selectorIndex;
-            ensureCachedScrollSelectorValue(selectorIndices[i]);
-        }
-    }
+			 // draw the bottom divider
+			 int rightOfRightDivider = mRightSelectionDividerRight;
+			 int leftOfRightDivider = rightOfRightDivider - mSelectionDividerWidth;
+			 mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
+			 mSelectionDivider.draw(canvas);
+		 }
+	 }
 
-    /**
-     * Sets the current value of this NumberPicker.
-     *
-     * @param current The new value of the NumberPicker.
-     * @param notifyChange Whether to notify if the current value changed.
-     */
-    private void setValueInternal(int current, boolean notifyChange) {
-        if (mValue == current) {
-            return;
-        }
-        // Wrap around the values if we go past the start or end
-        if (mWrapSelectorWheel) {
-            current = getWrappedSelectorIndex(current);
-        } else {
-            current = Math.max(current, mMinValue);
-            current = Math.min(current, mMaxValue);
-        }
-        int previous = mValue;
-        mValue = current;
-        updateInputTextView();
-        if (notifyChange) {
-            notifyChange(previous, current);
-        }
-        initializeSelectorWheelIndices();
-        invalidate();
-    }
+	 /**
+	  * Makes a measure spec that tries greedily to use the max value.
+	  *
+	  * @param measureSpec The measure spec.
+	  * @param maxSize The max value for the size.
+	  * @return A measure spec greedily imposing the max size.
+	  */
+	 private int makeMeasureSpec(int measureSpec, int maxSize) {
+		 if (maxSize == SIZE_UNSPECIFIED) {
+			 return measureSpec;
+		 }
+		 final int size = MeasureSpec.getSize(measureSpec);
+		 final int mode = MeasureSpec.getMode(measureSpec);
+		 switch (mode) {
+		 case MeasureSpec.EXACTLY:
+			 return measureSpec;
+		 case MeasureSpec.AT_MOST:
+			 return MeasureSpec.makeMeasureSpec(Math.min(size, maxSize), MeasureSpec.EXACTLY);
+		 case MeasureSpec.UNSPECIFIED:
+			 return MeasureSpec.makeMeasureSpec(maxSize, MeasureSpec.EXACTLY);
+		 default:
+			 throw new IllegalArgumentException("Unknown measure mode: " + mode);
+		 }
+	 }
 
-    /**
-     * Changes the current value by one which is increment or
-     * decrement based on the passes argument.
-     * decrement the current value.
-     *
-     * @param increment True to increment, false to decrement.
-     */
-     private void changeValueByOne(boolean increment) {
-    	 // TODO: This is incorrect if the frame spacing is less than one pixel
-            mInputText.setVisibility(View.INVISIBLE);
-            if (!moveToFinalScrollerPosition(mFlingScroller)) {
-                moveToFinalScrollerPosition(mAdjustScroller);
-            }
-            mPreviousScrollerX = 0;
-            if (increment) {
-                mFlingScroller.startScroll(0, 0, -(int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
-            } else {
-                mFlingScroller.startScroll(0, 0, (int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
-            }
-            invalidate();
-    }
+	 /**
+	  * Utility to reconcile a desired size and state, with constraints imposed
+	  * by a MeasureSpec. Tries to respect the min size, unless a different size
+	  * is imposed by the constraints.
+	  *
+	  * @param minSize The minimal desired size.
+	  * @param measuredSize The currently measured size.
+	  * @param measureSpec The current measure spec.
+	  * @return The resolved size and state.
+	  */
+	 private int resolveSizeAndStateRespectingMinSize(
+			 int minSize, int measuredSize, int measureSpec) {
+		 if (minSize != SIZE_UNSPECIFIED) {
+			 final int desiredWidth = Math.max(minSize, measuredSize);
+			 return resolveSize(desiredWidth, measureSpec);
+		 } else {
+			 return measuredSize;
+		 }
+	 }
 
-     private float mFrameSpacing; // pixels per frame
+	 /**
+	  * Resets the selector indices and clear the cached string representation of
+	  * these indices.
+	  */
+	 private void initializeSelectorWheelIndices() {
+		 mSelectorIndexToStringCache.clear();
+		 int[] selectorIndices = mSelectorIndices;
+		 int current = getValue();
+		 for (int i = 0; i < mSelectorIndices.length; i++) {
+			 int selectorIndex = current + (i - SELECTOR_MIDDLE_ITEM_INDEX);
+			 if (mWrapSelectorWheel) {
+				 selectorIndex = getWrappedSelectorIndex(selectorIndex);
+			 }
+			 selectorIndices[i] = selectorIndex;
+			 ensureCachedScrollSelectorValue(selectorIndices[i]);
+		 }
+	 }
 
-     float bottom;
-  	float minorTop;
-  	float majorTop;
-    float textBottom;
-  	float textOffset;
-  	int minorEvery; // frames / tick
-  	int majorEvery; // frames / tick
-     
-     private void updateCachedMetrics() {
-     	textOffset = dp2px(2);
-     	bottom = getHeight();
-     	minorTop = bottom - dp2px(10);
-     	majorTop = bottom - dp2px(20);
-        textBottom = getHeight() - dp2px(15);
-     	minorEvery = 1; // frames / marker
-     	majorEvery = 5; // frames / marker
-     }
+	 /**
+	  * Sets the current value of this NumberPicker.
+	  *
+	  * @param current The new value of the NumberPicker.
+	  * @param notifyChange Whether to notify if the current value changed.
+	  */
+	 private void setValueInternal(int current, boolean notifyChange) {
+		 if (mValue == current) {
+			 return;
+		 }
+		 // Wrap around the values if we go past the start or end
+		 if (mWrapSelectorWheel) {
+			 current = getWrappedSelectorIndex(current);
+		 } else {
+			 current = Math.max(current, mMinValue);
+			 current = Math.min(current, mMaxValue);
+		 }
+		 int previous = mValue;
+		 mValue = current;
+		 updateInputTextView();
+		 if (notifyChange) {
+			 notifyChange(previous, current);
+		 }
+		 initializeSelectorWheelIndices();
+		 invalidate();
+	 }
 
-     private void initializeSelectorWheel() {
-      	mFrameSpacing = dp2px(10);
-      	SELECTOR_WHEEL_ITEM_COUNT = (int) (getWidth() / mFrameSpacing) + 2;
-      	SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
-    	 
-      	updateCachedMetrics();
-        initializeSelectorWheelIndices();
-        int[] selectorIndices = mSelectorIndices;
-        // TODO: use a better number than mTextSize (the height) for the width of the elements. probably a constant
-        int totalTextWidth = selectorIndices.length * mTextSize;
-        float totalTextGapWidth = getWidth() - totalTextWidth;
-        float textGapCount = selectorIndices.length;
-        // Ensure that the middle item is positioned the same as the text in
-        // mInputText
-        int editTextTextPosition = getWidth()/2;
-        mInitialScrollOffset = editTextTextPosition
-                - (mFrameSpacing * SELECTOR_MIDDLE_ITEM_INDEX);
-        mCurrentScrollOffset = mInitialScrollOffset;
-        updateInputTextView();
-    }
+	 /**
+	  * Changes the current value by one which is increment or
+	  * decrement based on the passes argument.
+	  * decrement the current value.
+	  *
+	  * @param increment True to increment, false to decrement.
+	  */
+	 private void changeValueByOne(boolean increment) {
+		 // TODO: This is incorrect if the frame spacing is less than one pixel
+		 mInputText.setVisibility(View.INVISIBLE);
+		 if (!moveToFinalScrollerPosition(mFlingScroller)) {
+			 moveToFinalScrollerPosition(mAdjustScroller);
+		 }
+		 mPreviousScrollerX = 0;
+		 if (increment) {
+			 mFlingScroller.startScroll(0, 0, -(int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
+		 } else {
+			 mFlingScroller.startScroll(0, 0, (int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
+		 }
+		 invalidate();
+	 }
 
-    private void initializeFadingEdges() {
-        setHorizontalFadingEdgeEnabled(true);
-        setFadingEdgeLength((getWidth() - mTextSize) / 2);
-    }
+	 private float mFrameSpacing; // pixels per frame
 
-    /**
-     * Callback invoked upon completion of a given <code>scroller</code>.
-     */
-    private void onScrollerFinished(Scroller scroller) {
-        if (scroller == mFlingScroller) {
-            if (!ensureScrollWheelAdjusted()) {
-                updateInputTextView();
-            }
-            onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-        } else {
-            if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                updateInputTextView();
-            }
-        }
-    }
+	 float bottom;
+	 float minorTop;
+	 float majorTop;
+	 float textBottom;
+	 float textOffset;
+	 int minorEvery; // frames / tick
+	 int majorEvery; // frames / tick
 
-    /**
-     * Handles transition to a given <code>scrollState</code>
-     */
-    private void onScrollStateChange(int scrollState) {
-        if (mScrollState == scrollState) {
-            return;
-        }
-        mScrollState = scrollState;
-        if (mOnScrollListener != null) {
-            mOnScrollListener.onScrollStateChange(this, scrollState);
-        }
-    }
+	 private void updateCachedMetrics() {
+		 textOffset = dp2px(2);
+		 bottom = getHeight();
+		 minorTop = bottom - dp2px(10);
+		 majorTop = bottom - dp2px(20);
+		 textBottom = getHeight() - dp2px(15);
+		 minorEvery = 1; // frames / marker
+		 majorEvery = 5; // frames / marker
+	 }
 
-    /**
-     * Flings the selector with the given <code>velocityY</code>.
-     */
-    private void fling(int velocityX) {
-        mPreviousScrollerX = 0;
+	 private void initializeSelectorWheel() {
+		 mFrameSpacing = dp2px(10);
+		 SELECTOR_WHEEL_ITEM_COUNT = (int) (getWidth() / mFrameSpacing) + 2;
+		 SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
 
-        if (velocityX > 0) {
-            mFlingScroller.fling(0, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
-        } else {
-            mFlingScroller.fling(Integer.MAX_VALUE, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
-        }
+		 updateCachedMetrics();
+		 initializeSelectorWheelIndices();
+		 int[] selectorIndices = mSelectorIndices;
+		 // TODO: use a better number than mTextSize (the height) for the width of the elements. probably a constant
+		 int totalTextWidth = selectorIndices.length * mTextSize;
+		 float totalTextGapWidth = getWidth() - totalTextWidth;
+		 float textGapCount = selectorIndices.length;
+		 // Ensure that the middle item is positioned the same as the text in
+		 // mInputText
+		 int editTextTextPosition = getWidth()/2;
+		 mInitialScrollOffset = editTextTextPosition
+				 - (mFrameSpacing * SELECTOR_MIDDLE_ITEM_INDEX);
+		 mCurrentScrollOffset = mInitialScrollOffset;
+		 updateInputTextView();
+	 }
 
-        invalidate();
-    }
+	 private void initializeFadingEdges() {
+		 setHorizontalFadingEdgeEnabled(true);
+		 setFadingEdgeLength((getWidth() - mTextSize) / 2);
+	 }
 
-    /**
-     * @return The wrapped index <code>selectorIndex</code> value.
-     */
-    private int getWrappedSelectorIndex(int selectorIndex) {
-        if (selectorIndex > mMaxValue) {
-            return mMinValue + (selectorIndex - mMaxValue) % (mMaxValue - mMinValue) - 1;
-        } else if (selectorIndex < mMinValue) {
-            return mMaxValue - (mMinValue - selectorIndex) % (mMaxValue - mMinValue) + 1;
-        }
-        return selectorIndex;
-    }
+	 /**
+	  * Callback invoked upon completion of a given <code>scroller</code>.
+	  */
+	 private void onScrollerFinished(Scroller scroller) {
+		 if (scroller == mFlingScroller) {
+			 if (!ensureScrollWheelAdjusted()) {
+				 updateInputTextView();
+			 }
+			 onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+		 } else {
+			 if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+				 updateInputTextView();
+			 }
+		 }
+	 }
 
-    /**
-     * Increments the <code>selectorIndices</code> whose string representations
-     * will be displayed in the selector.
-     */
-    private void incrementSelectorIndices(int[] selectorIndices) {
-        for (int i = 0; i < selectorIndices.length - 1; i++) {
-            selectorIndices[i] = selectorIndices[i + 1];
-        }
-        int nextScrollSelectorIndex = selectorIndices[selectorIndices.length - 2] + 1;
-        if (mWrapSelectorWheel && nextScrollSelectorIndex > mMaxValue) {
-            nextScrollSelectorIndex = mMinValue;
-        }
-        selectorIndices[selectorIndices.length - 1] = nextScrollSelectorIndex;
-        ensureCachedScrollSelectorValue(nextScrollSelectorIndex);
-    }
+	 /**
+	  * Handles transition to a given <code>scrollState</code>
+	  */
+	 private void onScrollStateChange(int scrollState) {
+		 if (mScrollState == scrollState) {
+			 return;
+		 }
+		 mScrollState = scrollState;
+		 if (mOnScrollListener != null) {
+			 mOnScrollListener.onScrollStateChange(this, scrollState);
+		 }
+	 }
 
-    /**
-     * Decrements the <code>selectorIndices</code> whose string representations
-     * will be displayed in the selector.
-     */
-    private void decrementSelectorIndices(int[] selectorIndices) {
-        for (int i = selectorIndices.length - 1; i > 0; i--) {
-            selectorIndices[i] = selectorIndices[i - 1];
-        }
-        int nextScrollSelectorIndex = selectorIndices[1] - 1;
-        if (mWrapSelectorWheel && nextScrollSelectorIndex < mMinValue) {
-            nextScrollSelectorIndex = mMaxValue;
-        }
-        selectorIndices[0] = nextScrollSelectorIndex;
-        ensureCachedScrollSelectorValue(nextScrollSelectorIndex);
-    }
+	 /**
+	  * Flings the selector with the given <code>velocityY</code>.
+	  */
+	 private void fling(int velocityX) {
+		 mPreviousScrollerX = 0;
 
-    /**
-     * Ensures we have a cached string representation of the given <code>
-     * selectorIndex</code> to avoid multiple instantiations of the same string.
-     */
-    private void ensureCachedScrollSelectorValue(int selectorIndex) {
-        SparseArray<String> cache = mSelectorIndexToStringCache;
-        String scrollSelectorValue = cache.get(selectorIndex);
-        if (scrollSelectorValue != null) {
-            return;
-        }
-        if (selectorIndex < mMinValue || selectorIndex > mMaxValue) {
-            scrollSelectorValue = "";
-        } else {
-            if (mDisplayedValues != null) {
-                int displayedValueIndex = selectorIndex - mMinValue;
-                scrollSelectorValue = mDisplayedValues[displayedValueIndex];
-            } else {
-                scrollSelectorValue = formatNumber(selectorIndex);
-            }
-        }
-        cache.put(selectorIndex, scrollSelectorValue);
-    }
+		 if (velocityX > 0) {
+			 mFlingScroller.fling(0, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
+		 } else {
+			 mFlingScroller.fling(Integer.MAX_VALUE, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
+		 }
 
-    private String formatNumber(int value) {
-        return (mFormatter != null) ? mFormatter.format(value) : formatNumberWithLocale(value);
-    }
+		 invalidate();
+	 }
 
-    private void validateInputTextView(View v) {
-        String str = String.valueOf(((TextView) v).getText());
-        if (TextUtils.isEmpty(str)) {
-            // Restore to the old value as we don't allow empty values
-            updateInputTextView();
-        } else {
-            // Check the new value and ensure it's in range
-            int current = getSelectedPos(str.toString());
-            setValueInternal(current, true);
-        }
-    }
+	 /**
+	  * @return The wrapped index <code>selectorIndex</code> value.
+	  */
+	 private int getWrappedSelectorIndex(int selectorIndex) {
+		 if (selectorIndex > mMaxValue) {
+			 return mMinValue + (selectorIndex - mMaxValue) % (mMaxValue - mMinValue) - 1;
+		 } else if (selectorIndex < mMinValue) {
+			 return mMaxValue - (mMinValue - selectorIndex) % (mMaxValue - mMinValue) + 1;
+		 }
+		 return selectorIndex;
+	 }
 
-    /**
-     * Updates the view of this NumberPicker. If displayValues were specified in
-     * the string corresponding to the index specified by the current value will
-     * be returned. Otherwise, the formatter specified in {@link #setFormatter}
-     * will be used to format the number.
-     *
-     * @return Whether the text was updated.
-     */
-    private boolean updateInputTextView() {
-        /*
-         * If we don't have displayed values then use the current number else
-         * find the correct value in the displayed values for the current
-         * number.
-         */
-        String text = (mDisplayedValues == null) ? formatNumber(mValue)
-                : mDisplayedValues[mValue - mMinValue];
-        if (!TextUtils.isEmpty(text) && !text.equals(mInputText.getText().toString())) {
-            mInputText.setText(text);
-            return true;
-        }
+	 /**
+	  * Increments the <code>selectorIndices</code> whose string representations
+	  * will be displayed in the selector.
+	  */
+	 private void incrementSelectorIndices(int[] selectorIndices) {
+		 for (int i = 0; i < selectorIndices.length - 1; i++) {
+			 selectorIndices[i] = selectorIndices[i + 1];
+		 }
+		 int nextScrollSelectorIndex = selectorIndices[selectorIndices.length - 2] + 1;
+		 if (mWrapSelectorWheel && nextScrollSelectorIndex > mMaxValue) {
+			 nextScrollSelectorIndex = mMinValue;
+		 }
+		 selectorIndices[selectorIndices.length - 1] = nextScrollSelectorIndex;
+		 ensureCachedScrollSelectorValue(nextScrollSelectorIndex);
+	 }
 
-        return false;
-    }
+	 /**
+	  * Decrements the <code>selectorIndices</code> whose string representations
+	  * will be displayed in the selector.
+	  */
+	 private void decrementSelectorIndices(int[] selectorIndices) {
+		 for (int i = selectorIndices.length - 1; i > 0; i--) {
+			 selectorIndices[i] = selectorIndices[i - 1];
+		 }
+		 int nextScrollSelectorIndex = selectorIndices[1] - 1;
+		 if (mWrapSelectorWheel && nextScrollSelectorIndex < mMinValue) {
+			 nextScrollSelectorIndex = mMaxValue;
+		 }
+		 selectorIndices[0] = nextScrollSelectorIndex;
+		 ensureCachedScrollSelectorValue(nextScrollSelectorIndex);
+	 }
 
-    /**
-     * Notifies the listener, if registered, of a change of the value of this
-     * NumberPicker.
-     */
-    private void notifyChange(int previous, int current) {
-        if (mOnValueChangeListener != null) {
-            mOnValueChangeListener.onValueChange(this, previous, mValue);
-        }
-    }
+	 /**
+	  * Ensures we have a cached string representation of the given <code>
+	  * selectorIndex</code> to avoid multiple instantiations of the same string.
+	  */
+	 private void ensureCachedScrollSelectorValue(int selectorIndex) {
+		 SparseArray<String> cache = mSelectorIndexToStringCache;
+		 String scrollSelectorValue = cache.get(selectorIndex);
+		 if (scrollSelectorValue != null) {
+			 return;
+		 }
+		 if (selectorIndex < mMinValue || selectorIndex > mMaxValue) {
+			 scrollSelectorValue = "";
+		 } else {
+			 if (mDisplayedValues != null) {
+				 int displayedValueIndex = selectorIndex - mMinValue;
+				 scrollSelectorValue = mDisplayedValues[displayedValueIndex];
+			 } else {
+				 scrollSelectorValue = formatNumber(selectorIndex);
+			 }
+		 }
+		 cache.put(selectorIndex, scrollSelectorValue);
+	 }
 
-    /**
-     * Posts a command for changing the current value by one.
-     *
-     * @param increment Whether to increment or decrement the value.
-     */
-    private void postChangeCurrentByOneFromLongPress(boolean increment, long delayMillis) {
-        if (mChangeCurrentByOneFromLongPressCommand == null) {
-            mChangeCurrentByOneFromLongPressCommand = new ChangeCurrentByOneFromLongPressCommand();
-        } else {
-            removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-        }
-        mChangeCurrentByOneFromLongPressCommand.setStep(increment);
-        postDelayed(mChangeCurrentByOneFromLongPressCommand, delayMillis);
-    }
+	 private String formatNumber(int value) {
+		 return (mFormatter != null) ? mFormatter.format(value) : formatNumberWithLocale(value);
+	 }
 
-    /**
-     * Removes the command for changing the current value by one.
-     */
-    private void removeChangeCurrentByOneFromLongPress() {
-        if (mChangeCurrentByOneFromLongPressCommand != null) {
-            removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-        }
-    }
+	 private void validateInputTextView(View v) {
+		 String str = String.valueOf(((TextView) v).getText());
+		 if (TextUtils.isEmpty(str)) {
+			 // Restore to the old value as we don't allow empty values
+			 updateInputTextView();
+		 } else {
+			 // Check the new value and ensure it's in range
+			 int current = getSelectedPos(str.toString());
+			 setValueInternal(current, true);
+		 }
+	 }
 
-    /**
-     * Posts a command for beginning an edit of the current value via IME on
-     * long press.
-     */
-    private void postBeginSoftInputOnLongPressCommand() {
-        if (mBeginSoftInputOnLongPressCommand == null) {
-            mBeginSoftInputOnLongPressCommand = new BeginSoftInputOnLongPressCommand();
-        } else {
-            removeCallbacks(mBeginSoftInputOnLongPressCommand);
-        }
-        postDelayed(mBeginSoftInputOnLongPressCommand, ViewConfiguration.getLongPressTimeout());
-    }
+	 /**
+	  * Updates the view of this NumberPicker. If displayValues were specified in
+	  * the string corresponding to the index specified by the current value will
+	  * be returned. Otherwise, the formatter specified in {@link #setFormatter}
+	  * will be used to format the number.
+	  *
+	  * @return Whether the text was updated.
+	  */
+	 private boolean updateInputTextView() {
+		 /*
+		  * If we don't have displayed values then use the current number else
+		  * find the correct value in the displayed values for the current
+		  * number.
+		  */
+		 String text = (mDisplayedValues == null) ? formatNumber(mValue)
+				 : mDisplayedValues[mValue - mMinValue];
+		 if (!TextUtils.isEmpty(text) && !text.equals(mInputText.getText().toString())) {
+			 mInputText.setText(text);
+			 return true;
+		 }
 
-    /**
-     * Removes the command for beginning an edit of the current value via IME.
-     */
-    private void removeBeginSoftInputCommand() {
-        if (mBeginSoftInputOnLongPressCommand != null) {
-            removeCallbacks(mBeginSoftInputOnLongPressCommand);
-        }
-    }
+		 return false;
+	 }
 
-    /**
-     * Removes all pending callback from the message queue.
-     */
-    private void removeAllCallbacks() {
-        if (mChangeCurrentByOneFromLongPressCommand != null) {
-            removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-        }
-        if (mSetSelectionCommand != null) {
-            removeCallbacks(mSetSelectionCommand);
-        }
-        if (mBeginSoftInputOnLongPressCommand != null) {
-            removeCallbacks(mBeginSoftInputOnLongPressCommand);
-        }
-        mPressedStateHelper.cancel();
-    }
+	 /**
+	  * Notifies the listener, if registered, of a change of the value of this
+	  * NumberPicker.
+	  */
+	 private void notifyChange(int previous, int current) {
+		 if (mOnValueChangeListener != null) {
+			 mOnValueChangeListener.onValueChange(this, previous, mValue);
+		 }
+	 }
 
-    /**
-     * @return The selected index given its displayed <code>value</code>.
-     */
-    private int getSelectedPos(String value) {
-        if (mDisplayedValues == null) {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                // Ignore as if it's not a number we don't care
-            }
-        } else {
-            for (int i = 0; i < mDisplayedValues.length; i++) {
-                // Don't force the user to type in jan when ja will do
-                value = value.toLowerCase();
-                if (mDisplayedValues[i].toLowerCase().startsWith(value)) {
-                    return mMinValue + i;
-                }
-            }
+	 /**
+	  * Posts a command for changing the current value by one.
+	  *
+	  * @param increment Whether to increment or decrement the value.
+	  */
+	 private void postChangeCurrentByOneFromLongPress(boolean increment, long delayMillis) {
+		 if (mChangeCurrentByOneFromLongPressCommand == null) {
+			 mChangeCurrentByOneFromLongPressCommand = new ChangeCurrentByOneFromLongPressCommand();
+		 } else {
+			 removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
+		 }
+		 mChangeCurrentByOneFromLongPressCommand.setStep(increment);
+		 postDelayed(mChangeCurrentByOneFromLongPressCommand, delayMillis);
+	 }
 
-            /*
-             * The user might have typed in a number into the month field i.e.
-             * 10 instead of OCT so support that too.
-             */
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
+	 /**
+	  * Removes the command for changing the current value by one.
+	  */
+	 private void removeChangeCurrentByOneFromLongPress() {
+		 if (mChangeCurrentByOneFromLongPressCommand != null) {
+			 removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
+		 }
+	 }
 
-                // Ignore as if it's not a number we don't care
-            }
-        }
-        return mMinValue;
-    }
+	 /**
+	  * Posts a command for beginning an edit of the current value via IME on
+	  * long press.
+	  */
+	 private void postBeginSoftInputOnLongPressCommand() {
+		 if (mBeginSoftInputOnLongPressCommand == null) {
+			 mBeginSoftInputOnLongPressCommand = new BeginSoftInputOnLongPressCommand();
+		 } else {
+			 removeCallbacks(mBeginSoftInputOnLongPressCommand);
+		 }
+		 postDelayed(mBeginSoftInputOnLongPressCommand, ViewConfiguration.getLongPressTimeout());
+	 }
 
-    /**
-     * Posts an {@link SetSelectionCommand} from the given <code>selectionStart
-     * </code> to <code>selectionEnd</code>.
-     */
-    private void postSetSelectionCommand(int selectionStart, int selectionEnd) {
-        if (mSetSelectionCommand == null) {
-            mSetSelectionCommand = new SetSelectionCommand();
-        } else {
-            removeCallbacks(mSetSelectionCommand);
-        }
-        mSetSelectionCommand.mSelectionStart = selectionStart;
-        mSetSelectionCommand.mSelectionEnd = selectionEnd;
-        post(mSetSelectionCommand);
-    }
+	 /**
+	  * Removes the command for beginning an edit of the current value via IME.
+	  */
+	 private void removeBeginSoftInputCommand() {
+		 if (mBeginSoftInputOnLongPressCommand != null) {
+			 removeCallbacks(mBeginSoftInputOnLongPressCommand);
+		 }
+	 }
 
-    /**
-     * The numbers accepted by the input text's {@link Filter}
-     */
-    private static final char[] DIGIT_CHARACTERS = new char[] {
-            // Latin digits are the common case
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            // Arabic-Indic
-            '\u0660', '\u0661', '\u0662', '\u0663', '\u0664', '\u0665', '\u0666', '\u0667', '\u0668'
-            , '\u0669',
-            // Extended Arabic-Indic
-            '\u06f0', '\u06f1', '\u06f2', '\u06f3', '\u06f4', '\u06f5', '\u06f6', '\u06f7', '\u06f8'
-            , '\u06f9'
-    };
+	 /**
+	  * Removes all pending callback from the message queue.
+	  */
+	 private void removeAllCallbacks() {
+		 if (mChangeCurrentByOneFromLongPressCommand != null) {
+			 removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
+		 }
+		 if (mSetSelectionCommand != null) {
+			 removeCallbacks(mSetSelectionCommand);
+		 }
+		 if (mBeginSoftInputOnLongPressCommand != null) {
+			 removeCallbacks(mBeginSoftInputOnLongPressCommand);
+		 }
+		 mPressedStateHelper.cancel();
+	 }
 
-    /**
-     * Filter for accepting only valid indices or prefixes of the string
-     * representation of valid indices.
-     */
-    class InputTextFilter extends NumberKeyListener {
+	 /**
+	  * @return The selected index given its displayed <code>value</code>.
+	  */
+	 private int getSelectedPos(String value) {
+		 if (mDisplayedValues == null) {
+			 try {
+				 return Integer.parseInt(value);
+			 } catch (NumberFormatException e) {
+				 // Ignore as if it's not a number we don't care
+			 }
+		 } else {
+			 for (int i = 0; i < mDisplayedValues.length; i++) {
+				 // Don't force the user to type in jan when ja will do
+				 value = value.toLowerCase();
+				 if (mDisplayedValues[i].toLowerCase().startsWith(value)) {
+					 return mMinValue + i;
+				 }
+			 }
 
-        // XXX This doesn't allow for range limits when controlled by a
-        // soft input method!
-        public int getInputType() {
-            return InputType.TYPE_CLASS_TEXT;
-        }
+			 /*
+			  * The user might have typed in a number into the month field i.e.
+			  * 10 instead of OCT so support that too.
+			  */
+			 try {
+				 return Integer.parseInt(value);
+			 } catch (NumberFormatException e) {
 
-        @Override
-        protected char[] getAcceptedChars() {
-            return DIGIT_CHARACTERS;
-        }
+				 // Ignore as if it's not a number we don't care
+			 }
+		 }
+		 return mMinValue;
+	 }
 
-        @Override
-        public CharSequence filter(
-                CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
-            if (mDisplayedValues == null) {
-                CharSequence filtered = super.filter(source, start, end, dest, dstart, dend);
-                if (filtered == null) {
-                    filtered = source.subSequence(start, end);
-                }
+	 /**
+	  * Posts an {@link SetSelectionCommand} from the given <code>selectionStart
+	  * </code> to <code>selectionEnd</code>.
+	  */
+	 private void postSetSelectionCommand(int selectionStart, int selectionEnd) {
+		 if (mSetSelectionCommand == null) {
+			 mSetSelectionCommand = new SetSelectionCommand();
+		 } else {
+			 removeCallbacks(mSetSelectionCommand);
+		 }
+		 mSetSelectionCommand.mSelectionStart = selectionStart;
+		 mSetSelectionCommand.mSelectionEnd = selectionEnd;
+		 post(mSetSelectionCommand);
+	 }
 
-                String result = String.valueOf(dest.subSequence(0, dstart)) + filtered
-                        + dest.subSequence(dend, dest.length());
+	 /**
+	  * The numbers accepted by the input text's {@link Filter}
+	  */
+	 private static final char[] DIGIT_CHARACTERS = new char[] {
+		 // Latin digits are the common case
+		 '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		 // Arabic-Indic
+		 '\u0660', '\u0661', '\u0662', '\u0663', '\u0664', '\u0665', '\u0666', '\u0667', '\u0668'
+		 , '\u0669',
+		 // Extended Arabic-Indic
+		 '\u06f0', '\u06f1', '\u06f2', '\u06f3', '\u06f4', '\u06f5', '\u06f6', '\u06f7', '\u06f8'
+		 , '\u06f9'
+	 };
 
-                if ("".equals(result)) {
-                    return result;
-                }
-                int val = getSelectedPos(result);
+	 /**
+	  * Filter for accepting only valid indices or prefixes of the string
+	  * representation of valid indices.
+	  */
+	 class InputTextFilter extends NumberKeyListener {
 
-                /*
-                 * Ensure the user can't type in a value greater than the max
-                 * allowed. We have to allow less than min as the user might
-                 * want to delete some numbers and then type a new number.
-                 */
-                if (val > mMaxValue) {
-                    return "";
-                } else {
-                    return filtered;
-                }
-            } else {
-                CharSequence filtered = String.valueOf(source.subSequence(start, end));
-                if (TextUtils.isEmpty(filtered)) {
-                    return "";
-                }
-                String result = String.valueOf(dest.subSequence(0, dstart)) + filtered
-                        + dest.subSequence(dend, dest.length());
-                String str = String.valueOf(result).toLowerCase();
-                for (String val : mDisplayedValues) {
-                    String valLowerCase = val.toLowerCase();
-                    if (valLowerCase.startsWith(str)) {
-                        postSetSelectionCommand(result.length(), val.length());
-                        return val.subSequence(dstart, val.length());
-                    }
-                }
-                return "";
-            }
-        }
-    }
+		 // XXX This doesn't allow for range limits when controlled by a
+		 // soft input method!
+		 public int getInputType() {
+			 return InputType.TYPE_CLASS_TEXT;
+		 }
 
-    /**
-     * Ensures that the scroll wheel is adjusted i.e. there is no offset and the
-     * middle element is in the middle of the widget.
-     *
-     * @return Whether an adjustment has been made.
-     */
-    private boolean ensureScrollWheelAdjusted() {
-        // adjust to the closest value
-        float deltaX = mInitialScrollOffset - mCurrentScrollOffset;
-        if (deltaX != 0) {
-            mPreviousScrollerX = 0;
-            if (Math.abs(deltaX) > mFrameSpacing / 2) {
-                deltaX += (deltaX > 0) ? -mFrameSpacing : mFrameSpacing;
-            }
-            // TODO: this does not work for motions in fractions of a pixel
-            mAdjustScroller.startScroll(0, 0, (int)deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
-            invalidate();
-            return true;
-        }
-        return false;
-    }
+		 @Override
+		 protected char[] getAcceptedChars() {
+			 return DIGIT_CHARACTERS;
+		 }
 
-    class PressedStateHelper implements Runnable {
-        public static final int BUTTON_INCREMENT = 1;
-        public static final int BUTTON_DECREMENT = 2;
+		 @Override
+		 public CharSequence filter(
+				 CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+			 if (mDisplayedValues == null) {
+				 CharSequence filtered = super.filter(source, start, end, dest, dstart, dend);
+				 if (filtered == null) {
+					 filtered = source.subSequence(start, end);
+				 }
 
-        private final int MODE_PRESS = 1;
-        private final int MODE_TAPPED = 2;
+				 String result = String.valueOf(dest.subSequence(0, dstart)) + filtered
+						 + dest.subSequence(dend, dest.length());
 
-        private int mManagedButton;
-        private int mMode;
+				 if ("".equals(result)) {
+					 return result;
+				 }
+				 int val = getSelectedPos(result);
 
-        public void cancel() {
-            mMode = 0;
-            mManagedButton = 0;
-            FramePicker.this.removeCallbacks(this);
-            if (mIncrementVirtualButtonPressed) {
-                mIncrementVirtualButtonPressed = false;
-                invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-            }
-            mDecrementVirtualButtonPressed = false;
-            if (mDecrementVirtualButtonPressed) {
-                invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-            }
-        }
+				 /*
+				  * Ensure the user can't type in a value greater than the max
+				  * allowed. We have to allow less than min as the user might
+				  * want to delete some numbers and then type a new number.
+				  */
+				 if (val > mMaxValue) {
+					 return "";
+				 } else {
+					 return filtered;
+				 }
+			 } else {
+				 CharSequence filtered = String.valueOf(source.subSequence(start, end));
+				 if (TextUtils.isEmpty(filtered)) {
+					 return "";
+				 }
+				 String result = String.valueOf(dest.subSequence(0, dstart)) + filtered
+						 + dest.subSequence(dend, dest.length());
+				 String str = String.valueOf(result).toLowerCase();
+				 for (String val : mDisplayedValues) {
+					 String valLowerCase = val.toLowerCase();
+					 if (valLowerCase.startsWith(str)) {
+						 postSetSelectionCommand(result.length(), val.length());
+						 return val.subSequence(dstart, val.length());
+					 }
+				 }
+				 return "";
+			 }
+		 }
+	 }
 
-        public void buttonPressDelayed(int button) {
-            cancel();
-            mMode = MODE_PRESS;
-            mManagedButton = button;
-            FramePicker.this.postDelayed(this, ViewConfiguration.getTapTimeout());
-        }
+	 /**
+	  * Ensures that the scroll wheel is adjusted i.e. there is no offset and the
+	  * middle element is in the middle of the widget.
+	  *
+	  * @return Whether an adjustment has been made.
+	  */
+	 private boolean ensureScrollWheelAdjusted() {
+		 // adjust to the closest value
+		 float deltaX = mInitialScrollOffset - mCurrentScrollOffset;
+		 if (deltaX != 0) {
+			 mPreviousScrollerX = 0;
+			 if (Math.abs(deltaX) > mFrameSpacing / 2) {
+				 deltaX += (deltaX > 0) ? -mFrameSpacing : mFrameSpacing;
+			 }
+			 // TODO: this does not work for motions in fractions of a pixel
+			 mAdjustScroller.startScroll(0, 0, (int)deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
+			 invalidate();
+			 return true;
+		 }
+		 return false;
+	 }
 
-        public void buttonTapped(int button) {
-            cancel();
-            mMode = MODE_TAPPED;
-            mManagedButton = button;
-            FramePicker.this.post(this);
-        }
+	 class PressedStateHelper implements Runnable {
+		 public static final int BUTTON_INCREMENT = 1;
+		 public static final int BUTTON_DECREMENT = 2;
 
-        @Override
-        public void run() {
-            switch (mMode) {
-                case MODE_PRESS: {
-                    switch (mManagedButton) {
-                        case BUTTON_INCREMENT: {
-                            mIncrementVirtualButtonPressed = true;
-                            invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-                        } break;
-                        case BUTTON_DECREMENT: {
-                            mDecrementVirtualButtonPressed = true;
-                            invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-                        }
-                    }
-                } break;
-                case MODE_TAPPED: {
-                    switch (mManagedButton) {
-                        case BUTTON_INCREMENT: {
-                            if (!mIncrementVirtualButtonPressed) {
-                                FramePicker.this.postDelayed(this,
-                                        ViewConfiguration.getPressedStateDuration());
-                            }
-                            mIncrementVirtualButtonPressed ^= true;
-                            invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-                        } break;
-                        case BUTTON_DECREMENT: {
-                            if (!mDecrementVirtualButtonPressed) {
-                                FramePicker.this.postDelayed(this,
-                                        ViewConfiguration.getPressedStateDuration());
-                            }
-                            mDecrementVirtualButtonPressed ^= true;
-                            invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-                        }
-                    }
-                } break;
-            }
-        }
-    }
+		 private final int MODE_PRESS = 1;
+		 private final int MODE_TAPPED = 2;
 
-    /**
-     * Command for setting the input text selection.
-     */
-    class SetSelectionCommand implements Runnable {
-        private int mSelectionStart;
+		 private int mManagedButton;
+		 private int mMode;
 
-        private int mSelectionEnd;
+		 public void cancel() {
+			 mMode = 0;
+			 mManagedButton = 0;
+			 FramePicker.this.removeCallbacks(this);
+			 if (mIncrementVirtualButtonPressed) {
+				 mIncrementVirtualButtonPressed = false;
+				 invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
+			 }
+			 mDecrementVirtualButtonPressed = false;
+			 if (mDecrementVirtualButtonPressed) {
+				 invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
+			 }
+		 }
 
-        public void run() {
-            mInputText.setSelection(mSelectionStart, mSelectionEnd);
-        }
-    }
+		 public void buttonPressDelayed(int button) {
+			 cancel();
+			 mMode = MODE_PRESS;
+			 mManagedButton = button;
+			 FramePicker.this.postDelayed(this, ViewConfiguration.getTapTimeout());
+		 }
 
-    /**
-     * Command for changing the current value from a long press by one.
-     */
-    class ChangeCurrentByOneFromLongPressCommand implements Runnable {
-        private boolean mIncrement;
+		 public void buttonTapped(int button) {
+			 cancel();
+			 mMode = MODE_TAPPED;
+			 mManagedButton = button;
+			 FramePicker.this.post(this);
+		 }
 
-        private void setStep(boolean increment) {
-            mIncrement = increment;
-        }
+		 @Override
+		 public void run() {
+			 switch (mMode) {
+			 case MODE_PRESS: {
+				 switch (mManagedButton) {
+				 case BUTTON_INCREMENT: {
+					 mIncrementVirtualButtonPressed = true;
+					 invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
+				 } break;
+				 case BUTTON_DECREMENT: {
+					 mDecrementVirtualButtonPressed = true;
+					 invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
+				 }
+				 }
+			 } break;
+			 case MODE_TAPPED: {
+				 switch (mManagedButton) {
+				 case BUTTON_INCREMENT: {
+					 if (!mIncrementVirtualButtonPressed) {
+						 FramePicker.this.postDelayed(this,
+								 ViewConfiguration.getPressedStateDuration());
+					 }
+					 mIncrementVirtualButtonPressed ^= true;
+					 invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
+				 } break;
+				 case BUTTON_DECREMENT: {
+					 if (!mDecrementVirtualButtonPressed) {
+						 FramePicker.this.postDelayed(this,
+								 ViewConfiguration.getPressedStateDuration());
+					 }
+					 mDecrementVirtualButtonPressed ^= true;
+					 invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
+				 }
+				 }
+			 } break;
+			 }
+		 }
+	 }
 
-        @Override
-        public void run() {
-            changeValueByOne(mIncrement);
-            postDelayed(this, mLongPressUpdateInterval);
-        }
-    }
+	 /**
+	  * Command for setting the input text selection.
+	  */
+	 class SetSelectionCommand implements Runnable {
+		 private int mSelectionStart;
 
-    /**
-     * @hide
-     */
-    public static class CustomEditText extends EditText {
+		 private int mSelectionEnd;
 
-        public CustomEditText(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
+		 public void run() {
+			 mInputText.setSelection(mSelectionStart, mSelectionEnd);
+		 }
+	 }
 
-        @Override
-        public void onEditorAction(int actionCode) {
-            super.onEditorAction(actionCode);
-            if (actionCode == EditorInfo.IME_ACTION_DONE) {
-                clearFocus();
-            }
-        }
-    }
+	 /**
+	  * Command for changing the current value from a long press by one.
+	  */
+	 class ChangeCurrentByOneFromLongPressCommand implements Runnable {
+		 private boolean mIncrement;
 
-    /**
-     * Command for beginning soft input on long press.
-     */
-    class BeginSoftInputOnLongPressCommand implements Runnable {
+		 private void setStep(boolean increment) {
+			 mIncrement = increment;
+		 }
 
-        @Override
-        public void run() {
-            showSoftInput();
-            mIngonreMoveEvents = true;
-        }
-    }
+		 @Override
+		 public void run() {
+			 changeValueByOne(mIncrement);
+			 postDelayed(this, mLongPressUpdateInterval);
+		 }
+	 }
 
-    static private String formatNumberWithLocale(int value) {
-        return String.format(Locale.getDefault(), "%d", value);
-    }
+	 /**
+	  * @hide
+	  */
+	 public static class CustomEditText extends EditText {
+
+		 public CustomEditText(Context context, AttributeSet attrs) {
+			 super(context, attrs);
+		 }
+
+		 @Override
+		 public void onEditorAction(int actionCode) {
+			 super.onEditorAction(actionCode);
+			 if (actionCode == EditorInfo.IME_ACTION_DONE) {
+				 clearFocus();
+			 }
+		 }
+	 }
+
+	 /**
+	  * Command for beginning soft input on long press.
+	  */
+	 class BeginSoftInputOnLongPressCommand implements Runnable {
+
+		 @Override
+		 public void run() {
+			 showSoftInput();
+			 mIngonreMoveEvents = true;
+		 }
+	 }
+
+	 static private String formatNumberWithLocale(int value) {
+		 return String.format(Locale.getDefault(), "%d", value);
+	 }
 }
