@@ -94,7 +94,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The number of items show in the selector wheel.
      */
-    private static final int SELECTOR_WHEEL_ITEM_COUNT = 3;
+    private int SELECTOR_WHEEL_ITEM_COUNT = 3;
 
     /**
      * The default update interval during long press.
@@ -104,7 +104,7 @@ public class FramePicker extends LinearLayout {
     /**
      * The index of the middle selector item.
      */
-    private static final int SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
+    private int SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
 
     /**
      * The coefficient by which to adjust (divide) the max fling velocity.
@@ -187,11 +187,6 @@ public class FramePicker extends LinearLayout {
     private final int mTextSize;
 
     /**
-     * The height of the gap between text elements if the selector wheel.
-     */
-    private int mSelectorTextGapWidth;
-
-    /**
      * The values to be displayed instead the indices.
      */
     private String[] mDisplayedValues;
@@ -242,6 +237,11 @@ public class FramePicker extends LinearLayout {
     private final int[] mSelectorIndices = new int[SELECTOR_WHEEL_ITEM_COUNT];
 
     /**
+     * The difference from one text display to the next.
+     */
+    private int mFramesPerSegment = 5;
+
+    /**
      * The {@link Paint} for drawing the selector.
      */
     private final Paint mSelectorWheelPaint;
@@ -252,19 +252,14 @@ public class FramePicker extends LinearLayout {
     private final Drawable mVirtualButtonPressedDrawable;
 
     /**
-     * The height of a selector element (text + gap).
-     */
-    private int mSelectorElementWidth;
-
-    /**
      * The initial offset of the scroll selector.
      */
-    private int mInitialScrollOffset = Integer.MIN_VALUE;
+    private float mInitialScrollOffset = Integer.MIN_VALUE;
 
     /**
      * The current offset of the scroll selector.
      */
-    private int mCurrentScrollOffset;
+    private float mCurrentScrollOffset;
 
     /**
      * The {@link Scroller} responsible for flinging the selector.
@@ -627,15 +622,15 @@ public class FramePicker extends LinearLayout {
      */
     private boolean moveToFinalScrollerPosition(Scroller scroller) {
         scroller.forceFinished(true);
-        int amountToScroll = scroller.getFinalX() - scroller.getCurrX();
-        int futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mSelectorElementWidth;
-        int overshootAdjustment = mInitialScrollOffset - futureScrollOffset;
+        float amountToScroll = scroller.getFinalX() - scroller.getCurrX();
+        float futureScrollOffset = (mCurrentScrollOffset + amountToScroll) % mFrameSpacing;
+        float overshootAdjustment = mInitialScrollOffset - futureScrollOffset;
         if (overshootAdjustment != 0) {
-            if (Math.abs(overshootAdjustment) > mSelectorElementWidth / 2) {
+            if (Math.abs(overshootAdjustment) > mFrameSpacing / 2) {
                 if (overshootAdjustment > 0) {
-                    overshootAdjustment -= mSelectorElementWidth;
+                    overshootAdjustment -= mFrameSpacing;
                 } else {
-                    overshootAdjustment += mSelectorElementWidth;
+                    overshootAdjustment += mFrameSpacing;
                 }
             }
             amountToScroll += overshootAdjustment;
@@ -746,7 +741,7 @@ public class FramePicker extends LinearLayout {
                             mShowSoftInputOnTap = false;
                             showSoftInput();
                         } else {
-                            int selectorIndexOffset = (eventX / mSelectorElementWidth)
+                            float selectorIndexOffset = (eventX / mFrameSpacing)
                                     - SELECTOR_MIDDLE_ITEM_INDEX;
                             if (selectorIndexOffset > 0) {
                                 changeValueByOne(true);
@@ -842,6 +837,10 @@ public class FramePicker extends LinearLayout {
 
     @Override
     public void scrollBy(int x, int y) {
+    	scrollBy((float)x, (float)y);
+    }
+
+    public void scrollBy(float x, float y) {
         int[] selectorIndices = mSelectorIndices;
         if (!mWrapSelectorWheel && x > 0
                 && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
@@ -854,18 +853,18 @@ public class FramePicker extends LinearLayout {
             return;
         }
         mCurrentScrollOffset += x;
-        while (mCurrentScrollOffset - mInitialScrollOffset > mSelectorTextGapWidth) {
-            mCurrentScrollOffset -= mSelectorElementWidth;
+        while (mCurrentScrollOffset - mInitialScrollOffset > mFrameSpacing) {
+            mCurrentScrollOffset -= mFrameSpacing;
             decrementSelectorIndices(selectorIndices);
-            setValueInternal(selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX], true);
+            setValueInternal(mValue - 1, true);
             if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] <= mMinValue) {
                 mCurrentScrollOffset = mInitialScrollOffset;
             }
         }
-        while (mCurrentScrollOffset - mInitialScrollOffset < -mSelectorTextGapWidth) {
-            mCurrentScrollOffset += mSelectorElementWidth;
+        while (mCurrentScrollOffset - mInitialScrollOffset < -mFrameSpacing) {
+            mCurrentScrollOffset += mFrameSpacing;
             incrementSelectorIndices(selectorIndices);
-            setValueInternal(selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX], true);
+            setValueInternal(mValue + 1, true);
             if (!mWrapSelectorWheel && selectorIndices[SELECTOR_MIDDLE_ITEM_INDEX] >= mMaxValue) {
                 mCurrentScrollOffset = mInitialScrollOffset;
             }
@@ -1204,45 +1203,12 @@ public class FramePicker extends LinearLayout {
         removeAllCallbacks();
     }
 
-    private float frameSpacing; // pixels per frame
-    private float[] frameTicks; // pixel coordinates of the frame tick marks. Pass this directly to Canvas.drawLines();
-    private float[] textPositions; // x pixel coordinates of the start of the tick mark labels
-    
-    private void updateCachedMetrics() {
-    	frameSpacing = dp2px(10);
-    	float bottom = getHeight();
-    	float minorTop = bottom - dp2px(10);
-    	float majorTop = bottom - dp2px(20);
-    	int minorEvery = 1; // frames / marker
-    	int majorEvery = 5; // frames / marker
-    	int count = 101;
-    	float x = 0;
-    	frameTicks = new float[count * 4];
-    	textPositions = new float[count / majorEvery + 1];
-    	
-    	for (int i = 0; i < count; i++) {
-    		float top;
-    		if (i % majorEvery == 0) {
-    			top = majorTop;
-    			textPositions[i/majorEvery] = x + dp2px(2);
-    		} else if (i % minorEvery == 0) {
-    			top = minorTop;
-    		} else continue;
-    		
-    		frameTicks[i*4 + 0] = x;
-    		frameTicks[i*4 + 1] = bottom;
-    		frameTicks[i*4 + 2] = x;
-    		frameTicks[i*4 + 3] = top;
-    		
-    		x += frameSpacing;
-    	}
-    }
     
     protected int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
     
     @Override
     protected void onDraw(Canvas canvas) {
-        float x = 0;
+        float x = mCurrentScrollOffset;
         float y = mInputText.getBaseline() + mInputText.getTop();
 
         // draw the virtual buttons pressed state if needed
@@ -1261,9 +1227,7 @@ public class FramePicker extends LinearLayout {
             }
         }
 
-    	canvas.save();
-    	canvas.translate(mCurrentScrollOffset, 0);
-
+/*
     	// draw the selector wheel
         int[] selectorIndices = mSelectorIndices;
         for (int i = 0; i < selectorIndices.length; i++) {
@@ -1279,17 +1243,25 @@ public class FramePicker extends LinearLayout {
             }
             x += mSelectorElementWidth;
         }
-
-        updateCachedMetrics();
+*/
+        
         Paint rulerPaint = new Paint(mSelectorWheelPaint);
         rulerPaint.setTextAlign(Paint.Align.LEFT);
-        canvas.drawLines(frameTicks, rulerPaint);
-        float textBottom = getHeight() - dp2px(15);
-        for (int i = 0; i < textPositions.length; i++) {
-                canvas.drawText(Integer.toString(i), textPositions[i], textBottom, rulerPaint);
-                canvas.drawPoint(textPositions[i], textBottom, rulerPaint);
-        }
-        canvas.restore();
+        int firstFrame = getValue() - SELECTOR_MIDDLE_ITEM_INDEX;
+        int lastFrame = firstFrame + SELECTOR_WHEEL_ITEM_COUNT;
+     	for (int i = firstFrame; i < lastFrame; i++) {
+     		float top;
+     		if (i % majorEvery == 0) {
+     			top = majorTop;
+                canvas.drawText(Integer.toString(i), x + textOffset, textBottom, rulerPaint);
+     		} else if (i % minorEvery == 0) {
+     			top = minorTop;
+     		} else continue;
+     		
+     		canvas.drawLine(x, bottom, x, top, rulerPaint);
+     		
+     		x += mFrameSpacing;
+     	}
 
         // draw the selection dividers
         if (mSelectionDivider != null) {
@@ -1405,33 +1377,57 @@ public class FramePicker extends LinearLayout {
      * @param increment True to increment, false to decrement.
      */
      private void changeValueByOne(boolean increment) {
+    	 // TODO: This is incorrect if the frame spacing is less than one pixel
             mInputText.setVisibility(View.INVISIBLE);
             if (!moveToFinalScrollerPosition(mFlingScroller)) {
                 moveToFinalScrollerPosition(mAdjustScroller);
             }
             mPreviousScrollerX = 0;
             if (increment) {
-                mFlingScroller.startScroll(0, 0, -mSelectorElementWidth, 0, SNAP_SCROLL_DURATION);
+                mFlingScroller.startScroll(0, 0, -(int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
             } else {
-                mFlingScroller.startScroll(0, 0, mSelectorElementWidth, 0, SNAP_SCROLL_DURATION);
+                mFlingScroller.startScroll(0, 0, (int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
             }
             invalidate();
     }
 
-    private void initializeSelectorWheel() {
+     private float mFrameSpacing; // pixels per frame
+
+     float bottom;
+  	float minorTop;
+  	float majorTop;
+    float textBottom;
+  	float textOffset;
+  	int minorEvery; // frames / tick
+  	int majorEvery; // frames / tick
+     
+     private void updateCachedMetrics() {
+     	textOffset = dp2px(2);
+     	bottom = getHeight();
+     	minorTop = bottom - dp2px(10);
+     	majorTop = bottom - dp2px(20);
+        textBottom = getHeight() - dp2px(15);
+     	minorEvery = 1; // frames / marker
+     	majorEvery = 5; // frames / marker
+     }
+
+     private void initializeSelectorWheel() {
+      	mFrameSpacing = dp2px(10);
+      	SELECTOR_WHEEL_ITEM_COUNT = (int) (getWidth() / mFrameSpacing) + 2;
+      	SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
+    	 
+      	updateCachedMetrics();
         initializeSelectorWheelIndices();
         int[] selectorIndices = mSelectorIndices;
         // TODO: use a better number than mTextSize (the height) for the width of the elements. probably a constant
         int totalTextWidth = selectorIndices.length * mTextSize;
         float totalTextGapWidth = getWidth() - totalTextWidth;
         float textGapCount = selectorIndices.length;
-        mSelectorTextGapWidth = (int) (totalTextGapWidth / textGapCount + 0.5f);
-        mSelectorElementWidth = mTextSize + mSelectorTextGapWidth;
         // Ensure that the middle item is positioned the same as the text in
         // mInputText
-        int editTextTextPosition = mInputText.getWidth()/2 + mInputText.getLeft();
+        int editTextTextPosition = getWidth()/2;
         mInitialScrollOffset = editTextTextPosition
-                - (mSelectorElementWidth * SELECTOR_MIDDLE_ITEM_INDEX);
+                - (mFrameSpacing * SELECTOR_MIDDLE_ITEM_INDEX);
         mCurrentScrollOffset = mInitialScrollOffset;
         updateInputTextView();
     }
@@ -1798,13 +1794,14 @@ public class FramePicker extends LinearLayout {
      */
     private boolean ensureScrollWheelAdjusted() {
         // adjust to the closest value
-        int deltaX = mInitialScrollOffset - mCurrentScrollOffset;
+        float deltaX = mInitialScrollOffset - mCurrentScrollOffset;
         if (deltaX != 0) {
             mPreviousScrollerX = 0;
-            if (Math.abs(deltaX) > mSelectorElementWidth / 2) {
-                deltaX += (deltaX > 0) ? -mSelectorElementWidth : mSelectorElementWidth;
+            if (Math.abs(deltaX) > mFrameSpacing / 2) {
+                deltaX += (deltaX > 0) ? -mFrameSpacing : mFrameSpacing;
             }
-            mAdjustScroller.startScroll(0, 0, deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
+            // TODO: this does not work for motions in fractions of a pixel
+            mAdjustScroller.startScroll(0, 0, (int)deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
             invalidate();
             return true;
         }
