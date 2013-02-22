@@ -49,13 +49,7 @@ public class Camera {
 	 * the camera slides along this vector when moving between origins
 	 */
 	private float[] transitionRail = new float[] {0.0f, 0.0f, 0.0f, 1.0f};
-	private float transitionProgress = 0.0f;
-	private Interpolator transitionInterpolator = new AccelerateDecelerateInterpolator();
-    private long transitionStartTime = 0; // ms
-    private float transitionValue = 1.0f;
-    private final int transitionDuration = 300; // ms
-
-	
+	private SimpleFloatAnimator transition = new SimpleFloatAnimator(300, 1.0f, 0.0f);
 	
 	/**
 	 * Trackball that keeps track of orientation set by touch
@@ -87,7 +81,7 @@ public class Camera {
 		transitionRail[1]  = 0.0f;
 		transitionRail[2]  = 0.0f;
 		transitionRail[3]  = 1.0f;
-		transitionProgress = 0.0f;
+		transition.progress = 0.0f;
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 		trackball.setZoomRate(1.0f);
 		updateViewMatrix();
@@ -115,7 +109,7 @@ public class Camera {
 			trackball.setDistance(20.0f);
 			transitionRail[2] += 20.0f;
 		}
-		transitionStartTime = SystemClock.uptimeMillis();
+		transition.start();
 	}
 	
 	public void onResume() {
@@ -127,31 +121,18 @@ public class Camera {
 		trackball.setZoomRate(1.0f);
 	}
 	
-	private void updateTransition() {
-		long time = SystemClock.uptimeMillis() - transitionStartTime;
-		if (time < 0) {
-			transitionProgress = 0.0f;
-		} else if (time > transitionDuration) {
-			transitionProgress = 1.0f;
-		} else {
-			transitionProgress = (float)time / transitionDuration;
-		}
-		transitionValue = 1.0f - transitionInterpolator.getInterpolation(transitionProgress);
-
-	}
-
 	public void updateViewMatrix() {
 		trackball.updateOrientation();
-		updateTransition();
+		transition.update();
 		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
 		
 		trackball.rotateMatrix(inverseCameraOrientation, gyroscope.getOrientation());
 
 		Matrix.setIdentityM(temporaryMatrix, 0);
 		Matrix.translateM(temporaryMatrix, 0, 
-				transitionValue * transitionRail[0],
-				transitionValue * transitionRail[1],
-				transitionValue * transitionRail[2] - trackball.getDistance());
+				transition.value * transitionRail[0],
+				transition.value * transitionRail[1],
+				transition.value * transitionRail[2] - trackball.getDistance());
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, inverseCameraOrientation, 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
 	}
