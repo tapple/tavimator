@@ -32,6 +32,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.NumberKeyListener;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -90,6 +91,8 @@ import java.util.Locale;
  */
 
 public class FramePicker extends LinearLayout {
+	
+	private static final String TAG = "FramePicker";
 
 	/**
 	 * The number of items show in the selector wheel.
@@ -114,12 +117,12 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * The the duration for adjusting the selector wheel.
 	 */
-	private static final int SELECTOR_ADJUSTMENT_DURATION_MILLIS = 800;
+	private static final int SELECTOR_ADJUSTMENT_DURATION_MILLIS = 200;
 
 	/**
 	 * The duration of scrolling while snapping to a given position.
 	 */
-	private static final int SNAP_SCROLL_DURATION = 300;
+	private static final int SNAP_SCROLL_DURATION = 200;
 
 	/**
 	 * The strength of fading in the top and bottom while drawing the selector.
@@ -234,7 +237,7 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * The {@link Scroller} responsible for adjusting the selector.
 	 */
-	private final Scroller mAdjustScroller;
+	private final SimpleFloatAnimator mAdjustScroller;
 
 	/**
 	 * The previous Y coordinate while scrolling the selector.
@@ -529,7 +532,7 @@ public class FramePicker extends LinearLayout {
 
 		// create the fling and adjust scrollers
 		mFlingScroller = new Scroller(getContext(), null);
-		mAdjustScroller = new Scroller(getContext(), new DecelerateInterpolator(2.5f));
+		mAdjustScroller = new SimpleFloatAnimator(new DecelerateInterpolator(2.5f));
 
 		updateInputTextView();
 	}
@@ -588,9 +591,8 @@ public class FramePicker extends LinearLayout {
 	private boolean moveToFinalScrollerPosition(Scroller scroller) {
 		scroller.forceFinished(true);
 		int amountToScroll = scroller.getFinalX() - scroller.getCurrX();
-		int finalValue = (int) (mValue + amountToScroll/mFrameSpacing + 0.5f);
-		if (finalValue != mValue) {
-			setValueInternal(finalValue, true);
+		if (amountToScroll != 0) {
+			scrollBy(amountToScroll, 0);
 			return true;
 		}
 		return false;
@@ -764,26 +766,32 @@ public class FramePicker extends LinearLayout {
 
 	@Override
 	public void computeScroll() {
-		Scroller scroller = mFlingScroller;
-		if (scroller.isFinished()) {
-			scroller = mAdjustScroller;
-			if (scroller.isFinished()) {
-				return;
+		if (!mFlingScroller.isFinished()) {
+			mFlingScroller.computeScrollOffset();
+			int currentScrollerX = mFlingScroller.getCurrX();
+			if (mPreviousScrollerX == 0) {
+				mPreviousScrollerX = mFlingScroller.getStartX();
+			}
+			scrollBy(currentScrollerX - mPreviousScrollerX, 0);
+			mPreviousScrollerX = currentScrollerX;
+			if (mFlingScroller.isFinished()) {
+				if (!ensureScrollWheelAdjusted()) {
+					updateInputTextView();
+				}
+				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+			} else {
+				invalidate();
+			}
+		} else if (!mAdjustScroller.isFinished()){
+			mAdjustScroller.update();
+			setValueInternal(mAdjustScroller.value, true);
+			if (mAdjustScroller.isFinished()) {
+				if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+					updateInputTextView();
+				}
 			}
 		}
-		scroller.computeScrollOffset();
-		int currentScrollerX = scroller.getCurrX();
-		if (mPreviousScrollerX == 0) {
-			mPreviousScrollerX = scroller.getStartX();
-		}
-		scrollBy(currentScrollerX - mPreviousScrollerX, 0);
-		mPreviousScrollerX = currentScrollerX;
-		if (scroller.isFinished()) {
-			onScrollerFinished(scroller);
-		} else {
-			invalidate();
-		}
-	}
+}
 
 	@Override
 	public void setEnabled(boolean enabled) {
@@ -1228,14 +1236,16 @@ public class FramePicker extends LinearLayout {
 		// TODO: This is incorrect if the frame spacing is less than one pixel
 		mInputText.setVisibility(View.INVISIBLE);
 		if (!moveToFinalScrollerPosition(mFlingScroller)) {
-			moveToFinalScrollerPosition(mAdjustScroller);
+			mAdjustScroller.forceFinished(true);
+			setValueInternal(mAdjustScroller.endValue, true);
 		}
-		mPreviousScrollerX = 0;
+		mAdjustScroller.startValue = mValue;
 		if (increment) {
-			mFlingScroller.startScroll(0, 0, -(int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
+			mAdjustScroller.endValue = mValue + 1;
 		} else {
-			mFlingScroller.startScroll(0, 0, (int)mFrameSpacing, 0, SNAP_SCROLL_DURATION);
+			mAdjustScroller.endValue = mValue - 1;
 		}
+		mAdjustScroller.start(SNAP_SCROLL_DURATION);
 		invalidate();
 	}
 
@@ -1274,22 +1284,6 @@ public class FramePicker extends LinearLayout {
 	}
 
 	/**
-	 * Callback invoked upon completion of a given <code>scroller</code>.
-	 */
-	private void onScrollerFinished(Scroller scroller) {
-		if (scroller == mFlingScroller) {
-			if (!ensureScrollWheelAdjusted()) {
-				updateInputTextView();
-			}
-			onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-		} else {
-			if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-				updateInputTextView();
-			}
-		}
-	}
-
-	/**
 	 * Handles transition to a given <code>scrollState</code>
 	 */
 	private void onScrollStateChange(int scrollState) {
@@ -1321,7 +1315,7 @@ public class FramePicker extends LinearLayout {
 	 * @return The wrapped index <code>selectorIndex</code> value.
 	 */
 	private float getWrappedSelectorIndex(float selectorIndex) {
-		if (selectorIndex > mMaxValue) {
+		if (selectorIndex >= mMaxValue) {
 			if (mWrapSelectorWheel) {
 				return mMinValue + (selectorIndex - mMaxValue) % (mMaxValue - mMinValue);
 			} else {
@@ -1543,11 +1537,10 @@ public class FramePicker extends LinearLayout {
 	 */
 	private boolean ensureScrollWheelAdjusted() {
 		// adjust to the closest value
-		float deltaX = (getRoundedValue() - mValue) * mFrameSpacing;
-		if (deltaX != 0) {
-			mPreviousScrollerX = 0;
-			// TODO: this does not work for motions in fractions of a pixel
-			mAdjustScroller.startScroll(0, 0, (int)deltaX, 0, SELECTOR_ADJUSTMENT_DURATION_MILLIS);
+		if (getRoundedValue() != mValue) {
+			mAdjustScroller.startValue = mValue;
+			mAdjustScroller.endValue = getRoundedValue();
+			mAdjustScroller.start(SELECTOR_ADJUSTMENT_DURATION_MILLIS);
 			invalidate();
 			return true;
 		}

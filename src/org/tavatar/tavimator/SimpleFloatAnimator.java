@@ -56,13 +56,24 @@ public class SimpleFloatAnimator {
 		this.endValue = endValue;
 	}
 
+	public void start(int duration) {
+		this.duration = duration;
+		start();
+	}
+
 	public void start() {
 		startTime = SystemClock.uptimeMillis();
+		progress = 0.0f;
+	}
+	
+	public void forceFinished(boolean finish) {
+		if (!finish) return;
+		startTime = 0;
+		progress = 1.0f;
 	}
 
 	public boolean isFinished() {
-		long time = SystemClock.uptimeMillis() - startTime;
-		return time > duration;
+		return progress == 1.0f;
 	}
 
 	/**
