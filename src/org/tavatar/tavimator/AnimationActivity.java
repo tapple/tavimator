@@ -173,7 +173,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 	}
 
 	@Override
-	public void onValueChange(FramePicker picker, int oldVal, int newVal) {
+	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
 		// TODO Auto-generated method stub
 		((TextView) findViewById(R.id.debugLabel)).setText("frame " + newVal);
 
