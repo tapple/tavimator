@@ -28,17 +28,17 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final String TAG = "AnimationRenderer";
 	private final AnimationView mView;
 	private final Context mActivityContext;
-	
+
 	// defines where we start counting opengl ids for parts with multiple animations
 	// first animation counts 0-ANIMATION_INCREMENT-1, next ANIMATION_INCREMENT++
 	public static final int ANIMATION_INCREMENT = 100;
 
-    private enum DrawMode {
-      MODE_PARTS,
-      MODE_SKELETON,
-      MODE_ROT_AXES
-    };
-	
+	private enum DrawMode {
+		MODE_PARTS,
+		MODE_SKELETON,
+		MODE_ROT_AXES
+	};
+
 	/**
 	 * Store the model matrix. This matrix is used to move models from object space (where each model can be thought
 	 * of being located at the center of the universe) to world space.
@@ -54,31 +54,31 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	/** Store the projection matrix. This is used to project the scene onto a 2D viewport. */
 	private float[] mProjectionMatrix = new float[16];
-	
+
 	/** Allocate storage for the final combined matrix. This will be passed into the shader program. */
 	private float[] mMVPMatrix = new float[16];
-	
+
 	private float[] backgroundColor = new float[4];
-	
+
 	/** Store our model data in a float buffer. */
 	private final FloatBuffer mCubePositions;
 	private final FloatBuffer mCubeNormals;
-		
+
 	/** This will be used to pass in the transformation matrix. */
 	private int mMVPMatrixHandle;				
-	
+
 	/** This will be used to pass in the modelview matrix. */
 	private int mMVMatrixHandle;
-	
+
 	/** This will be used to pass in model position information. */
 	private int mPositionHandle;
-	
+
 	/** This will be used to pass in model color information. */
 	private int mColorHandle;
-	
+
 	/** This will be used to enable or disable lighting. */
 	private int mLightingHandle;
-	
+
 	/** This will be used to pass in model normal information. */
 	private int mNormalHandle;
 
@@ -86,41 +86,41 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	/** How many bytes per float. */
 	private final int mBytesPerFloat = 4;	
-	
+
 	/** Size of the position data in elements. */
 	private final int mPositionDataSize = 3;	
-	
+
 	/** Size of the normal data in elements. */
 	private final int mNormalDataSize = 3;
-	
+
 	/** This is a handle to our per-vertex cube shading program. */
 	private int mPerVertexProgramHandle;
-		
-	private SLPartsRenderer figureRenderer = new SLPartsFemale(this);
-	
-    private boolean skeleton;
-    private boolean selecting;
-    private int selectName;
 
-    /**
+	private SLPartsRenderer figureRenderer = new SLPartsFemale(this);
+
+	private boolean skeleton;
+	private boolean selecting;
+	private int selectName;
+
+	/**
 	 * Initialize the model data.
 	 */
 	public AnimationRenderer(AnimationView view) {
 		mView = view;
-        mActivityContext = view.getContext();
+		mActivityContext = view.getContext();
 		mCamera = new Camera(mActivityContext);
 		resetCamera();
 
 		// Define points for a cube.		
-		
+
 		// X, Y, Z
 		final float[] cubePositionData =
-		{
+			{
 				// In OpenGL counter-clockwise winding is default. This means that when we look at a triangle, 
 				// if the points are counter-clockwise we are looking at the "front". If not we are looking at
 				// the back. OpenGL has an optimization where all back-facing triangles are culled, since they
 				// usually represent the backside of an object and aren't visible anyways.
-				
+
 				// Front face
 				-1.0f, 1.0f, 1.0f,				
 				-1.0f, -1.0f, 1.0f,
@@ -128,7 +128,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				-1.0f, -1.0f, 1.0f, 				
 				1.0f, -1.0f, 1.0f,
 				1.0f, 1.0f, 1.0f,
-				
+
 				// Right face
 				1.0f, 1.0f, 1.0f,				
 				1.0f, -1.0f, 1.0f,
@@ -136,7 +136,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				1.0f, -1.0f, 1.0f,				
 				1.0f, -1.0f, -1.0f,
 				1.0f, 1.0f, -1.0f,
-				
+
 				// Back face
 				1.0f, 1.0f, -1.0f,				
 				1.0f, -1.0f, -1.0f,
@@ -144,7 +144,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				1.0f, -1.0f, -1.0f,				
 				-1.0f, -1.0f, -1.0f,
 				-1.0f, 1.0f, -1.0f,
-				
+
 				// Left face
 				-1.0f, 1.0f, -1.0f,				
 				-1.0f, -1.0f, -1.0f,
@@ -152,7 +152,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				-1.0f, -1.0f, -1.0f,				
 				-1.0f, -1.0f, 1.0f, 
 				-1.0f, 1.0f, 1.0f, 
-				
+
 				// Top face
 				-1.0f, 1.0f, -1.0f,				
 				-1.0f, 1.0f, 1.0f, 
@@ -160,7 +160,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				-1.0f, 1.0f, 1.0f, 				
 				1.0f, 1.0f, 1.0f, 
 				1.0f, 1.0f, -1.0f,
-				
+
 				// Bottom face
 				1.0f, -1.0f, -1.0f,				
 				1.0f, -1.0f, 1.0f, 
@@ -168,14 +168,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				1.0f, -1.0f, 1.0f, 				
 				-1.0f, -1.0f, 1.0f,
 				-1.0f, -1.0f, -1.0f,
-		};	
-		
+			};	
+
 		// X, Y, Z
 		// The normal is used in light calculations and is a vector which points
 		// orthogonal to the plane of the surface. For a cube model, the normals
 		// should be orthogonal to the points of each face.
 		final float[] cubeNormalData =
-		{												
+			{												
 				// Front face
 				0.0f, 0.0f, 1.0f,				
 				0.0f, 0.0f, 1.0f,
@@ -183,7 +183,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				0.0f, 0.0f, 1.0f,				
 				0.0f, 0.0f, 1.0f,
 				0.0f, 0.0f, 1.0f,
-				
+
 				// Right face 
 				1.0f, 0.0f, 0.0f,				
 				1.0f, 0.0f, 0.0f,
@@ -191,7 +191,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				1.0f, 0.0f, 0.0f,				
 				1.0f, 0.0f, 0.0f,
 				1.0f, 0.0f, 0.0f,
-				
+
 				// Back face 
 				0.0f, 0.0f, -1.0f,				
 				0.0f, 0.0f, -1.0f,
@@ -199,7 +199,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				0.0f, 0.0f, -1.0f,				
 				0.0f, 0.0f, -1.0f,
 				0.0f, 0.0f, -1.0f,
-				
+
 				// Left face 
 				-1.0f, 0.0f, 0.0f,				
 				-1.0f, 0.0f, 0.0f,
@@ -207,7 +207,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				-1.0f, 0.0f, 0.0f,				
 				-1.0f, 0.0f, 0.0f,
 				-1.0f, 0.0f, 0.0f,
-				
+
 				// Top face 
 				0.0f, 1.0f, 0.0f,			
 				0.0f, 1.0f, 0.0f,
@@ -215,7 +215,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				0.0f, 1.0f, 0.0f,				
 				0.0f, 1.0f, 0.0f,
 				0.0f, 1.0f, 0.0f,
-				
+
 				// Bottom face 
 				0.0f, -1.0f, 0.0f,			
 				0.0f, -1.0f, 0.0f,
@@ -223,20 +223,20 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				0.0f, -1.0f, 0.0f,				
 				0.0f, -1.0f, 0.0f,
 				0.0f, -1.0f, 0.0f
-		};
-		
+			};
+
 		// Initialize the buffers.
 		mCubePositions = ByteBuffer.allocateDirect(cubePositionData.length * mBytesPerFloat)
-	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
+				.order(ByteOrder.nativeOrder()).asFloatBuffer();							
 		mCubePositions.put(cubePositionData).position(0);		
-		
+
 		mCubeNormals = ByteBuffer.allocateDirect(cubeNormalData.length * mBytesPerFloat)
-	    .order(ByteOrder.nativeOrder()).asFloatBuffer();							
+				.order(ByteOrder.nativeOrder()).asFloatBuffer();							
 		mCubeNormals.put(cubeNormalData).position(0);
-		
+
 		figureRenderer.load();
 		loadFloor();
-		
+
 		TypedValue colorRef = new TypedValue();
 		mActivityContext.getTheme().resolveAttribute(android.R.attr.colorBackground, colorRef, true);
 		backgroundColor[0] = Color.red  (colorRef.data) / 255f;
@@ -245,7 +245,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		backgroundColor[3] = Color.alpha(colorRef.data) / 255f;
 
 	}
-	
+
 	public void onResume() {
 		mCamera.onResume();
 	}
@@ -257,27 +257,27 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	public Camera getCamera() {
 		return mCamera;
 	}
-	
+
 	protected String getVertexShader()
 	{
 		return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.color_vertex_shader);
 	}
-	
+
 	protected String getFragmentShader()
 	{
 		return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.color_fragment_shader);
 	}
-	
+
 	/** This will be used to pass in model position information. */
 	public int getPositionHandle() {
 		return mPositionHandle;
 	}
-	
+
 	/** This will be used to pass in model color information. */
 	public int getColorHandle() {
 		return mColorHandle;
 	}
-	
+
 	/** This will be used to pass in model normal information. */
 	public int getNormalHandle() {
 		return mNormalHandle;
@@ -288,45 +288,45 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	{				
 		// Enable depth testing
 		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-		
-//		  GLES20.glEnable(GLES20.GL_BLEND);
-//		  GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+		//		  GLES20.glEnable(GLES20.GL_BLEND);
+		//		  GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 		GLES20.glDisable(GLES20.GL_DITHER);
 
 
-			
+
 		final String vertexShader = getVertexShader();   		
- 		final String fragmentShader = getFragmentShader();			
-		
+		final String fragmentShader = getFragmentShader();			
+
 		final int vertexShaderHandle = ShaderHelper.compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);		
 		final int fragmentShaderHandle = ShaderHelper.compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);		
-		
+
 		mPerVertexProgramHandle = createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle, 
 				new String[] {"a_Position",  "a_Color", "a_Normal"});								                                							       
 
 		// Set our per-vertex lighting program.
-        GLES20.glUseProgram(mPerVertexProgramHandle);
-        
-        // Set program handles for cube drawing.
-        mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
-        mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
-        mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
-        mLightingHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Lighting");
-        mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
-        mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal");
-        mFogColorHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "fogColor");
+		GLES20.glUseProgram(mPerVertexProgramHandle);
 
-        GLES20.glUniform4f(mFogColorHandle, 0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
+		// Set program handles for cube drawing.
+		mMVPMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVPMatrix");
+		mMVMatrixHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_MVMatrix"); 
+		mColorHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Color");
+		mLightingHandle = GLES20.glGetUniformLocation(mPerVertexProgramHandle, "u_Lighting");
+		mPositionHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Position");
+		mNormalHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "a_Normal");
+		mFogColorHandle = GLES20.glGetAttribLocation(mPerVertexProgramHandle, "fogColor");
+
+		GLES20.glUniform4f(mFogColorHandle, 0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glUniform4f(mFogColorHandle, backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 	}	
 
-//*
+	//*
 	public static void printMatrix(float[] m) {
 		System.out.println("" + 
-			m[ 0]+" "+ m[ 4]+" "+m[ 8]+" "+m[12]+"\n"+
-			m[ 1]+" "+ m[ 5]+" "+m[ 9]+" "+m[13]+"\n"+
-			m[ 2]+" "+ m[ 6]+" "+m[10]+" "+m[14]+"\n"+
-			m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15]);
+				m[ 0]+" "+ m[ 4]+" "+m[ 8]+" "+m[12]+"\n"+
+				m[ 1]+" "+ m[ 5]+" "+m[ 9]+" "+m[13]+"\n"+
+				m[ 2]+" "+ m[ 6]+" "+m[10]+" "+m[14]+"\n"+
+				m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15]);
 	}
 
 	public static void printVector(float[] m) {
@@ -335,16 +335,16 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		}
 		System.out.println();
 	}
-//*/
+	//*/
 
 	public void resetCamera() {
 		mCamera.initializeCamera(
-				 0, 40, 100,
-				 0, 40,   0,
-				 0,  1,   0);
+				0, 40, 100,
+				0, 40,   0,
+				0,  1,   0);
 
 	}
-	
+
 	/**
 	 * Answers a color for color picking, basis. Works on a color buffer with as
 	 * little as 12 bits of precision, thus supporting 4096 pick indices. The
@@ -404,7 +404,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorBuffer);
 		colorBuffer.position(0);
 		int selection = colorToIndex(colorBuffer.get(), colorBuffer.get(), colorBuffer.get(), colorBuffer.get());
-		
+
 		// special case: white (the clear color) is no selection
 		if (selection == 4095) selection = -1;
 		return selection;
@@ -427,7 +427,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		final float top = 1.0f;
 		final float near = 1.0f;
 		final float far = 2000.0f;
-		
+
 		Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
 	}	
 
@@ -437,98 +437,98 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.3f); /* fog color */
 		GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-		
+
 		getCamera().getGyroscope().updateOrientation();
 		mView.updateSelectionOrientation();
 		updateAnimationsTransforms();
 
 		BVHNode selectedNode = mView.getSelectedPart();
-        if (selectedNode != null) {
-        	mCamera.setOrigin(selectedNode.cachedOrigin());
-        }
-		
-		
+		if (selectedNode != null) {
+			mCamera.setOrigin(selectedNode.cachedOrigin());
+		}
+
+
 		mCamera.updateViewMatrix();
 		mView.updateSelectionTouchOrientation();
-                
-        // Do a complete rotation every 10 seconds.
-        long time = SystemClock.uptimeMillis() % 10000L;        
-        float angleInDegrees = (360.0f / 10000.0f) * ((int) time);                
-        
-        GLES20.glUniform1i(mLightingHandle, 1);
-        selecting = false;
-        
-        // Draw some cubes.        
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 20.0f, 0.0f, -7.0f);
-        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
-        GLES20.glUniform4f(mColorHandle, 1.0f, 0.0f, 0.0f, 1.0f); // red
-        updateUniforms();
-        figureRenderer.drawPartNamed("lHand");
-                        
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, -20.0f, 0.0f, -7.0f);
-        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
-        GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 0.0f, 1.0f); // green
-        updateUniforms();
-        figureRenderer.drawPartNamed("hip");
-        
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
-        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
-    	System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
-    	Matrix.multiplyMM(mModelMatrix, 0, tempViewMatrix, 0, mCamera.getInverseCameraOrientation(), 0);
-        GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
-        updateUniforms();
-        figureRenderer.drawPartNamed("head");
-        
-//        if (selectedNode != null) {
-        if (false) {
-        	float[] selectedOrigin = selectedNode.cachedOrigin();
-        	Matrix.setIdentityM(mModelMatrix, 0);
-        	Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
-//        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
-        	System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
-        	mView.getSelectionTrackball().rotateMatrix(mModelMatrix, tempViewMatrix);
-        	GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
-        	updateUniforms();
-        	figureRenderer.drawPartNamed(selectedNode.name());
-        }
-        
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
-        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
-        GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
-        updateUniforms();
-        figureRenderer.drawPartNamed("chest");
-        
-        drawAnimations();
 
-        Matrix.setIdentityM(mModelMatrix, 0);
-        updateUniforms();
-        drawFloor();
-  
-        // uncomment to debug picking
-//        pickPart(touchX, touchY);
+		// Do a complete rotation every 10 seconds.
+		long time = SystemClock.uptimeMillis() % 10000L;        
+		float angleInDegrees = (360.0f / 10000.0f) * ((int) time);                
+
+		GLES20.glUniform1i(mLightingHandle, 1);
+		selecting = false;
+
+		// Draw some cubes.        
+		Matrix.setIdentityM(mModelMatrix, 0);
+		Matrix.translateM(mModelMatrix, 0, 20.0f, 0.0f, -7.0f);
+		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 0.0f, 0.0f);        
+		GLES20.glUniform4f(mColorHandle, 1.0f, 0.0f, 0.0f, 1.0f); // red
+		updateUniforms();
+		figureRenderer.drawPartNamed("lHand");
+
+		Matrix.setIdentityM(mModelMatrix, 0);
+		Matrix.translateM(mModelMatrix, 0, -20.0f, 0.0f, -7.0f);
+		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 1.0f, 0.0f);        
+		GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 0.0f, 1.0f); // green
+		updateUniforms();
+		figureRenderer.drawPartNamed("hip");
+
+		Matrix.setIdentityM(mModelMatrix, 0);
+		Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
+		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
+		System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
+		Matrix.multiplyMM(mModelMatrix, 0, tempViewMatrix, 0, mCamera.getInverseCameraOrientation(), 0);
+		GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
+		updateUniforms();
+		figureRenderer.drawPartNamed("head");
+
+		//        if (selectedNode != null) {
+		if (false) {
+			float[] selectedOrigin = selectedNode.cachedOrigin();
+			Matrix.setIdentityM(mModelMatrix, 0);
+			Matrix.translateM(mModelMatrix, 0, selectedOrigin[0], selectedOrigin[1], selectedOrigin[2]);
+			//        	Matrix.translateM(mModelMatrix, 0, 0.0f, -20.0f, -7.0f);
+			System.arraycopy(mModelMatrix, 0, tempViewMatrix, 0, 16);
+			mView.getSelectionTrackball().rotateMatrix(mModelMatrix, tempViewMatrix);
+			GLES20.glUniform4f(mColorHandle, 1.0f, 1.0f, 0.0f, 1.0f); // yellow
+			updateUniforms();
+			figureRenderer.drawPartNamed(selectedNode.name());
+		}
+
+		Matrix.setIdentityM(mModelMatrix, 0);
+		Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
+		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);        
+		GLES20.glUniform4f(mColorHandle, 0.0f, 1.0f, 1.0f, 1.0f); // cyan
+		updateUniforms();
+		figureRenderer.drawPartNamed("chest");
+
+		drawAnimations();
+
+		Matrix.setIdentityM(mModelMatrix, 0);
+		updateUniforms();
+		drawFloor();
+
+		// uncomment to debug picking
+		//        pickPart(touchX, touchY);
 	}
-	
-	
+
+
 	private void updateUniforms() {
 		// This multiplies the view matrix by the model matrix, and stores the result in the MVP matrix
-        // (which currently contains model * view).
-        Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mModelMatrix, 0);   
-        
-        // Pass in the modelview matrix.
-        GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVPMatrix, 0);                
-        
-        // This multiplies the modelview matrix by the projection matrix, and stores the result in the MVP matrix
-        // (which now contains model * view * projection).
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+		// (which currently contains model * view).
+		Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mModelMatrix, 0);   
 
-        // Pass in the combined matrix.
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+		// Pass in the modelview matrix.
+		GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVPMatrix, 0);                
+
+		// This multiplies the modelview matrix by the projection matrix, and stores the result in the MVP matrix
+		// (which now contains model * view * projection).
+		Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+		// Pass in the combined matrix.
+		GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 	}
-	
+
 	/**
 	 * Draws a cube.
 	 */			
@@ -536,63 +536,63 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	{		
 		// Pass in the position information
 		mCubePositions.position(0);		
-        GLES20.glVertexAttribPointer(mPositionHandle, mPositionDataSize, GLES20.GL_FLOAT, false,
-        		0, mCubePositions);        
-                
-        GLES20.glEnableVertexAttribArray(mPositionHandle);        
-        
-        // Pass in the normal information
-        mCubeNormals.position(0);
-        GLES20.glVertexAttribPointer(mNormalHandle, mNormalDataSize, GLES20.GL_FLOAT, false, 
-        		0, mCubeNormals);
-        
-        GLES20.glEnableVertexAttribArray(mNormalHandle);
-        
-        updateUniforms();
-        
-        // Draw the cube.
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               
+		GLES20.glVertexAttribPointer(mPositionHandle, mPositionDataSize, GLES20.GL_FLOAT, false,
+				0, mCubePositions);        
+
+		GLES20.glEnableVertexAttribArray(mPositionHandle);        
+
+		// Pass in the normal information
+		mCubeNormals.position(0);
+		GLES20.glVertexAttribPointer(mNormalHandle, mNormalDataSize, GLES20.GL_FLOAT, false, 
+				0, mCubeNormals);
+
+		GLES20.glEnableVertexAttribArray(mNormalHandle);
+
+		updateUniforms();
+
+		// Draw the cube.
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);                               
 	}
-	
+
 
 	private void updateAnimationsTransforms() {
 		updateFigureTransforms(mView.getSelectedAnimation(), 0);
-/*
+		/*
 		for(int index=0; index < mView.getAnimationCount(); index++) {
 			updateFigureTransforms(mView.getAnimationNumber(index), index);
 		}
-*/
+		 */
 	}
-	
+
 	private void updateFigureTransforms(Animation anim, int index) {
-	    // int figType = anim.getFigureType().ordinal();
-	    int figType = 1;
+		// int figType = anim.getFigureType().ordinal();
+		int figType = 1;
 
-	    // save current drawing matrix
+		// save current drawing matrix
 		float[] modelMatrix = new float[16];
-        Matrix.setIdentityM(modelMatrix, 0);
+		Matrix.setIdentityM(modelMatrix, 0);
 
-	    // scale drawing matrix to avatar scale specified
-	    float scale = anim.getAvatarScale();
-	    Matrix.scaleM(modelMatrix, 0, scale, scale, scale);
+		// scale drawing matrix to avatar scale specified
+		float scale = anim.getAvatarScale();
+		Matrix.scaleM(modelMatrix, 0, scale, scale, scale);
 
-	    Position pos = anim.getPosition();
-	    Matrix.translateM(modelMatrix, 0, pos.x, pos.y, pos.z);
+		Position pos = anim.getPosition();
+		Matrix.translateM(modelMatrix, 0, pos.x, pos.y, pos.z);
 
-	    // visual compensation
-	    Matrix.translateM(modelMatrix, 0, 0, 2, 0);
-	    updatePartTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
+		// visual compensation
+		Matrix.translateM(modelMatrix, 0, 0, 2, 0);
+		updatePartTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
 	}
-	
+
 	float[] inverseGlobalParentOrientation = new float[16];
 
 	private void updatePartTransforms(int frame, BVHNode motion, BVHNode joints, float[] parentMatrix) {
 		if(motion == null || joints == null) return;
 		if (motion == mView.getSelectedPart()) {
 			Matrix.invertM(inverseGlobalParentOrientation, 0, parentMatrix, 0);
-	    	inverseGlobalParentOrientation[12] = 0.0f;
-	    	inverseGlobalParentOrientation[13] = 0.0f;
-	    	inverseGlobalParentOrientation[14] = 0.0f;
+			inverseGlobalParentOrientation[12] = 0.0f;
+			inverseGlobalParentOrientation[13] = 0.0f;
+			inverseGlobalParentOrientation[14] = 0.0f;
 		}
 		System.arraycopy(parentMatrix, 0, motion.cachedTransform, 0, 16);
 		Matrix.translateM(motion.cachedTransform, 0, joints.offset[0], joints.offset[1], joints.offset[2]);
@@ -606,28 +606,28 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			updatePartTransforms(frame, motion.child(i), joints.child(i), motion.cachedTransform);
 		}
 	}
-	
+
 	private void drawAnimations() {
 		drawFigure(mView.getSelectedAnimation(), 0);
-/*
+		/*
 		for(int index=0; index < mView.getAnimationCount(); index++) {
 			drawFigure(mView.getAnimationNumber(index), index);
 		}
-*/
+		 */
 	}
-	
+
 	private void drawFigure(Animation anim, int index) {
-	    selectName = index*ANIMATION_INCREMENT;
-	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-	    GLES20.glDisable(GLES20.GL_CULL_FACE);	    
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_PARTS);
-	    GLES20.glEnable(GLES20.GL_CULL_FACE);	    
-	    selectName = index*ANIMATION_INCREMENT;
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_ROT_AXES);
-	    selectName = index*ANIMATION_INCREMENT;
-	    GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        drawPart(anim, anim.getMotion(), DrawMode.MODE_SKELETON);
-	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		selectName = index*ANIMATION_INCREMENT;
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES20.glDisable(GLES20.GL_CULL_FACE);	    
+		drawPart(anim, anim.getMotion(), DrawMode.MODE_PARTS);
+		GLES20.glEnable(GLES20.GL_CULL_FACE);	    
+		selectName = index*ANIMATION_INCREMENT;
+		drawPart(anim, anim.getMotion(), DrawMode.MODE_ROT_AXES);
+		selectName = index*ANIMATION_INCREMENT;
+		GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+		drawPart(anim, anim.getMotion(), DrawMode.MODE_SKELETON);
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 	}
 
 	private void drawPart(Animation anim, BVHNode motion, DrawMode mode) {
@@ -640,7 +640,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			motion = motion.child(0);
 		}
 
-/*	
+		/*	
 		if(mode == DrawMode.MODE_SKELETON && skeleton && !selecting)
 		{
 			glColor4f(0,1,1,1);
@@ -664,10 +664,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				glutSolidSphere(1,16,16);
 			}
 		}
-*/
-		
+		 */
 
-/*
+
+		/*
 			if(mode == DrawMode.MODE_ROT_AXES && !selecting && partSelected==selectName)
 			{
 				switch(motion->channelType[i])
@@ -678,11 +678,11 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				default: break;
 				}
 			}
-*/
+		 */
 
 		if(mode == DrawMode.MODE_PARTS) {
 			if(selecting) {
-		        GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
+				GLES20.glUniform4fv(mColorHandle, 1, indexToColor(selectName), 0);
 			} else {
 
 				if(anim.getMirrored() && (mView.getMirrorSelected() == selectName || mView.getSelectedPartIndex() == selectName)) {
@@ -693,34 +693,34 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 					GLES20.glUniform4f(mColorHandle, 0.4f, 0.5f, 0.3f, 1.0f); // green
 				} else {
 					GLES20.glUniform4f(mColorHandle, 0.6f, 0.5f, 0.5f, 1.0f); // grey peach
-//					GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
+					//					GLES20.glUniform4f(mColorHandle, 0.9f, 0.667f, 0.561f, 1.0f); // peach
 				}
-			
-/*
+
+				/*
 			if(anim.getIK(motion)) {
 				glGetFloatv(GL_CURRENT_COLOR,color);
 				glColor4f(color[0],color[1],color[2]+0.3,1.0f);
 			}
-*/
+				 */
 			}
-			
+
 			System.arraycopy(motion.cachedTransform, 0, mModelMatrix, 0, 16);
-		    updateUniforms();
+			updateUniforms();
 			figureRenderer.drawPartNamed(motion.name());
 
-/*
+			/*
 			for(int index=0; index < propList.size(); index++) {
 				Prop* prop=propList.at(index);
 				if(prop->isAttached()==selectName) drawProp(prop);
 			} // for
-*/
+			 */
 		}
-		
+
 		for(int i = 0; i < motion.numChildren(); i++) {
 			drawPart(anim, motion.child(i), mode);
 		}
 	}
-	
+
 	private FloatBuffer lightTiles;
 	private FloatBuffer darkTiles;
 
@@ -756,34 +756,34 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			}
 		}
 	}
-	
+
 	private void releaseFloor() {
 		lightTiles.limit(0);
 		lightTiles = null;
 		darkTiles.limit(0);
 		darkTiles = null;
 	}
-	
+
 	private void drawFloor() {
 		//		  float alpha=(100-Settings::floorTranslucency())/100.0; // default is 33% transparent, so 0.67 alpha
 		float alpha = 0.67f;
 
-	    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-	    GLES20.glVertexAttrib3f(getNormalHandle(), 0, 1, 0);
-        GLES20.glDisableVertexAttribArray(getNormalHandle());
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+		GLES20.glVertexAttrib3f(getNormalHandle(), 0, 1, 0);
+		GLES20.glDisableVertexAttribArray(getNormalHandle());
 
 		boolean frameProtected = false;
 
-        GLES20.glEnableVertexAttribArray(mPositionHandle);
+		GLES20.glEnableVertexAttribArray(mPositionHandle);
 
-        // dark
+		// dark
 		if(frameProtected)
 			GLES20.glUniform4f(mColorHandle, 0.3f, 0.0f, 0.0f, alpha);
 		else
 			GLES20.glUniform4f(mColorHandle, 0.1f, 0.1f, 0.1f, alpha);
-        darkTiles.position(0);
-        GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
-        		0, darkTiles);
+		darkTiles.position(0);
+		GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
+				0, darkTiles);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 1200);
 
 		// light
@@ -791,9 +791,9 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			GLES20.glUniform4f(mColorHandle, 0.8f, 0.0f, 0.0f, alpha);
 		else
 			GLES20.glUniform4f(mColorHandle, 0.6f, 0.6f, 0.6f, alpha);
-        lightTiles.position(0);
-        GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
-        		0, lightTiles);
+		lightTiles.position(0);
+		GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,
+				0, lightTiles);
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 1200);
 	}
 
@@ -833,10 +833,10 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		{			
 			throw new RuntimeException("Error creating shader.");
 		}
-		
+
 		return shaderHandle;
 	}	
-	
+
 	/**
 	 * Helper function to compile and link a program.
 	 * 
@@ -848,7 +848,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private int createAndLinkProgram(final int vertexShaderHandle, final int fragmentShaderHandle, final String[] attributes) 
 	{
 		int programHandle = GLES20.glCreateProgram();
-		
+
 		if (programHandle != 0) 
 		{
 			// Bind the vertex shader to the program.
@@ -856,7 +856,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 			// Bind the fragment shader to the program.
 			GLES20.glAttachShader(programHandle, fragmentShaderHandle);
-			
+
 			// Bind attributes
 			if (attributes != null)
 			{
@@ -866,7 +866,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 					GLES20.glBindAttribLocation(programHandle, i, attributes[i]);
 				}						
 			}
-			
+
 			// Link the two shaders together into a program.
 			GLES20.glLinkProgram(programHandle);
 
@@ -882,12 +882,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 				programHandle = 0;
 			}
 		}
-		
+
 		if (programHandle == 0)
 		{
 			throw new RuntimeException("Error creating program.");
 		}
-		
+
 		return programHandle;
 	}
 }

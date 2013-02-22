@@ -42,47 +42,47 @@ public class BVHNode {
 	public float[] ikGoalPos = new float[3];
 	public float[] ikGoalDir = new float[3];
 	public float ikWeight;
-	
+
 	public float[] cachedTransform = new float[16];
 
 
-	
-	
+
+
 	public BVHNode(String name)	{
-	//  qDebug(QString("BVHNode::BVHNode(%1)").arg(name));
-	  setName(name);
+		//  qDebug(QString("BVHNode::BVHNode(%1)").arg(name));
+		setName(name);
 
-	  // clean out lists
-	  keyframes.clear();
-	  children.clear();
+		// clean out lists
+		keyframes.clear();
+		children.clear();
 
-	  // have clean one-time cache
-	  flushFrameCache();
+		// have clean one-time cache
+		flushFrameCache();
 
-	  setMirror(null, 0);
+		setMirror(null, 0);
 
-	  numChannels=0;
+		numChannels=0;
 
-	  ikRot.x=0;
-	  ikRot.y=0;
-	  ikRot.z=0;
+		ikRot.x=0;
+		ikRot.y=0;
+		ikRot.z=0;
 
-	  ikGoalPos[0]=0;
-	  ikGoalPos[1]=0;
-	  ikGoalPos[2]=0;
+		ikGoalPos[0]=0;
+		ikGoalPos[1]=0;
+		ikGoalPos[2]=0;
 
-	  ikGoalDir[0]=0;
-	  ikGoalDir[1]=1;
-	  ikGoalDir[2]=0;
+		ikGoalDir[0]=0;
+		ikGoalDir[1]=1;
+		ikGoalDir[2]=0;
 	}
 
 	public String name() {
 		return m_name;
 	}
 
-	
+
 	public int numChildren() {
-	  return children.size();
+		return children.size();
 	}
 
 	public BVHNode child(int num) {
@@ -90,60 +90,60 @@ public class BVHNode {
 	}
 
 	public void addChild(BVHNode newChild) {
-	// qDebug(QString("BVHNode(%1): addChild(%2)").arg(name()).arg(newChild->name()));
-	  children.add(newChild);
+		// qDebug(QString("BVHNode(%1): addChild(%2)").arg(name()).arg(newChild->name()));
+		children.add(newChild);
 	}
 
 	public void insertChild(BVHNode newChild,int index) {
-	// qDebug(QString("BVHNode(%1): insertChild(%2,%3)").arg(name()).arg(newChild->name()).arg(index));
-	  children.add(index,newChild);
+		// qDebug(QString("BVHNode(%1): insertChild(%2,%3)").arg(name()).arg(newChild->name()).arg(index));
+		children.add(index,newChild);
 	}
 
 	public void removeChild(BVHNode child) {
-	// qDebug(QString("BVHNode(%1): removeChild(%2)").arg(name()).arg(child->name()));
-	  while(children.remove(child)); // this was QList::removeAll in qavimator
+		// qDebug(QString("BVHNode(%1): removeChild(%2)").arg(name()).arg(child->name()));
+		while(children.remove(child)); // this was QList::removeAll in qavimator
 	}
 
 
 	public FrameData frameData(int frame) {
-	  // return empty frame data on end site nodes
-	  if(type==BVHNodeType.BVH_END) return new FrameData();
-	  // if the keyframe exists, return the data
-	  if(isKeyframe(frame)) return keyframes.get(frame);
+		// return empty frame data on end site nodes
+		if(type==BVHNodeType.BVH_END) return new FrameData();
+		// if the keyframe exists, return the data
+		if(isKeyframe(frame)) return keyframes.get(frame);
 
-	  // get keyframes before and after desired frame
-	  FrameData before=getKeyframeBefore(frame);
-	  FrameData after=getNextKeyframe(before.frameNumber());
+		// get keyframes before and after desired frame
+		FrameData before=getKeyframeBefore(frame);
+		FrameData after=getNextKeyframe(before.frameNumber());
 
-	  int frameBefore=before.frameNumber();
-	  int frameAfter=after.frameNumber();
+		int frameBefore=before.frameNumber();
+		int frameAfter=after.frameNumber();
 
-	  // if before and after frames are the same, there are no more keyframes left, so
-	  // we return the last keyframe data
-	  if(frameBefore==frameAfter) return before;
+		// if before and after frames are the same, there are no more keyframes left, so
+		// we return the last keyframe data
+		if(frameBefore==frameAfter) return before;
 
-	  Rotation rotBefore=before.rotation();
-	  Rotation rotAfter=after.rotation();
-	  Position posBefore=before.position();
-	  Position posAfter=after.position();
+		Rotation rotBefore=before.rotation();
+		Rotation rotAfter=after.rotation();
+		Position posBefore=before.position();
+		Position posAfter=after.position();
 
-	  Rotation iRot = new Rotation();
-	  Position iPos = new Position();
+		Rotation iRot = new Rotation();
+		Position iPos = new Position();
 
-	  iRot.x=interpolate(rotBefore.x,rotAfter.x,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
-	  iRot.y=interpolate(rotBefore.y,rotAfter.y,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
-	  iRot.z=interpolate(rotBefore.z,rotAfter.z,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iRot.x=interpolate(rotBefore.x,rotAfter.x,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iRot.y=interpolate(rotBefore.y,rotAfter.y,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iRot.z=interpolate(rotBefore.z,rotAfter.z,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
 
-	  iPos.x=interpolate(posBefore.x,posAfter.x,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
-	  iPos.y=interpolate(posBefore.y,posAfter.y,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
-	  iPos.z=interpolate(posBefore.z,posAfter.z,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iPos.x=interpolate(posBefore.x,posAfter.x,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iPos.y=interpolate(posBefore.y,posAfter.y,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
+		iPos.z=interpolate(posBefore.z,posAfter.z,frameAfter-frameBefore,frame-frameBefore,before.easeOut(),after.easeIn());
 
-	// qDebug(QString("iRot.x %1 frame %2: %3").arg(rotBefore.bodyPart).arg(before.frameNumber()).arg(iRot.x));
+		// qDebug(QString("iRot.x %1 frame %2: %3").arg(rotBefore.bodyPart).arg(before.frameNumber()).arg(iRot.x));
 
-	  // return interpolated frame data here
-	  return new FrameData(frame,iPos,iRot);
+		// return interpolated frame data here
+		return new FrameData(frame,iPos,iRot);
 	}
-	
+
 	public float[] rotateMatrixForFrame(float[] matrix, int frame) {
 		Rotation rot = this.frameData(frame).rotation();
 		for(int i = 0; i < this.numChannels; i++) {
@@ -166,22 +166,22 @@ public class BVHNode {
 
 			// need to do rotations in the right order
 			switch(this.channelType[i]) {
-				case BVH_XROT: Matrix.rotateM(matrix, 0, rot.x+ikRot.x, 1, 0, 0); break;
-				case BVH_YROT: Matrix.rotateM(matrix, 0, rot.y+ikRot.y, 0, 1, 0); break;
-				case BVH_ZROT: Matrix.rotateM(matrix, 0, rot.z+ikRot.z, 0, 0, 1); break;
-				default: break;
+			case BVH_XROT: Matrix.rotateM(matrix, 0, rot.x+ikRot.x, 1, 0, 0); break;
+			case BVH_YROT: Matrix.rotateM(matrix, 0, rot.y+ikRot.y, 0, 1, 0); break;
+			case BVH_ZROT: Matrix.rotateM(matrix, 0, rot.z+ikRot.z, 0, 0, 1); break;
+			default: break;
 			}
 		}
 		return matrix;
 	}
 
 	public FrameData keyframeDataByIndex(int index) {
-	  // get a list of all keyframe numbers
-	  Integer[] keys=keyframeList();
-	  // get frame number of keyframe at given index
-	  int number=keys[index];
-	  // return keyframe data
-	  return keyframes.get(number);
+		// get a list of all keyframe numbers
+		Integer[] keys=keyframeList();
+		// get frame number of keyframe at given index
+		int number=keys[index];
+		// return keyframe data
+		return keyframes.get(number);
 	}
 
 	public Integer[] keyframeList() {
@@ -190,33 +190,33 @@ public class BVHNode {
 
 
 	public void addKeyframe(int frame,Position pos,Rotation rot) {
-	//  qDebug(QString("addKeyframe(%1)").arg(frame));
-	  keyframes.put(frame, new FrameData(frame,pos,rot));
-	//  if(frame==0 && name().equals("hip")) qDebug(QString("BVHNode::addKeyframe(%1,<%2,%3,%4>,<%5,%6,%7>) %8").arg(frame).arg(pos.x).arg(pos.y).arg(pos.z).arg(rot.x).arg(rot.y).arg(rot.z).arg(pos.bodyPart));
+		//  qDebug(QString("addKeyframe(%1)").arg(frame));
+		keyframes.put(frame, new FrameData(frame,pos,rot));
+		//  if(frame==0 && name().equals("hip")) qDebug(QString("BVHNode::addKeyframe(%1,<%2,%3,%4>,<%5,%6,%7>) %8").arg(frame).arg(pos.x).arg(pos.y).arg(pos.z).arg(rot.x).arg(rot.y).arg(rot.z).arg(pos.bodyPart));
 	}
 
 	public void deleteKeyframe(int frame) {
-	  keyframes.remove(frame);
+		keyframes.remove(frame);
 	}
 
 	public void setKeyframePosition(int frame, Position pos) {
-	//  qDebug(QString("setKeyframePosition(%1)").arg(frame));
-	  if(!isKeyframe(frame)) Log.d(TAG, "setKeyframePosition(" + frame + "): not a keyframe!");
-	  else
-	  {
-	    FrameData key=keyframes.get(frame);
-	    key.setPosition(pos);
-	  }
+		//  qDebug(QString("setKeyframePosition(%1)").arg(frame));
+		if(!isKeyframe(frame)) Log.d(TAG, "setKeyframePosition(" + frame + "): not a keyframe!");
+		else
+		{
+			FrameData key=keyframes.get(frame);
+			key.setPosition(pos);
+		}
 	}
 
 	public void setKeyframeRotation(int frame, Rotation rot) {
-	//  qDebug(QString("setKeyframeRotation(%1)").arg(frame));
-	  if(!isKeyframe(frame)) Log.d(TAG, "setKeyframeRotation(" + frame + "): not a keyframe!");
-	  else
-	  {
-	    FrameData key=keyframes.get(frame);
-	    key.setRotation(rot);
-	  }
+		//  qDebug(QString("setKeyframeRotation(%1)").arg(frame));
+		if(!isKeyframe(frame)) Log.d(TAG, "setKeyframeRotation(" + frame + "): not a keyframe!");
+		else
+		{
+			FrameData key=keyframes.get(frame);
+			key.setRotation(rot);
+		}
 	}
 
 	// moves all key frames starting at "frame" one frame further
@@ -245,11 +245,11 @@ public class BVHNode {
 	}
 
 	public boolean isKeyframe(int frame) {
-	  return keyframes.containsKey(frame);
+		return keyframes.containsKey(frame);
 	}
 
 	public int numKeyframes() {
-	  return keyframes.size();
+		return keyframes.size();
 	}
 
 
@@ -281,43 +281,43 @@ public class BVHNode {
 	}
 
 	public boolean easeIn(int frame) {
-	  if(keyframes.containsKey(frame))
-	    return keyframes.get(frame).easeIn();
+		if(keyframes.containsKey(frame))
+			return keyframes.get(frame).easeIn();
 
-	  Log.d(TAG, "BVHNode::easeIn(): asked on non-keyframe!");
-	  return false;
+		Log.d(TAG, "BVHNode::easeIn(): asked on non-keyframe!");
+		return false;
 	}
 
 	public boolean easeOut(int frame) {
-	  if(keyframes.containsKey(frame))
-	    return keyframes.get(frame).easeOut();
+		if(keyframes.containsKey(frame))
+			return keyframes.get(frame).easeOut();
 
-	  Log.d(TAG, "BVHNode::easeOut(): asked on non-keyframe!");
-	  return false;
+		Log.d(TAG, "BVHNode::easeOut(): asked on non-keyframe!");
+		return false;
 	}
 
 
 	public Rotation getCachedRotation(int frame) {
-	  return rotations.get(frame);
+		return rotations.get(frame);
 	}
 
 	public Position getCachedPosition(int frame) {
-	  return positions.get(frame);
+		return positions.get(frame);
 	}
 
 	public void cacheRotation(Rotation rot) {
-	  rotations.add(rot);
+		rotations.add(rot);
 	}
 
 	public void cachePosition(Position pos) {
-	  positions.add(pos);
+		positions.add(pos);
 	}
 
 	public void flushFrameCache() {
-	  rotations.clear();
-	  positions.clear();
+		rotations.clear();
+		positions.clear();
 	}
-	
+
 	public float[] cachedOrigin() {
 		return new float[] {
 				cachedTransform[12],
@@ -328,23 +328,23 @@ public class BVHNode {
 
 
 	public boolean compareFrames(int key1,int key2) {
-	  if(type==BVHNodeType.BVH_POS) {
-	    final Position pos1=frameData(key1).position();
-	    final Position pos2=frameData(key2).position();
+		if(type==BVHNodeType.BVH_POS) {
+			final Position pos1=frameData(key1).position();
+			final Position pos2=frameData(key2).position();
 
-	    if(pos1.x!=pos2.x) return false;
-	    if(pos1.y!=pos2.y) return false;
-	    if(pos1.z!=pos2.z) return false;
-	  } else {
-	    final Rotation rot1=frameData(key1).rotation();
-	    final Rotation rot2=frameData(key2).rotation();
+			if(pos1.x!=pos2.x) return false;
+			if(pos1.y!=pos2.y) return false;
+			if(pos1.z!=pos2.z) return false;
+		} else {
+			final Rotation rot1=frameData(key1).rotation();
+			final Rotation rot2=frameData(key2).rotation();
 
-	    if(rot1.x!=rot2.x) return false;
-	    if(rot1.y!=rot2.y) return false;
-	    if(rot1.z!=rot2.z) return false;
-	  }
+			if(rot1.x!=rot2.x) return false;
+			if(rot1.y!=rot2.y) return false;
+			if(rot1.z!=rot2.z) return false;
+		}
 
-	  return true;
+		return true;
 	}
 
 	public void optimize() {
@@ -361,7 +361,7 @@ public class BVHNode {
 				if(compareFrames(keys[i],keys[i-1])) {
 					keysToDelete.add(keys[i]);
 				}
-			// otherwise check for the one before and the one after
+				// otherwise check for the one before and the one after
 			} else if(compareFrames(keys[i],keys[i-1]) && compareFrames(keys[i],keys[i+1])) {
 				keysToDelete.add(keys[i]);
 			}
@@ -400,7 +400,7 @@ public class BVHNode {
 			int frameBefore  = keys[itBefore ];
 			FrameData dataCurrent = keyframes.get(frameCurrent);
 			FrameData dataBefore  = keyframes.get(frameBefore );
-			
+
 			int distance=frameCurrent-frameBefore;
 
 			// optimize positions if this is the position node
@@ -420,7 +420,7 @@ public class BVHNode {
 				}
 
 				oldPDifference=pDifference;
-			// otherwise optimize rotations
+				// otherwise optimize rotations
 			} else {
 				Rotation rDifference=Rotation.difference(dataBefore.rotation(),dataCurrent.rotation());
 
@@ -475,93 +475,93 @@ public class BVHNode {
 
 	// mirrors the rotations in a node and swaps the tracks' keyframes if needed
 	public void mirror() {
-	  mirrorKeys();
+		mirrorKeys();
 
-	  BVHNode node2=getMirror();
+		BVHNode node2=getMirror();
 
-	  // if a mirror node is given, swap the keyframes, too
-	  if(node2 != null) {
-	    node2.mirrorKeys();
-	    TreeMap<Integer,FrameData> temp=keyframes;
-	    keyframes=node2.keyframes;
-	    node2.keyframes=temp;
-	  }
+		// if a mirror node is given, swap the keyframes, too
+		if(node2 != null) {
+			node2.mirrorKeys();
+			TreeMap<Integer,FrameData> temp=keyframes;
+			keyframes=node2.keyframes;
+			node2.keyframes=temp;
+		}
 	}
 
 
 	private void setName(String newName) {
-	  m_name=newName;
+		m_name=newName;
 	}
 
 	private float interpolate(float from,float to,int steps,int pos,boolean easeOut,boolean easeIn) {
-	  boolean ease=false;
+		boolean ease=false;
 
-	  // do not start any calculation if there's nothing to do
-	  if(from==to) return from;
+		// do not start any calculation if there's nothing to do
+		if(from==to) return from;
 
-	  if(pos<=(steps/2) && easeOut) ease=true;
-	  if(pos>(steps/2) && easeIn) ease=true;
+		if(pos<=(steps/2) && easeOut) ease=true;
+		if(pos>(steps/2) && easeIn) ease=true;
 
-	  // sine interpolation for ease in / out
-	  if(ease)
-	  {
-	    float distance=to-from;
-	    float step=3.1415f/(steps);
+		// sine interpolation for ease in / out
+		if(ease)
+		{
+			float distance=to-from;
+			float step=3.1415f/(steps);
 
-	    return from+(0.5f-(float)Math.cos(step*(float) pos)/2)*distance;
-	  }
-	  // classic linear interpolation
-	  else
-	  {
-	    float distance=to-from;
-	    float increment=distance/(float) steps;
-	    return from+increment*(float) pos;
-	  }
+			return from+(0.5f-(float)Math.cos(step*(float) pos)/2)*distance;
+		}
+		// classic linear interpolation
+		else
+		{
+			float distance=to-from;
+			float increment=distance/(float) steps;
+			return from+increment*(float) pos;
+		}
 	}
 
 
 	private int getKeyframeNumberBefore(int frame) {
-	  if(frame==0)
-	  {
-	    // should never happen
-	    Log.d(TAG, "BVHNode::getKeyframeNumberBefore(int frame): frame==0!");
-	    return 0;
-	  }
+		if(frame==0)
+		{
+			// should never happen
+			Log.d(TAG, "BVHNode::getKeyframeNumberBefore(int frame): frame==0!");
+			return 0;
+		}
 
-	  // find previous key
-	  while(--frame > 0 && !isKeyframe(frame)) {};
+		// find previous key
+		while(--frame > 0 && !isKeyframe(frame)) {};
 
-	  return frame;
+		return frame;
 	}
 
 	private int getKeyframeNumberAfter(int frame) {
-	  // get a list of all keyframe numbers
-	  Integer[] keys=keyframeList();
+		// get a list of all keyframe numbers
+		Integer[] keys=keyframeList();
 
-	  // past the end? return -1
-	  if(frame>(int) keys[keyframes.size()-1])
-	    return -1;
+		// past the end? return -1
+		if(frame>(int) keys[keyframes.size()-1])
+			return -1;
 
-	  // find next key
-	  while(++frame != 0 && !isKeyframe(frame)) {};
+		// find next key
+		while(++frame != 0 && !isKeyframe(frame)) {};
 
-	  return frame;
+		return frame;
 	}
 
 
 	// mirrors the keyframes inside of this node
 	private void mirrorKeys() {
-	  for(int frame:keyframeList()) {
-	    if(type==BVHNodeType.BVH_POS) {
-	      Position pos=frameData(frame).position();
-	      pos.x=-pos.x;
-	      setKeyframePosition(frame,pos);
-	    } else {
-	      Rotation rot=frameData(frame).rotation();
-	      rot.y=-rot.y;
-	      rot.z=-rot.z;
-	      setKeyframeRotation(frame,rot);
-	    }
-	  }
+		for(int frame:keyframeList()) {
+			if(type==BVHNodeType.BVH_POS) {
+				Position pos=frameData(frame).position();
+				pos.x=-pos.x;
+				setKeyframePosition(frame,pos);
+			} else {
+				Rotation rot=frameData(frame).rotation();
+				rot.y=-rot.y;
+				rot.z=-rot.z;
+				setKeyframeRotation(frame,rot);
+			}
+		}
 	}
 }

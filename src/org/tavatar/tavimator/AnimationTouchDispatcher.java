@@ -13,9 +13,9 @@ import android.widget.TextView;
 public class AnimationTouchDispatcher {
 
 	private static final String TAG = "AnimationTouchDispatcher";
-	
+
 	private Context mContext;
-	
+
 	private class FingerAdapter<T> extends ArrayAdapter<T> {
 		private int mFieldId;
 
@@ -23,17 +23,17 @@ public class AnimationTouchDispatcher {
 			super(context, resource, textViewResourceId);
 			mFieldId = textViewResourceId;
 		}
-		
+
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View view = super.getView(position, convertView, parent);
-            TextView text = (TextView) view.findViewById(mFieldId);
-            AnimationTouchHandler item = (AnimationTouchHandler)getItem(position);
+			TextView text = (TextView) view.findViewById(mFieldId);
+			AnimationTouchHandler item = (AnimationTouchHandler)getItem(position);
 			text.setText(item.shortToolName());
 			return view;
 		}
 	}
-	
+
 	private AnimationPartSelector tapHandler;
 	private AnimationOneFingerDragHandler oneFingerCameraHandler;
 	private AnimationOneFingerDragHandler oneFingerPartHandler;
@@ -59,7 +59,7 @@ public class AnimationTouchDispatcher {
 				.findViewById(R.id.button_two_finger_action));
 		twoFingerSpinner.setAdapter(twoFingerHandlers);
 	}
-	
+
 	public ArrayAdapter<AnimationOneFingerDragHandler> getOneFingerHandlers() {
 		return oneFingerHandlers;
 	}
@@ -104,9 +104,9 @@ public class AnimationTouchDispatcher {
 			return tapHandler.view.getSelectionTrackball();
 		}		
 	}
-	
+
 	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
-//		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
+		//		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
 		if (!tapHandler.isPickResultReady) return null;
 		if (tapHandler.pickResult < 0) {
 			return oneFingerCameraHandler;
@@ -116,7 +116,7 @@ public class AnimationTouchDispatcher {
 	}
 
 	public AnimationTwoFingerDragHandler getTwoFingerDragHandler() {
-//		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
+		//		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
 		if (!tapHandler.isPickResultReady) return null;
 		if (tapHandler.pickResult < 0) {
 			return twoFingerCameraHandler;

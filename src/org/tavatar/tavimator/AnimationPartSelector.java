@@ -5,16 +5,16 @@ import android.os.Message;
 import android.util.Log;
 
 public class AnimationPartSelector implements AnimationTapHandler, Handler.Callback {
-	
+
 	private static String TAG = "AnimationPartSelector";
-	
+
 	AnimationView view;
 	private Handler pickResultHandler = new Handler(this);
-	
+
 	private enum TapStatus {
 		DOWN, FINISHED, CANCELED
 	}
-	
+
 	public boolean isPickResultReady = false;
 	private TapStatus status = TapStatus.CANCELED;
 	public int pickResult;
@@ -61,17 +61,17 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		update();
 		return false;
 	}
-	
+
 	public String dumpNode(BVHNode node) {
 		if (node == null) return null;
 		return node.name();
 	}
-	
+
 	private void update() {
 		if (!isPickResultReady) return;
-		
+
 		Log.d(TAG, "selection update: " + pickResult + " from thread " + Thread.currentThread().hashCode());
-		
+
 		view.setPartHighlighted(pickResult);
 		view.selectPart(pickResult);
 		BVHNode selectedPart = view.getSelectedPart();
@@ -80,7 +80,7 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 			view.getRenderer().getCamera().moveToOrigin(origin);
 		}
 
-/*
+		/*
 		switch (status) {
 		case DOWN:
 			Log.d(TAG, "down; pickResult: " + pickResult);
@@ -96,9 +96,9 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 			Log.d(TAG, "finished/canceled; pickResult: " + pickResult);
 			endGyroGrab();	
 		}
-*/
+		 */
 	}
-	
+
 	public void endGyroGrab() {
 		if (pickResult < 0) {
 			view.getCameraTrackball().trackGyroscope(null, false);

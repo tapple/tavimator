@@ -9,44 +9,44 @@ import android.view.ViewConfiguration;
 
 public class Pointer {
 	public ViewConfiguration config;
-//	config.getScaledTouchSlop() = configuration.getScaledTouchSlop();
-//	mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
-//	mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
+	//	config.getScaledTouchSlop() = configuration.getScaledTouchSlop();
+	//	mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
+	//	mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
 
-	
+
 	/**
 	 * Sentinel value for no current active pointer. Used by
 	 * {@link #id}.
 	 */
 	public static final int INVALID_POINTER = -1;
-	
+
 	public int id = INVALID_POINTER;
 	public boolean isDragging = false;
-	
+
 	public int x;
 	public int y;
-	
+
 	public int prevX;
 	public int prevY;
-	
+
 	public int dx;
 	public int dy;
-	
+
 	public float velocityX;
 	public float velocityY;
-	
+
 	public Pointer(Context context) {
 		config = ViewConfiguration.get(context);
 	}
-	
+
 	public boolean isValid() {
 		return id != INVALID_POINTER;
 	}
-	
+
 	public boolean notValid() {
 		return id == INVALID_POINTER;
 	}
-	
+
 	public void invalidate() {
 		id = INVALID_POINTER;
 	}
@@ -54,19 +54,19 @@ public class Pointer {
 	public void update(MotionEvent event) {
 		update(event, false);
 	}
-	
+
 	public void update(MotionEvent event, boolean pointerDown) {
 		if (notValid()) return;
-		
+
 		if (isDragging) {
 			prevX = x;
 			prevY = y;
 		}
-		
+
 		final int index = event.findPointerIndex(id);
 		x = (int) event.getX(index);
 		y = (int) event.getY(index);
-		
+
 		if (pointerDown) {
 			prevX = x;
 			prevY = y;
@@ -75,7 +75,7 @@ public class Pointer {
 		dx = x - prevX;
 		dy = y - prevY;
 	}
-	
+
 	public void update(VelocityTracker velocityTracker) {
 		if (notValid()) return;
 
@@ -85,7 +85,7 @@ public class Pointer {
 
 	public boolean shouldStartDrag() {
 		if (notValid()) return false;
-		
+
 		boolean shouldStart = false;
 		if (dx > config.getScaledTouchSlop()) {
 			shouldStart = true;
@@ -108,7 +108,7 @@ public class Pointer {
 
 	public boolean shouldFling() {
 		if (notValid()) return false;
-		
+
 		return  velocityX > config.getScaledMinimumFlingVelocity() ||
 				velocityY > config.getScaledMinimumFlingVelocity();
 	}

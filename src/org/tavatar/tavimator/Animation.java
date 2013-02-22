@@ -42,9 +42,9 @@ public class Animation {
 	// playback resolution in milliseconds
 	// this is the speed of the internal sync timer, in milliseconds, not of the animation itself
 	private final int PLAYBACK_RESOLUTION = 20;
-	
 
-/* ###IK###
+
+	/* ###IK###
 	public static enum IKPartType {
 		IK_LHAND,
 		IK_RHAND,
@@ -52,7 +52,7 @@ public class Animation {
 		IK_RFOOT,
 		NUM_IK
 	}
-*/
+	 */
 
 	public static enum FigureType {
 		FIGURE_MALE,
@@ -102,14 +102,14 @@ public class Animation {
 		public void handleMessage(Message m) {
 			if (playstate == PlayState.PLAYSTATE_STOPPED) return;
 			playbackTimeout();
-            sendMessageDelayed(Message.obtain(this), PLAYBACK_RESOLUTION);
+			sendMessageDelayed(Message.obtain(this), PLAYBACK_RESOLUTION);
 		}
 	};
 
 	public Animation(Context context, BVH newBVH) throws IOException {
 		this(context, newBVH, "");
 	}
-	
+
 	public Animation(Context context, BVH newBVH, String bvhFile) throws IOException {
 		this.context = context;
 		frame = 0;
@@ -142,13 +142,13 @@ public class Animation {
 		positionNode=bvh.lastLoadedPositionNode;
 		addKeyFrameAllJoints();
 
-/* ###IK###
+		/* ###IK###
 		ikTree.set(frames);
 		setIK(IK_LHAND, false);
 		setIK(IK_RHAND, false);
 		setIK(IK_LFOOT, false);
 		setIK(IK_RFOOT, false);
-*/
+		 */
 
 		setLoop(false);
 		setDirty(false);
@@ -229,7 +229,7 @@ public class Animation {
 			//    	    }
 			frame=frameNumber;
 
-/* ###IK###
+			/* ###IK###
 			for(int i=0;i<NUM_IK;i++)
 			{
 				if(ikOn[i])
@@ -238,7 +238,7 @@ public class Animation {
 					break;
 				}
 			}
-*/
+			 */
 
 			emit(currentFrame(frame));
 			emit(frameChanged());
@@ -374,7 +374,7 @@ public class Animation {
 		}
 	}
 
-/* ###IK###
+	/* ###IK###
 	private void setIK(IKPartType part, boolean flag) {
 		if(ikOn[part]==flag) return;
 
@@ -510,21 +510,21 @@ public class Animation {
 		//  ikTree.setJointLimits(true);
 		ikTree.solve(frame);
 	}
-*/
+	 */
 
 	public void setRotation(BVHNode node, float x, float y, float z) {
 		setRotation(node, new Rotation(x,y,z));
 	}
-	
+
 	public void setRotationFromMatrix(BVHNode node, float[] matrix) {
 		setRotation(node, Math3D.toEulerAngles(new Rotation(), matrix, node.channelOrder));
 	}
 
 	public void setRotation(BVHNode node, Rotation rot) {
 		if (node != null) {
-//			Log.v(TAG, "Animation.setRotation(" + node.name() + ")");
+			//			Log.v(TAG, "Animation.setRotation(" + node.name() + ")");
 
-/* ###IK###
+			/* ###IK###
 			for(int i=0;i<NUM_IK;i++)
 			{
 				if(ikOn[i])
@@ -533,7 +533,7 @@ public class Animation {
 					break;
 				}
 			}
-*/
+			 */
 
 			if(node.isKeyframe(frame)) {
 				node.setKeyframeRotation(frame, rot);
@@ -578,9 +578,9 @@ public class Animation {
 
 	public void useRotationLimits(boolean flag) {
 		limits=flag;
-/* ###IK###
+		/* ###IK###
 		ikTree.setJointLimits(flag);
-*/
+		 */
 	}
 
 	public RotationLimits getRotationLimits(BVHNode node) {
@@ -617,14 +617,14 @@ public class Animation {
 	}
 
 	public void setPosition(float x, float y, float z) {
-/* ###IK###
+		/* ###IK###
 		for(int i=0;i<NUM_IK;i++) {
 			if(ikOn[i]) {
 				solveIK();
 				break;
 			}
 		}
-*/
+		 */
 		// new keyframe system
 		if(positionNode.isKeyframe(frame)) {
 			positionNode.setKeyframePosition(frame, new Position(x,y,z));
@@ -919,7 +919,7 @@ public class Animation {
 		// joint number 0 needs to return the hip position pseudonode
 		if(jointNumber==0) return positionNode;
 		// get the joint structure
-//		Log.v(TAG, "getNode " + jointNumber + " " + getPartName(jointNumber));
+		//		Log.v(TAG, "getNode " + jointNumber + " " + getPartName(jointNumber));
 		return bvh.bvhFindNode(frames,getPartName(jointNumber));
 	}
 
@@ -1044,7 +1044,7 @@ public class Animation {
 	public void setFigureType(FigureType type) {
 		// safety check if figure is valid
 		//if(type>=0 && type<NUM_FIGURES)
-			figureType=type;
+		figureType=type;
 	}
 
 	public void nextPlaystate() {
@@ -1055,7 +1055,7 @@ public class Animation {
 		{
 		case PLAYSTATE_LOOPING:
 		case PLAYSTATE_PLAYING:
-            timer.sendMessageDelayed(Message.obtain(timer), PLAYBACK_RESOLUTION);
+			timer.sendMessageDelayed(Message.obtain(timer), PLAYBACK_RESOLUTION);
 			break;
 		case PLAYSTATE_STOPPED:
 		default:
@@ -1116,13 +1116,13 @@ public class Animation {
     void animationDirty(bool state);
 	 */
 
-    int numberOfFrames(int num) { return 0; }
-    int currentFrame(int frame) { return 0; }
-    int frameChanged() { return 0; }
-    int redrawTrack(int track) { return 0; }
-    int animationDirty(boolean state) { return 0; }
-    void emit(int num) {}
-    void blockSignals(boolean yes) {}
+	int numberOfFrames(int num) { return 0; }
+	int currentFrame(int frame) { return 0; }
+	int frameChanged() { return 0; }
+	int redrawTrack(int track) { return 0; }
+	int animationDirty(boolean state) { return 0; }
+	void emit(int num) {}
+	void blockSignals(boolean yes) {}
 
 
 	/*

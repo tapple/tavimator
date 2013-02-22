@@ -11,7 +11,7 @@ public enum BVHNodeType {
 	BVH_JOINT	("JOINT"),
 	BVH_END		("End"),
 	BVH_NO_SL	("NoSL");
-	
+
 	public final String name;
 
 	BVHNodeType(String name) {

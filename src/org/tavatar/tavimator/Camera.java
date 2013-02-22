@@ -29,38 +29,38 @@ public class Camera {
 	 * The view matrix for the current frame
 	 */
 	private float[] viewMatrix = new float[16];
-	
+
 	/**
 	 * The orientation component of the view matrix, with no translation
 	 */
 	private float[] inverseCameraOrientation = new float[16];
 
 	private float[] temporaryMatrix = new float[16];
-	
+
 	/**
 	 * The point about which the camera rotates
 	 */
 	float originX;
 	float originY;
 	float originZ;
-	
+
 	/**
 	 * The a vector from the old origin + distance to the new origin + distance.
 	 * the camera slides along this vector when moving between origins
 	 */
 	private float[] transitionRail = new float[] {0.0f, 0.0f, 0.0f, 1.0f};
 	private SimpleFloatAnimator transition = new SimpleFloatAnimator(300, 1.0f, 0.0f);
-	
+
 	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
 	private TwoFingerTrackball trackball;
-	
+
 	/**
 	 * Gyroscope that keeps track of orientation set by device orientation
 	 */
 	private Gyroscope gyroscope;
-	
+
 	public Camera(Context context) {
 		trackball = new TwoFingerTrackball(context);
 		gyroscope = new Gyroscope(context);
@@ -70,12 +70,12 @@ public class Camera {
 				0.0f, 0.0f, 0.0f,
 				0.0f, 1.0f, 0.0f);
 	}
-	
+
 	public void initializeCamera(
 			float eyeX, float eyeY, float eyeZ, 
 			float lookX, float lookY, float lookZ,
 			float upX, float upY, float upZ) {
-		
+
 		setOrigin(lookX, lookY, lookZ);
 		transitionRail[0]  = 0.0f;
 		transitionRail[1]  = 0.0f;
@@ -86,17 +86,17 @@ public class Camera {
 		trackball.setZoomRate(1.0f);
 		updateViewMatrix();
 	}
-	
+
 	public void setOrigin(float lookX, float lookY, float lookZ) {
 		this.originX = -lookX;
 		this.originY = -lookY;
 		this.originZ = -lookZ;
 	}
-	
+
 	public void setOrigin(float[] look) {
 		setOrigin(look[0], look[1], look[2]);
 	}
-	
+
 	public void moveToOrigin(float[] newOrigin) {
 		setOrigin(newOrigin);
 		Matrix.multiplyMV(transitionRail, 0, viewMatrix, 0, newOrigin, 0);
@@ -111,7 +111,7 @@ public class Camera {
 		}
 		transition.start();
 	}
-	
+
 	public void onResume() {
 		gyroscope.onResume();
 	}
@@ -120,12 +120,12 @@ public class Camera {
 		gyroscope.onPause();
 		trackball.setZoomRate(1.0f);
 	}
-	
+
 	public void updateViewMatrix() {
 		trackball.updateOrientation();
 		transition.update();
 		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
-		
+
 		trackball.rotateMatrix(inverseCameraOrientation, gyroscope.getOrientation());
 
 		Matrix.setIdentityM(temporaryMatrix, 0);
@@ -136,21 +136,21 @@ public class Camera {
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, inverseCameraOrientation, 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
 	}
-	
+
 	// returns the view matrix. Copy it if you intend to pass it around; this one might change
 	public float[] getInverseCameraOrientation() {
 		return inverseCameraOrientation;
 	}
-	
+
 	// returns the view matrix. Copy it if you intend to pass it around; this one might change
 	public float[] getViewMatrix() {
 		return viewMatrix;
 	}
-	
+
 	public TwoFingerTrackball getTrackball() {
 		return trackball;
 	}
-	
+
 	public Gyroscope getGyroscope() {
 		return gyroscope;
 	}

@@ -4,7 +4,7 @@ public class Rotation {
 	public float x;
 	public float y;
 	public float z;
-	
+
 	public Rotation() {
 		x=0;
 		y=0;

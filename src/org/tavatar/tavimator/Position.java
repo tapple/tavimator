@@ -4,17 +4,17 @@ public class Position {
 	public float x;
 	public float y;
 	public float z;
-	
+
 	public Position() {
 		x=0;
-	  	y=0;
-	  	z=0;
+		y=0;
+		z=0;
 	}
 
 	public Position(float px, float py, float pz) {
 		x=px;
-	  	y=py;
-	  	z=pz;
+		y=py;
+		z=pz;
 	}
 
 	public static Position difference(Position pos1, Position pos2) {

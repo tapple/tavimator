@@ -26,34 +26,34 @@ import android.widget.TextView;
 public class AnimationView extends GLSurfaceView 
 {
 	public final static int PICK_PART_RESULT = 932023;
-	
+
 	private AnimationRenderer renderer;
 	private AnimationTouchDispatcher touchDispatcher;
-	
+
 	private static final String TAG = "AnimationView";
-	
-    private BVH bvh;
-    private List<Animation> animList = new ArrayList<Animation>();
-    private Animation animation; // this is the "currently selected" animation
-    private BVHNode[] joints = new BVHNode[2];
+
+	private BVH bvh;
+	private List<Animation> animList = new ArrayList<Animation>();
+	private Animation animation; // this is the "currently selected" animation
+	private BVHNode[] joints = new BVHNode[2];
 
 	/**
 	 * Position of the last motion event.
 	 */
-//	private int mLastMotionX1;
-//	private int mLastMotionY1;
-//	private int mLastMotionX2;
-//	private int mLastMotionY2;
+	//	private int mLastMotionX1;
+	//	private int mLastMotionY1;
+	//	private int mLastMotionX2;
+	//	private int mLastMotionY2;
 
-    private int partHighlighted = -1;
-    private int partSelected = -1;
-    private int mirrorSelected = -1;
-//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
-//    private int propDragging;  // holds the actual drag handle id
-    
-    private TwoFingerTrackball selectionTrackball;
+	private int partHighlighted = -1;
+	private int partSelected = -1;
+	private int mirrorSelected = -1;
+	//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
+	//    private int propDragging;  // holds the actual drag handle id
 
-    /**
+	private TwoFingerTrackball selectionTrackball;
+
+	/**
 	 * True if the user is currently dragging this ScrollView around. This is
 	 * not the same as 'is being flinged', which can be checked by
 	 * mScroller.isFinished() (flinging begins when the user lifts his finger).
@@ -69,15 +69,15 @@ public class AnimationView extends GLSurfaceView
 	 * ID of the active pointer. This is used to retain consistency during
 	 * drags/flings if multiple pointers are used.
 	 */
-//	private int activePointer1Id = INVALID_POINTER;
+	//	private int activePointer1Id = INVALID_POINTER;
 	private Pointer pointer1;
 
 	/**
 	 * ID of the second finger pointer during two finger gestures.
 	 */
-//	private int activePointer2Id = INVALID_POINTER;
+	//	private int activePointer2Id = INVALID_POINTER;
 	private Pointer pointer2;
-	
+
 	/**
 	 * true if the previous gesture ended in a fling
 	 */
@@ -88,16 +88,16 @@ public class AnimationView extends GLSurfaceView
 	 */
 	private boolean isTwoFingerGesture = false;
 
-//	private int mTouchSlop;
-//	private int mMinimumVelocity;
-//	private int mMaximumVelocity;
+	//	private int mTouchSlop;
+	//	private int mMinimumVelocity;
+	//	private int mMaximumVelocity;
 
 	/**
 	 * Sentinel value for no current active pointer. Used by
 	 * {@link #activePointer1Id}.
 	 */
-//	private static final int INVALID_POINTER = -1;
-	
+	//	private static final int INVALID_POINTER = -1;
+
 	public AnimationView(Context context) {
 		super(context);
 		initialize();
@@ -119,12 +119,12 @@ public class AnimationView extends GLSurfaceView
 		ans.append(']');
 		return ans.toString();
 	}
-	
+
 	private void initialize() {
 		if (isInEditMode()) return;
-		
+
 		selectionTrackball = new TwoFingerTrackball(getContext());
-		
+
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
 		try {
@@ -135,7 +135,7 @@ public class AnimationView extends GLSurfaceView
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		// Check if the system supports OpenGL ES 2.0.
 		final ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
 		final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
@@ -150,7 +150,7 @@ public class AnimationView extends GLSurfaceView
 			// Set the renderer to our demo renderer, defined below.
 			renderer = new AnimationRenderer(this);
 			setRenderer(renderer);
-//			setRenderMode(RENDERMODE_WHEN_DIRTY);
+			//			setRenderMode(RENDERMODE_WHEN_DIRTY);
 		} else {
 			// This is where you could create an OpenGL ES 1.x compatible
 			// renderer if you wanted to support both ES 1 and ES 2.
@@ -160,7 +160,7 @@ public class AnimationView extends GLSurfaceView
 		pointer1 = new Pointer(getContext());
 		pointer2 = new Pointer(getContext());
 	}
-	
+
 	// this code probably would be more appropriate in the activity
 	public void initializeTouchDispatcher() {
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
@@ -173,21 +173,21 @@ public class AnimationView extends GLSurfaceView
 				R.string.two_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
 		touchDispatcher.setTwoFingerPartHandler(selectionTrackball.getTwoFingerDragHandler(
 				R.string.two_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-		
+
 		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerCameraHandler());
 		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerPartHandler());
 		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerCameraHandler());
 		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerPartHandler());
 	}
-	
+
 	public AnimationRenderer getRenderer() {
 		return renderer;
 	}
-	
+
 	public Camera getCamera() {
 		return getRenderer().getCamera();
 	}
-	
+
 	public TwoFingerTrackball getCameraTrackball() {
 		return getCamera().getTrackball();
 	}
@@ -196,151 +196,151 @@ public class AnimationView extends GLSurfaceView
 		return getCamera().getGyroscope();
 	}
 
-    public Animation getSelectedAnimation() {
-    	return animation;
-    }
-    
-    public Animation getAnimationNumber(int index) {
-    	return animList.get(index);
-    }
-    
-    public int getAnimationCount() {
-    	return animList.size();
-    }
-    
-    public BVHNode getJoints(int index) {
-    	return joints[index];
-    }
-    
-    public Animation getLastAnimation() { 
-    	return animList.get(animList.size()-1);
-    }
+	public Animation getSelectedAnimation() {
+		return animation;
+	}
 
-    public BVH getBVH() {
-    	return bvh;
-    }
+	public Animation getAnimationNumber(int index) {
+		return animList.get(index);
+	}
 
-    public void selectAnimation(int index) {
-      if(index < animList.size()) {
-        animation = animList.get(index);
-        emit(animationSelected(getSelectedAnimation()));
-        repaint();
-      }
-    }
+	public int getAnimationCount() {
+		return animList.size();
+	}
 
-    public void setAnimation(Animation anim) {
-        clear();
+	public BVHNode getJoints(int index) {
+		return joints[index];
+	}
 
-        animation = anim;
-        animList.add(anim);
-        //connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
-        repaint();
-    }
-    
- // Adds a new animation without overriding others, and sets it current
-    public void addAnimation(Animation anim) {
-    	if(!inAnimList(anim)) {
-    		animList.add(anim);
-    		animation = anim; // set it as the current one
-    		if (!animList.isEmpty() && anim != animList.get(0)) {
-    			anim.setFrame(animList.get(0).getFrame());
-    		}
+	public Animation getLastAnimation() { 
+		return animList.get(animList.size()-1);
+	}
 
-    		//connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
-    		repaint();
-    	}
-    }
+	public BVH getBVH() {
+		return bvh;
+	}
 
-    private boolean inAnimList(Animation anim) {
-    	return animList.contains(anim);
-    }
+	public void selectAnimation(int index) {
+		if(index < animList.size()) {
+			animation = animList.get(index);
+			emit(animationSelected(getSelectedAnimation()));
+			repaint();
+		}
+	}
 
-    public void clear() {
-    	animList.clear();
-    	animation = null;
-    }
+	public void setAnimation(Animation anim) {
+		clear();
 
-    public BVHNode getSelectedPart() {
-    	return getSelectedAnimation().getNode(partSelected % AnimationRenderer.ANIMATION_INCREMENT);
-    }
+		animation = anim;
+		animList.add(anim);
+		//connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
+		repaint();
+	}
 
-    public int getSelectedPartIndex() {
-    	return partSelected % AnimationRenderer.ANIMATION_INCREMENT;
-    }
+	// Adds a new animation without overriding others, and sets it current
+	public void addAnimation(Animation anim) {
+		if(!inAnimList(anim)) {
+			animList.add(anim);
+			animation = anim; // set it as the current one
+			if (!animList.isEmpty() && anim != animList.get(0)) {
+				anim.setFrame(animList.get(0).getFrame());
+			}
 
-    /*
+			//connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
+			repaint();
+		}
+	}
+
+	private boolean inAnimList(Animation anim) {
+		return animList.contains(anim);
+	}
+
+	public void clear() {
+		animList.clear();
+		animation = null;
+	}
+
+	public BVHNode getSelectedPart() {
+		return getSelectedAnimation().getNode(partSelected % AnimationRenderer.ANIMATION_INCREMENT);
+	}
+
+	public int getSelectedPartIndex() {
+		return partSelected % AnimationRenderer.ANIMATION_INCREMENT;
+	}
+
+	/*
     public String getPartName(int index) {
       // get part name from animation, with respect to multiple animations in view
       return getSelectedAnimation()->getPartName(index % renderer.ANIMATION_INCREMENT);
     }
-     */
+	 */
 
-/*
+	/*
     // returns the selected prop name or an empty string if none selected
     public String getSelectedPropName() {
     	for(int index = 0; index < propList.count(); index++)
     		if(propList.at(index).id == propSelected) return propList.at(index).name();
     	return "";
     }
-*/
+	 */
 
-    public void selectPart(int partNum) {
-    	BVHNode node = getSelectedAnimation().getNode(partNum);
-    	Log.d(TAG, "AnimationView.selectPart(" + partNum + ")");
+	public void selectPart(int partNum) {
+		BVHNode node = getSelectedAnimation().getNode(partNum);
+		Log.d(TAG, "AnimationView.selectPart(" + partNum + ")");
 
-    	if(node == null) {
-    		Log.d(TAG, "AnimationView::selectPart(" + partNum + "): node==0!");
-    		return;
-    	}
+		if(node == null) {
+			Log.d(TAG, "AnimationView::selectPart(" + partNum + "): node==0!");
+			return;
+		}
 
-    	if(node.type == BVHNodeType.BVH_END) {
-    		partSelected=0;
-    		mirrorSelected=0;
-//    		propSelected=0;
-//    		propDragging=0;
-//    		emit backgroundClicked();
-//    		repaint();
-    	} else {
-    		selectPart(node);
-    	}
-    }
+		if(node.type == BVHNodeType.BVH_END) {
+			partSelected=0;
+			mirrorSelected=0;
+			//    		propSelected=0;
+			//    		propDragging=0;
+			//    		emit backgroundClicked();
+			//    		repaint();
+		} else {
+			selectPart(node);
+		}
+	}
 
-    public void selectPart(BVHNode node) {
+	public void selectPart(BVHNode node) {
 		Log.d(TAG, "selectPart(BVHNode) from thread " + Thread.currentThread().hashCode());
-		
-    	if(node == null) {
-    		Log.d(TAG, "AnimationView::selectPart(node): node==0!");
-    		return;
-    	}
-    	
-    	float[] newOrientation = new float[16];
-    	Matrix.setIdentityM(newOrientation, 0);
-    	synchronized(selectionTrackball) {
-    		node.rotateMatrixForFrame(selectionTrackball.getOrientation(newOrientation), animation.getFrame());
-    		selectionTrackball.setOrientation(newOrientation);
-    	}
 
-    	Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
-    	// make sure no prop is selected anymore
-//    	propSelected=0;
-//    	propDragging=0;
+		if(node == null) {
+			Log.d(TAG, "AnimationView::selectPart(node): node==0!");
+			return;
+		}
 
-    	// find out the index count of the animation we're working with currently
-    	int animationIndex = animList.indexOf(getSelectedAnimation());
+		float[] newOrientation = new float[16];
+		Matrix.setIdentityM(newOrientation, 0);
+		synchronized(selectionTrackball) {
+			node.rotateMatrixForFrame(selectionTrackball.getOrientation(newOrientation), animation.getFrame());
+			selectionTrackball.setOrientation(newOrientation);
+		}
 
-    	// get the part index to be selected, including the proper animation increment
-    	// FIXME: when we are adding support for removing animations we need to remember
-    	//        the increment for each animation so they don't get confused
-    	partSelected = getSelectedAnimation().getPartIndex(node) + AnimationRenderer.ANIMATION_INCREMENT*animationIndex;
-//    	emit partClicked(node,
-//    			Rotation(getSelectedAnimation()->getRotation(node)),
-//    			getSelectedAnimation()->getRotationLimits(node),
-//    			Position(getSelectedAnimation()->getPosition())
-//    			);
-//    	repaint();
-    }
+		Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
+		// make sure no prop is selected anymore
+		//    	propSelected=0;
+		//    	propDragging=0;
 
-/*
+		// find out the index count of the animation we're working with currently
+		int animationIndex = animList.indexOf(getSelectedAnimation());
+
+		// get the part index to be selected, including the proper animation increment
+		// FIXME: when we are adding support for removing animations we need to remember
+		//        the increment for each animation so they don't get confused
+		partSelected = getSelectedAnimation().getPartIndex(node) + AnimationRenderer.ANIMATION_INCREMENT*animationIndex;
+		//    	emit partClicked(node,
+		//    			Rotation(getSelectedAnimation()->getRotation(node)),
+		//    			getSelectedAnimation()->getRotationLimits(node),
+		//    			Position(getSelectedAnimation()->getPosition())
+		//    			);
+		//    	repaint();
+	}
+
+	/*
     void selectProp(final String propName) {
     	// make sure no part is selected anymore
     	partSelected=0;
@@ -349,40 +349,40 @@ public class AnimationView extends GLSurfaceView
     	if(prop) propSelected=prop->id;
     	repaint();
     }
-*/
-    
-    public TwoFingerTrackball getSelectionTrackball() {
-    	return selectionTrackball;
-    }
-    
-    public void updateSelectionOrientation() {
-    	BVHNode selection = getSelectedPart();
-    	if (selection == null) return;
-    	selectionTrackball.updateOrientation();
-    	float[] newOrientation = new float[16];
-    	animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation(newOrientation));
-    }
+	 */
 
-    public void updateSelectionTouchOrientation() {
-    	BVHNode selection = getSelectedPart();
-    	if (selection == null) return;
-    	float[] cameraOrientation = new float[16];
-    	Matrix.transposeM(cameraOrientation, 0, getRenderer().getCamera().getInverseCameraOrientation(), 0);
-    	Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0,
-    			renderer.inverseGlobalParentOrientation, 0,
-    			cameraOrientation, 0);
-    	float[] cameraTrackballOrientation = new float[16];
-    	getRenderer().getCamera().getTrackball().getInverseOrientation(cameraTrackballOrientation);
-    	Matrix.multiplyMM(selectionTrackball.getGyroToTrackball(), 0,
-    			renderer.inverseGlobalParentOrientation, 0,
-    			cameraTrackballOrientation, 0);
-    }
-    
-    public void repaint() {
-    	// do nothing
-    }
+	public TwoFingerTrackball getSelectionTrackball() {
+		return selectionTrackball;
+	}
 
-    @Override
+	public void updateSelectionOrientation() {
+		BVHNode selection = getSelectedPart();
+		if (selection == null) return;
+		selectionTrackball.updateOrientation();
+		float[] newOrientation = new float[16];
+		animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation(newOrientation));
+	}
+
+	public void updateSelectionTouchOrientation() {
+		BVHNode selection = getSelectedPart();
+		if (selection == null) return;
+		float[] cameraOrientation = new float[16];
+		Matrix.transposeM(cameraOrientation, 0, getRenderer().getCamera().getInverseCameraOrientation(), 0);
+		Matrix.multiplyMM(selectionTrackball.getCameraToTrackballOrientation(), 0,
+				renderer.inverseGlobalParentOrientation, 0,
+				cameraOrientation, 0);
+		float[] cameraTrackballOrientation = new float[16];
+		getRenderer().getCamera().getTrackball().getInverseOrientation(cameraTrackballOrientation);
+		Matrix.multiplyMM(selectionTrackball.getGyroToTrackball(), 0,
+				renderer.inverseGlobalParentOrientation, 0,
+				cameraTrackballOrientation, 0);
+	}
+
+	public void repaint() {
+		// do nothing
+	}
+
+	@Override
 	public void onResume() 
 	{
 		// The activity must call the GL surface view's onResume() on activity onResume().
@@ -397,7 +397,7 @@ public class AnimationView extends GLSurfaceView
 		super.onPause();
 		renderer.onPause();
 	}
-	
+
 	public void pickPart(final int x, final int y, final Handler resultHandler) {
 		queueEvent(new Runnable() {
 			@Override public void run() {
@@ -406,7 +406,7 @@ public class AnimationView extends GLSurfaceView
 			}
 		});
 	}
-	
+
 	private void debug(String message) {
 		Log.d(TAG, message);
 		((TextView) ((Activity) getContext())
@@ -441,11 +441,11 @@ public class AnimationView extends GLSurfaceView
 		s.append(' ').append(ev.getPointerCount());
 		return s.toString();
 	}
-	
+
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
 		final int action = ev.getAction();
-//		if (action != MotionEvent.ACTION_MOVE) debug(printMotionEvent(ev));
+		//		if (action != MotionEvent.ACTION_MOVE) debug(printMotionEvent(ev));
 		final int actionMask = action & MotionEvent.ACTION_MASK;
 		final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
 
@@ -595,7 +595,7 @@ public class AnimationView extends GLSurfaceView
 		}
 		return true;
 	}
-	
+
 	private void saveLastMotion(MotionEvent ev) {
 		pointer1.update(ev);
 		pointer2.update(ev);
@@ -629,15 +629,15 @@ public class AnimationView extends GLSurfaceView
 		pointer1.isDragging = true;
 		pointer2.isDragging = true;
 	}
-	
+
 	private void endDrag() {
 		mIsBeingDragged = false;
 		pointer1.isDragging = false;
 		pointer2.isDragging = false;
 		recycleVelocityTracker();
 	}
-	
-/*
+
+	/*
   signals:
     void partClicked(BVHNode* node,Rotation rot,RotationLimits rotLimit,Position pos);
     void partClicked(int part);
@@ -663,23 +663,23 @@ public class AnimationView extends GLSurfaceView
   protected slots:
     void draw();
 
- */
+	 */
 	void emit(int i) {}
-    int partClicked(BVHNode node, Rotation rot, RotationLimits rotLimit, Position pos) { return 0; }
-    int partClicked(int part) { return 0; }
-//    int propClicked(Prop* prop) { return 0; }
+	int partClicked(BVHNode node, Rotation rot, RotationLimits rotLimit, Position pos) { return 0; }
+	int partClicked(int part) { return 0; }
+	//    int propClicked(Prop* prop) { return 0; }
 
-    int partDragged(BVHNode node,double changeX,double changeY,double changeZ) { return 0; }
+	int partDragged(BVHNode node,double changeX,double changeY,double changeZ) { return 0; }
 
-//    int propDragged(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
-//    int propRotated(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
-//    int propScaled(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+	//    int propDragged(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+	//    int propRotated(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
+	//    int propScaled(Prop* prop,double changeX,double changeY,double changeZ) { return 0; }
 
-    int backgroundClicked() { return 0; }
-    int animationSelected(Animation animation) { return 0; }
+	int backgroundClicked() { return 0; }
+	int animationSelected(Animation animation) { return 0; }
 
-    int storeCameraPosition(int num) { return 0; }
-    int restoreCameraPosition(int num) { return 0; }
+	int storeCameraPosition(int num) { return 0; }
+	int restoreCameraPosition(int num) { return 0; }
 
 	public int getPartHighlighted() {
 		return partHighlighted;

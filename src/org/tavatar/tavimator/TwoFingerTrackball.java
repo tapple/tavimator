@@ -11,7 +11,7 @@ import android.view.WindowManager;
 import android.widget.Scroller;
 
 public class TwoFingerTrackball {
-	
+
 	private static String TAG = "TwoFingerTrackball";
 
 	private Scroller mScroller;
@@ -21,9 +21,9 @@ public class TwoFingerTrackball {
 	 * translation
 	 */
 	private float[] orientation = new float[16];
-	
+
 	private float distance = 50;
-	
+
 	private float minDistance = 10f;
 	private float maxDistance = 100f;
 
@@ -46,9 +46,9 @@ public class TwoFingerTrackball {
 	private float[] scrollAxis = new float[4];
 	private float[] flingAxis = new float[4];
 	private static final float ZOOM_FACTOR = 100.0f;
-	
+
 	private float zoomRate = 1.0f; // per second
-	
+
 	private Gyroscope trackingGyroscope = null;
 	private float[] gyroOffset = new float[16];
 	private float[] localGyroOrientation = new float[16];
@@ -62,7 +62,7 @@ public class TwoFingerTrackball {
 	private float mDensity = 1.0f;
 
 	private Context mContext;
-	
+
 	public void dumpMatrices() {
 		Log.d(TAG, "gyroToTrackball:");
 		AnimationRenderer.printMatrix(gyroToTrackball);
@@ -73,7 +73,7 @@ public class TwoFingerTrackball {
 		Log.d(TAG, "orientation:\n");
 		AnimationRenderer.printMatrix(orientation);
 	}
-	
+
 	public static String arrayToString(float[] array) {
 		String ans = "[";
 		for (int i = 0; i < array.length; i++) {			
@@ -82,7 +82,7 @@ public class TwoFingerTrackball {
 		}
 		return ans;
 	}
-	
+
 	/**
 	 * Converts touch data into an angular velocity vector, in degrees per unit
 	 * time. The angular velocity vector will be in camera-local coordinates.
@@ -144,7 +144,7 @@ public class TwoFingerTrackball {
 		Matrix.rotateM(matrix, 0, angularVelocity[1], 0, 1, 0);
 		Matrix.rotateM(matrix, 0, angularVelocity[2], 0, 0, 1);
 	}
-	
+
 	public TwoFingerTrackball(Context context) {
 		mContext = context;
 
@@ -179,26 +179,26 @@ public class TwoFingerTrackball {
 		System.arraycopy(orientation, 0, dest, 0, 16);
 		return dest;
 	}
-	
+
 	public synchronized float[] getInverseOrientation(float[] dest) {
 		Matrix.transposeM(dest, 0, orientation, 0);
 		return dest;
 	}
-	
+
 	public synchronized float[] setOrientation(float[] src) {
 		System.arraycopy(src, 0, orientation, 0, 16);
 		return src;
 	}
-	
+
 	public synchronized void setIdentity() {
 		Matrix.setIdentityM(orientation, 0);
 	}
-	
+
 	public synchronized float[] rotateMatrix (float[] dest, float[] lhs) {
 		Matrix.multiplyMM(dest, 0, lhs, 0, orientation, 0);
 		return dest;
 	}
-	
+
 	public synchronized float getDistance() {
 		return distance;
 	}
@@ -210,7 +210,7 @@ public class TwoFingerTrackball {
 	public float[] getCameraToTrackballOrientation() {
 		return cameraToTrackball;
 	}
-	
+
 	public void trackGyroscope(Gyroscope newTrackingGyroscope, boolean newInvert) {
 		if (trackingGyroscope != null) {
 			float[] angularVelocity = new float[4];
@@ -222,14 +222,14 @@ public class TwoFingerTrackball {
 			}
 			fling(angularVelocity);
 		}
-		
+
 		trackingGyroscope = newTrackingGyroscope;
 		invertGyro = newInvert;
-		
+
 		if (trackingGyroscope != null) {
 			stopFling();
 		}
-		
+
 		updateGyroOffset();
 	}
 
@@ -237,13 +237,13 @@ public class TwoFingerTrackball {
 		this.zoomRate = zoomRate;
 		prevZoomTime = SystemClock.uptimeMillis();
 	}
-	
+
 	private synchronized void updateGyroTracking() {
 		if (trackingGyroscope == null) return;
-		
+
 		if (localGyroOrientation == null) Log.d(TAG, "localGyroOrientation is null");
 		if (gyroToTrackball == null) Log.d(TAG, "gyroToTrackball is null");
-		
+
 		if (invertGyro) {
 			Matrix.multiplyMM(localGyroOrientation, 0, gyroToTrackball, 0, trackingGyroscope.getInverseOrientation(), 0);
 		} else {
@@ -254,7 +254,7 @@ public class TwoFingerTrackball {
 
 	private synchronized void updateGyroOffset() {
 		if (trackingGyroscope == null) return;
-		
+
 		Matrix.transposeM(trackballToGyro, 0, gyroToTrackball, 0);
 
 		if (invertGyro) {
@@ -264,14 +264,14 @@ public class TwoFingerTrackball {
 		}
 		Matrix.multiplyMM(gyroOffset, 0, inverseLocalGyroOrientation, 0, orientation, 0);
 	}
-	
+
 	public synchronized void basicUpdateOrientation() {
 		mScroller.computeScrollOffset();
 		int x = mScroller.getCurrX();
 		int y = mScroller.getCurrY();
 		long time = SystemClock.uptimeMillis();
 
-        if (prevFlingX == x && prevFlingY == y && zoomRate == 1.0f)
+		if (prevFlingX == x && prevFlingY == y && zoomRate == 1.0f)
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
@@ -287,7 +287,7 @@ public class TwoFingerTrackball {
 		basicUpdateOrientation();
 		updateGyroOffset();
 	}
-	
+
 	public AnimationOneFingerDragHandler getOneFingerDragHandler(int nameId, int shortNameId) {
 		class OneFingerDragHandler extends AbsTouchHandler implements AnimationOneFingerDragHandler {
 			public OneFingerDragHandler(Context context, int nameId, int shortNameId) {
@@ -299,13 +299,13 @@ public class TwoFingerTrackball {
 				oneFingerDragToAngularVelocity(scrollVelocity, dx, dy);
 				scrollBy(scrollVelocity);
 			}
-		
+
 			@Override
 			public void onOneFingerFling(int x, int y, float vx, float vy) {
 				oneFingerDragToAngularVelocity(scrollVelocity, vx, vy);
 				fling(scrollVelocity);
 			}
-		
+
 			@Override
 			public void onCancel() {
 				stopFling();
@@ -341,7 +341,7 @@ public class TwoFingerTrackball {
 	}
 
 	private synchronized void scrollBy(float[] angularVelocity) {
-//		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
+		//		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 		rotateAboutCameraAxis(
 				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
@@ -361,7 +361,7 @@ public class TwoFingerTrackball {
 	}
 
 	public void fling(float[] angularVelocity) {
-//		Log.d(TAG, "fling(" + arrayToString(angularVelocity) + ");");
+		//		Log.d(TAG, "fling(" + arrayToString(angularVelocity) + ");");
 		Matrix.multiplyMV(flingAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
 
 		prevFlingX = 0;
@@ -372,9 +372,9 @@ public class TwoFingerTrackball {
 				(int) (Math.log(angularVelocity[3]) * ZOOM_FACTOR), 
 				0, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
-	
+
 	public void stopFling() {
-//		Log.d(TAG, "stopFling();");
+		//		Log.d(TAG, "stopFling();");
 		mScroller.forceFinished(true);
 	}
 
