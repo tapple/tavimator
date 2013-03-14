@@ -31,14 +31,13 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 
 		setContentView(R.layout.animation);
 
-		/*
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
-		 */
 
 		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
 		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
 
+/*
 		FramePicker framePicker = (FramePicker) findViewById(R.id.frame_picker);
 		framePicker.setMaxValue(120);
 		framePicker.setWrapSelectorWheel(true);
@@ -49,6 +48,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 		numberPicker.setMaxValue(120);
 		numberPicker.setWrapSelectorWheel(true);
 		numberPicker.setOnLongPressUpdateInterval(33);
+*/
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 	{
 		// The activity must call the GL surface view's onResume() on activity onResume().
 		super.onResume();
-		//		mGLSurfaceView.onResume();
+		mGLSurfaceView.onResume();
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 	{
 		// The activity must call the GL surface view's onPause() on activity onPause().
 		super.onPause();
-		//		mGLSurfaceView.onPause();
+		mGLSurfaceView.onPause();
 		isVolumeDownPressed = false;
 		isVolumeUpPressed = false;
 
