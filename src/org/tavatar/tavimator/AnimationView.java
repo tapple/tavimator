@@ -315,10 +315,8 @@ public class AnimationView extends GLSurfaceView
 
 		float[] newOrientation = new float[16];
 		Matrix.setIdentityM(newOrientation, 0);
-		synchronized(selectionTrackball) {
-			node.rotateMatrixForFrame(selectionTrackball.getOrientation(newOrientation), animation.getFrame());
-			selectionTrackball.setOrientation(newOrientation);
-		}
+		node.rotateMatrixForFrame(newOrientation, animation.getFrame());
+		selectionTrackball.setOrientation(newOrientation);
 
 		Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
 		// make sure no prop is selected anymore
