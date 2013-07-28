@@ -8,26 +8,23 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 
 public class Pointer {
-	public ViewConfiguration config;
-	//	config.getScaledTouchSlop() = configuration.getScaledTouchSlop();
+	private static String TAG = "Pointer";
+	private PointerGroup group;
+	//	slopiness = configuration.getScaledTouchSlop();
 	//	mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
 	//	mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
 
-
-	/**
-	 * Sentinel value for no current active pointer. Used by
-	 * {@link #id}.
-	 */
-	public static final int INVALID_POINTER = -1;
-
-	public int id = INVALID_POINTER;
-	public boolean isDragging = false;
+	public int id;
+	public boolean up;
 
 	public int x;
 	public int y;
 
 	public int prevX;
 	public int prevY;
+	
+	public int startX;
+	public int startY;
 
 	public int dx;
 	public int dy;
@@ -35,85 +32,69 @@ public class Pointer {
 	public float velocityX;
 	public float velocityY;
 
-	public Pointer(Context context) {
-		config = ViewConfiguration.get(context);
+	public Pointer(PointerGroup group) {
+		this.group = group;
 	}
 
-	public boolean isValid() {
-		return id != INVALID_POINTER;
+	public boolean isDragging() {
+		return group.isDragging();
 	}
 
-	public boolean notValid() {
-		return id == INVALID_POINTER;
+ 	public void down(MotionEvent ev, int index) {
+ 		up = false;
+		id = ev.getPointerId(index);
+		startX = prevX = (int) ev.getX(index);
+		startY = prevY = (int) ev.getY(index);
 	}
-
-	public void invalidate() {
-		id = INVALID_POINTER;
-	}
+ 	
+ 	public void up() {
+ 		up = true;
+ 	}
 
 	public void update(MotionEvent event) {
-		update(event, false);
-	}
-
-	public void update(MotionEvent event, boolean pointerDown) {
-		if (notValid()) return;
-
-		if (isDragging) {
+		final int index = event.findPointerIndex(id);
+		if (index < 0) return;
+		
+		if (isDragging()) {
 			prevX = x;
 			prevY = y;
 		}
 
-		final int index = event.findPointerIndex(id);
 		x = (int) event.getX(index);
 		y = (int) event.getY(index);
-
-		if (pointerDown) {
-			prevX = x;
-			prevY = y;
-		}
 
 		dx = x - prevX;
 		dy = y - prevY;
 	}
 
 	public void update(VelocityTracker velocityTracker) {
-		if (notValid()) return;
-
 		velocityX = velocityTracker.getXVelocity(id);
 		velocityY = velocityTracker.getYVelocity(id);
 	}
 
-	public boolean shouldStartDrag() {
-		if (notValid()) return false;
-
+	public boolean shouldStartDrag(int slopiness) {
 		boolean shouldStart = false;
-		if (dx > config.getScaledTouchSlop()) {
+		if (dx > slopiness) {
 			shouldStart = true;
-			dx -= config.getScaledTouchSlop();
+			dx -= slopiness;
 		}
-		if (dx < -config.getScaledTouchSlop()) {
+		if (dx < -slopiness) {
 			shouldStart = true;
-			dx += config.getScaledTouchSlop();
+			dx += slopiness;
 		}
-		if (dy > config.getScaledTouchSlop()) {
+		if (dy > slopiness) {
 			shouldStart = true;
-			dy -= config.getScaledTouchSlop();
+			dy -= slopiness;
 		}
-		if (dy < -config.getScaledTouchSlop()) {
+		if (dy < -slopiness) {
 			shouldStart = true;
-			dy += config.getScaledTouchSlop();
+			dy += slopiness;
 		}
 		return shouldStart;
 	}
 
-	public boolean shouldFling() {
-		if (notValid()) return false;
-
-		return  velocityX > config.getScaledMinimumFlingVelocity() ||
-				velocityY > config.getScaledMinimumFlingVelocity();
-	}
-
-	public float maximumFlingVelocity() {
-		return config.getScaledMaximumFlingVelocity();
+	public boolean shouldFling(float minFlingVelocity) {
+		return  velocityX > minFlingVelocity ||
+				velocityY > minFlingVelocity;
 	}
 }

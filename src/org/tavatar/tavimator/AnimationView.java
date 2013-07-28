@@ -36,6 +36,8 @@ public class AnimationView extends GLSurfaceView
 	private List<Animation> animList = new ArrayList<Animation>();
 	private Animation animation; // this is the "currently selected" animation
 	private BVHNode[] joints = new BVHNode[2];
+	
+	private PointerGroup pointers;
 
 	/**
 	 * Position of the last motion event.
@@ -52,51 +54,6 @@ public class AnimationView extends GLSurfaceView
 	//    private int propDragging;  // holds the actual drag handle id
 
 	private TwoFingerTrackball selectionTrackball;
-
-	/**
-	 * True if the user is currently dragging this ScrollView around. This is
-	 * not the same as 'is being flinged', which can be checked by
-	 * mScroller.isFinished() (flinging begins when the user lifts his finger).
-	 */
-	private boolean mIsBeingDragged = false;
-
-	/**
-	 * Determines speed during touch scrolling
-	 */
-	private VelocityTracker mVelocityTracker;
-
-	/**
-	 * ID of the active pointer. This is used to retain consistency during
-	 * drags/flings if multiple pointers are used.
-	 */
-	//	private int activePointer1Id = INVALID_POINTER;
-	private Pointer pointer1;
-
-	/**
-	 * ID of the second finger pointer during two finger gestures.
-	 */
-	//	private int activePointer2Id = INVALID_POINTER;
-	private Pointer pointer2;
-
-	/**
-	 * true if the previous gesture ended in a fling
-	 */
-	private boolean wasFlinging = false;
-
-	/**
-	 * true if the current or previous gesture was a two finger one
-	 */
-	private boolean isTwoFingerGesture = false;
-
-	//	private int mTouchSlop;
-	//	private int mMinimumVelocity;
-	//	private int mMaximumVelocity;
-
-	/**
-	 * Sentinel value for no current active pointer. Used by
-	 * {@link #activePointer1Id}.
-	 */
-	//	private static final int INVALID_POINTER = -1;
 
 	public AnimationView(Context context) {
 		super(context);
@@ -157,8 +114,7 @@ public class AnimationView extends GLSurfaceView
 			return;
 		}
 
-		pointer1 = new Pointer(getContext());
-		pointer2 = new Pointer(getContext());
+		pointers = new PointerGroup(getContext());
 	}
 
 	// this code probably would be more appropriate in the activity
@@ -447,11 +403,10 @@ public class AnimationView extends GLSurfaceView
 		final int actionMask = action & MotionEvent.ACTION_MASK;
 		final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
 
-		if (pointer1.notValid() && actionMask != MotionEvent.ACTION_DOWN)
+		if (pointers.size() == 0 && actionMask != MotionEvent.ACTION_DOWN)
 			return true;
 
-		initVelocityTrackerIfNotExists();
-		mVelocityTracker.addMovement(ev);
+		pointers.addMovement(ev);
 
 		switch (actionMask) {
 		case MotionEvent.ACTION_DOWN: {
@@ -459,180 +414,76 @@ public class AnimationView extends GLSurfaceView
 			 * If being flinged and user touches, stop the fling. isFinished
 			 * will be false if being flinged.
 			 */
-			if (wasFlinging) {
-				if (isTwoFingerGesture) {
-					touchDispatcher.onTwoFingerMoveCancel();
-				} else {
-					touchDispatcher.onOneFingerMoveCancel();
-				}
-			}
-			wasFlinging = false;
-			isTwoFingerGesture = false;
-
-			// Remember where the motion event started
-			pointer1.id = ev.getPointerId(0);
-			pointer1.update(ev, true);
-			touchDispatcher.onFingerDown(pointer1.x, pointer1.y);
+			touchDispatcher.onOneFingerMoveCancel();
+			touchDispatcher.onFingerDown(pointers.get(0).x, pointers.get(0).y);
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
-			if (isTwoFingerGesture && pointer2.notValid()) break; // two finger drag ended, but one finger is still on screen
-			pointer1.update(ev);
-			pointer2.update(ev);
-			if (!mIsBeingDragged) {
-				if (pointer1.shouldStartDrag() || pointer2.shouldStartDrag()) startDrag();
-				if (mIsBeingDragged) {
+			if (!pointers.isDragging()) {
+				if (pointers.shouldStartDrag()) pointers.startDrag();
+				if (pointers.isDragging()) {
 					touchDispatcher.onTapCancel();
 				}
 			}
-			if (mIsBeingDragged) {
-				if (!isTwoFingerGesture && pointer2.notValid()) {
+			if (pointers.isDragging()) {
+				if (pointers.size() == 1) {
 					touchDispatcher.onOneFingerMove(
-							pointer1.x, pointer1.y, pointer1.dx, pointer1.dy);
+							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy);
 				} else {
-					isTwoFingerGesture = true;
 					touchDispatcher.onTwoFingerMove(
-							pointer1.x, pointer1.y, pointer1.dx, pointer1.dy,
-							pointer2.x, pointer2.y, pointer2.dx, pointer2.dy);
+							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy,
+							pointers.get(1).x, pointers.get(1).y, pointers.get(1).dx, pointers.get(1).dy);
 				}
 			}
 			break;
 		case MotionEvent.ACTION_UP: // the last finger was lifted
-			if (mIsBeingDragged) { // end of one finger drag
-				final VelocityTracker velocityTracker = mVelocityTracker;
-				velocityTracker.computeCurrentVelocity(1000, pointer1.maximumFlingVelocity());
-				pointer1.update(velocityTracker);
+			if (pointers.isDragging()) { // end of one finger drag
+				pointers.computeCurrentVelocity();
 
-				if (pointer1.shouldFling()) {
-					touchDispatcher.onOneFingerFling(pointer1.x, pointer1.y, pointer1.velocityX, pointer1.velocityY);
-					wasFlinging = true;
+				if (pointers.shouldFling()) {
+					touchDispatcher.onOneFingerFling(pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY);
 				} else {
 					touchDispatcher.onOneFingerMoveCancel();
 				}
 
-				endDrag();
-			} else if (!isTwoFingerGesture) { // end of tap
-				touchDispatcher.onTap(pointer1.x, pointer1.x);
-				endDrag();
+				pointers.endDrag();
+			} else /* if (second finger wasn't just released and we aren't doing a 2 finger fling) */ { // end of tap
+				touchDispatcher.onTap(pointers.get(0).x, pointers.get(0).x);
+				pointers.endDrag();
 			}
-			pointer1.invalidate();
+			pointers.clearUpPointers();
 			break;
 		case MotionEvent.ACTION_CANCEL:
-			if (!mIsBeingDragged) {
+			if (!pointers.isDragging()) {
 				touchDispatcher.onTapCancel();
-			} else if (isTwoFingerGesture) {
-				touchDispatcher.onTwoFingerMoveCancel();
 			} else {
 				touchDispatcher.onOneFingerMoveCancel();
 			}
-			endDrag();
-			pointer1.invalidate();
-			pointer2.invalidate();
+			pointers.endDrag();
 			break;
 		case MotionEvent.ACTION_POINTER_DOWN: {
-			final int pointerId = ev.getPointerId(pointerIndex);
-			if (pointer2.notValid()) {
-				if (mIsBeingDragged) { // switch active fingers during a one finger gesture
-					pointer1.id = pointerId;
-					pointer1.update(ev, true);
-				} else { 
-					pointer2.id = pointerId;
-					pointer2.update(ev, true);
-					if (isTwoFingerGesture) { // put the second finger back down after lifting it to complete a two finger gesture
-						touchDispatcher.onTwoFingerMoveCancel();
-					}
-				}
-			}
 			break;
 		}
 		case MotionEvent.ACTION_POINTER_UP:
-			final int pointerId = ev.getPointerId(pointerIndex);
-			final int newPointerId = unusedPointerId(ev);
-			if (newPointerId == Pointer.INVALID_POINTER) { // exactly two fingers were on the screen and active, and one of them was lifted
-				if (!mIsBeingDragged) { // two fingers were placed down without moving, and now one is being lifted
-					if (pointerId == pointer1.id) {
-						pointer1.id = pointer2.id;
-						touchDispatcher.onTapCancel();
-						int index = ev.findPointerIndex(pointer1.id);
-						touchDispatcher.onFingerDown((int)ev.getX(index), (int)ev.getY(index));
-					}
-					pointer2.invalidate();
-					mVelocityTracker.clear();
-				} else if(isTwoFingerGesture) { // one of the two fingers in a two finger drag was lifted; end gesture
-					final VelocityTracker velocityTracker = mVelocityTracker;
-					velocityTracker.computeCurrentVelocity(1000, pointer1.maximumFlingVelocity());
-					pointer1.update(velocityTracker);
-					pointer2.update(velocityTracker);
+			if (pointers.size() == 2) { // exactly two fingers were on the screen and active, and one of them was lifted
+				if (pointers.isDragging()) { // two fingers were placed down without moving, and now one is being lifted
+					pointers.computeCurrentVelocity();
 
-					if (pointer1.shouldFling() || pointer2.shouldFling()) {
+					if (pointers.shouldFling()) {
 						touchDispatcher.onTwoFingerFling(
-								pointer1.x, pointer1.y, pointer1.velocityX, pointer1.velocityY,
-								pointer2.x, pointer2.y, pointer2.velocityX, pointer2.velocityY);
-						wasFlinging = true;
+								pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY,
+								pointers.get(1).x, pointers.get(1).y, pointers.get(1).velocityX, pointers.get(1).velocityY);
 					} else {
 						touchDispatcher.onTwoFingerMoveCancel();
 					}
 
-					endDrag();
-					if (pointerId == pointer1.id) {
-						pointer1.id = pointer2.id;
-					}
-					pointer2.invalidate();
-				}
-			} else { // 3 or more fingers were present, and one was lifted
-				if (pointerId == pointer1.id) {
-					pointer1.id = newPointerId;
-					mVelocityTracker.clear();
-				} else if (pointerId == pointer2.id) {
-					pointer2.id = newPointerId;
-					mVelocityTracker.clear();
+					pointers.endDrag();
 				}
 			}
-			saveLastMotion(ev);
+			pointers.clearUpPointers();
 			break;
 		}
 		return true;
-	}
-
-	private void saveLastMotion(MotionEvent ev) {
-		pointer1.update(ev);
-		pointer2.update(ev);
-	}
-
-	private int unusedPointerId(MotionEvent ev) {
-		for (int i = 0; i < ev.getPointerCount(); i++) {
-			int id = ev.getPointerId(i);
-			if (id != pointer1.id && id != pointer2.id) {
-				return id;
-			}
-		}
-		return Pointer.INVALID_POINTER;
-	}
-
-	private void initVelocityTrackerIfNotExists() {
-		if (mVelocityTracker == null) {
-			mVelocityTracker = VelocityTracker.obtain();
-		}
-	}
-
-	private void recycleVelocityTracker() {
-		if (mVelocityTracker != null) {
-			mVelocityTracker.recycle();
-			mVelocityTracker = null;
-		}
-	}
-
-	private void startDrag() {
-		mIsBeingDragged = true;
-		pointer1.isDragging = true;
-		pointer2.isDragging = true;
-	}
-
-	private void endDrag() {
-		mIsBeingDragged = false;
-		pointer1.isDragging = false;
-		pointer2.isDragging = false;
-		recycleVelocityTracker();
 	}
 
 	/*
