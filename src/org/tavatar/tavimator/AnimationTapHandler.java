@@ -9,7 +9,7 @@ public interface AnimationTapHandler extends AnimationTouchHandler {
 	 * @param x
 	 * @param y
 	 */
-	public void onFingerDown(int x, int y);
+	public void onFingerDown(PointerGroup pointers);
 
 	/**
 	 * user touched then released the screen at x, y.
@@ -17,5 +17,5 @@ public interface AnimationTapHandler extends AnimationTouchHandler {
 	 * @param x
 	 * @param y
 	 */
-	public void onTap(int x, int y);
+	public void onTap(PointerGroup pointers);
 }

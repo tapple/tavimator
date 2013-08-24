@@ -415,7 +415,7 @@ public class AnimationView extends GLSurfaceView
 			 * will be false if being flinged.
 			 */
 			touchDispatcher.onOneFingerMoveCancel();
-			touchDispatcher.onFingerDown(pointers.get(0).x, pointers.get(0).y);
+			touchDispatcher.onFingerDown(pointers);
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
@@ -445,7 +445,7 @@ public class AnimationView extends GLSurfaceView
 
 				pointers.endDrag();
 			} else /* if (second finger wasn't just released and we aren't doing a 2 finger fling) */ { // end of tap
-				touchDispatcher.onTap(pointers.get(0).x, pointers.get(0).x);
+				touchDispatcher.onTap(pointers);
 				pointers.endDrag();
 			}
 			pointers.clearUpPointers();

@@ -125,14 +125,12 @@ public class AnimationTouchDispatcher {
 		}
 	}
 
-	public void onFingerDown(int x, int y) {
-		debug("onFingerDown(" + x + ", " + y + ")");		
-		if (getTapHandler() != null) getTapHandler().onFingerDown(x, y);
+	public void onFingerDown(PointerGroup pointers) {
+		if (getTapHandler() != null) getTapHandler().onFingerDown(pointers);
 	}
 
-	public void onTap(int x, int y) {
-		debug("onTap(" + x + ", " + y + ")");
-		if (getTapHandler() != null) getTapHandler().onTap(x, y);
+	public void onTap(PointerGroup pointers) {
+		if (getTapHandler() != null) getTapHandler().onTap(pointers);
 	}
 
 	public void onTapCancel() {

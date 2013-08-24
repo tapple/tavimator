@@ -47,6 +47,18 @@ public class PointerGroup {
 		return pointers.get(i);
 	}
 	
+	public Pointer first() {
+		return get(0);
+	}
+	
+	public Pointer second() {
+		return get(1);
+	}
+	
+	public Pointer last() {
+		return get(size()-1);
+	}
+	
 	/**
 	 * Converts touch data into an angular velocity vector, in degrees per unit
 	 * time. The angular velocity vector will be in camera-local coordinates.
@@ -78,8 +90,8 @@ public class PointerGroup {
 		// 2, but it ends up canceling out (radius is half
 		// the distance, velocity is the average of the two
 		// measurements, one of which is inverted)
-		Pointer p1 = pointers.get(0);
-		Pointer p2 = pointers.get(1);
+		Pointer p1 = first();
+		Pointer p2 = second();
 		int rx = p2.x-p1.x; // radius vector, x component
 		int ry = p2.y-p1.y; // radius vector, y component
 		int r2 = rx*rx + ry*ry; // radius squared
