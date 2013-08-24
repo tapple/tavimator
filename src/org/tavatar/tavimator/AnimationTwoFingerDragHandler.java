@@ -13,7 +13,7 @@ public interface AnimationTwoFingerDragHandler extends AnimationTouchHandler {
 	 * @param dx2
 	 * @param dy2
 	 */
-	public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2);
+	public void onTwoFingerMove(PointerGroup pointers);
 
 	/**
 	 * user lifted her two fingers at x1, y1 and x2, y2, while they were moving at vx1, vy1 and vx2, vy2 pixels per second
@@ -27,5 +27,5 @@ public interface AnimationTwoFingerDragHandler extends AnimationTouchHandler {
 	 * @param vx2
 	 * @param vy2
 	 */
-	public void onTwoFingerFling(int x1, int y1, float vx1, float vy1, int x2, int y2, float vx2, float vy2);
+	public void onTwoFingerFling(PointerGroup pointers);
 }

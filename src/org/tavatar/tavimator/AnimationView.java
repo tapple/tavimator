@@ -427,12 +427,9 @@ public class AnimationView extends GLSurfaceView
 			}
 			if (pointers.isDragging()) {
 				if (pointers.size() == 1) {
-					touchDispatcher.onOneFingerMove(
-							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy);
+					touchDispatcher.onOneFingerMove(pointers);
 				} else {
-					touchDispatcher.onTwoFingerMove(
-							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy,
-							pointers.get(1).x, pointers.get(1).y, pointers.get(1).dx, pointers.get(1).dy);
+					touchDispatcher.onTwoFingerMove(pointers);
 				}
 			}
 			break;
@@ -441,7 +438,7 @@ public class AnimationView extends GLSurfaceView
 				pointers.computeCurrentVelocity();
 
 				if (pointers.shouldFling()) {
-					touchDispatcher.onOneFingerFling(pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY);
+					touchDispatcher.onOneFingerFling(pointers);
 				} else {
 					touchDispatcher.onOneFingerMoveCancel();
 				}
@@ -470,9 +467,7 @@ public class AnimationView extends GLSurfaceView
 					pointers.computeCurrentVelocity();
 
 					if (pointers.shouldFling()) {
-						touchDispatcher.onTwoFingerFling(
-								pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY,
-								pointers.get(1).x, pointers.get(1).y, pointers.get(1).velocityX, pointers.get(1).velocityY);
+						touchDispatcher.onTwoFingerFling(pointers);
 					} else {
 						touchDispatcher.onTwoFingerMoveCancel();
 					}

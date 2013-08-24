@@ -140,18 +140,16 @@ public class AnimationTouchDispatcher {
 		if (getTapHandler() != null) getTapHandler().onCancel();
 	}
 
-	public void onOneFingerMove(int x, int y, int dx, int dy) {
-		verbose("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
+	public void onOneFingerMove(PointerGroup pointers) {
 		oneFingerSpinner.setPressed(true);
 		if (getOneFingerDragHandler() == null) return;
-		getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
+		getOneFingerDragHandler().onOneFingerMove(pointers);
 	}
 
-	public void onOneFingerFling(int x, int y, float vx, float vy) {
-		debug("onOneFingerFling(" + x + ", " + y + ", " + vx + ", " + vy + ")");
+	public void onOneFingerFling(PointerGroup pointers) {
 		oneFingerSpinner.setPressed(false);
 		if (getOneFingerDragHandler() == null) return;
-		getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
+		getOneFingerDragHandler().onOneFingerFling(pointers);
 		tapHandler.endGyroGrab();
 	}
 
@@ -166,21 +164,15 @@ public class AnimationTouchDispatcher {
 		tapHandler.endGyroGrab();
 	}
 
-	public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
-		verbose("onTwoFingerMove(" + 
-				x1 + ", " + y1 + ", " + dx1 + ", " + dy1 + ", "  + 
-				x2 + ", " + y2 + ", " + dx2 + ", " + dy2 + ")");
+	public void onTwoFingerMove(PointerGroup pointers) {
 		twoFingerSpinner.setPressed(true);
-		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(x1, y1, dx1, dy1, x2, y2, dx2, dy2);
+		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(pointers);
 	}
 
-	public void onTwoFingerFling(int x1, int y1, float vx1, float vy1, int x2, int y2, float vx2, float vy2) {
-		debug("onTwoFingerFling(" + 
-				x1 + ", " + y1 + ", " + vx1 + ", " + vy1 + ", "  + 
-				x2 + ", " + y2 + ", " + vx2 + ", " + vy2 + ")");
+	public void onTwoFingerFling(PointerGroup pointers) {
 		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() == null) return;
-		getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
+		getTwoFingerDragHandler().onTwoFingerFling(pointers);
 		tapHandler.endGyroGrab();
 	}
 
