@@ -35,45 +35,11 @@ public class AnimationTouchDispatcher {
 	}
 
 	private AnimationPartSelector tapHandler;
-	private AnimationOneFingerDragHandler oneFingerCameraHandler;
-	private AnimationOneFingerDragHandler oneFingerPartHandler;
-	private AnimationTwoFingerDragHandler twoFingerCameraHandler;
-	private AnimationTwoFingerDragHandler twoFingerPartHandler;
-	private FingerAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
-	private Spinner oneFingerSpinner;
-	private FingerAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
-	private Spinner twoFingerSpinner;
+	private AnimationDragHandler cameraHandler;
+	private AnimationDragHandler partHandler;
 
 	public AnimationTouchDispatcher(Context context) {
 		mContext = context;
-
-		oneFingerHandlers = new FingerAdapter<AnimationOneFingerDragHandler>(context, R.layout.one_finger_spinner_item, android.R.id.text1);
-		oneFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		oneFingerSpinner = ((Spinner) ((Activity) mContext)
-				.findViewById(R.id.button_one_finger_action));
-		oneFingerSpinner.setAdapter(oneFingerHandlers);
-
-		twoFingerHandlers = new FingerAdapter<AnimationTwoFingerDragHandler>(context, R.layout.two_finger_spinner_item, android.R.id.text1);
-		twoFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		twoFingerSpinner = ((Spinner) ((Activity) mContext)
-				.findViewById(R.id.button_two_finger_action));
-		twoFingerSpinner.setAdapter(twoFingerHandlers);
-	}
-
-	public ArrayAdapter<AnimationOneFingerDragHandler> getOneFingerHandlers() {
-		return oneFingerHandlers;
-	}
-
-	public Spinner getOneFingerSpinner() {
-		return oneFingerSpinner;
-	}
-
-	public ArrayAdapter<AnimationTwoFingerDragHandler> getTwoFingerHandlers() {
-		return twoFingerHandlers;
-	}
-
-	public Spinner getTwoFingerSpinner() {
-		return twoFingerSpinner;
 	}
 
 	private void debug(String message) {
@@ -105,23 +71,13 @@ public class AnimationTouchDispatcher {
 		}		
 	}
 
-	public AnimationOneFingerDragHandler getOneFingerDragHandler() {
+	public AnimationDragHandler getDragHandler() {
 		//		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
 		if (!tapHandler.isPickResultReady) return null;
 		if (tapHandler.pickResult < 0) {
-			return oneFingerCameraHandler;
+			return cameraHandler;
 		} else {
-			return oneFingerPartHandler;
-		}
-	}
-
-	public AnimationTwoFingerDragHandler getTwoFingerDragHandler() {
-		//		return (AnimationTwoFingerDragHandler) twoFingerSpinner.getSelectedItem();
-		if (!tapHandler.isPickResultReady) return null;
-		if (tapHandler.pickResult < 0) {
-			return twoFingerCameraHandler;
-		} else {
-			return twoFingerPartHandler;
+			return partHandler;
 		}
 	}
 
@@ -138,79 +94,40 @@ public class AnimationTouchDispatcher {
 		if (getTapHandler() != null) getTapHandler().onCancel();
 	}
 
-	public void onOneFingerMove(PointerGroup pointers) {
-		oneFingerSpinner.setPressed(true);
-		if (getOneFingerDragHandler() == null) return;
-		getOneFingerDragHandler().onOneFingerMove(pointers);
+	public void onMove(PointerGroup pointers) {
+		if (getDragHandler() == null) return;
+		getDragHandler().onMove(pointers);
 	}
 
-	public void onOneFingerFling(PointerGroup pointers) {
-		oneFingerSpinner.setPressed(false);
-		if (getOneFingerDragHandler() == null) return;
-		getOneFingerDragHandler().onOneFingerFling(pointers);
+	public void onFling(PointerGroup pointers) {
+		if (getDragHandler() == null) return;
+		getDragHandler().onFling(pointers);
 		tapHandler.endGyroGrab();
 	}
 
 	/**
 	 * one finger move gesture was canceled
 	 */
-	public void onOneFingerMoveCancel() {
-		debug("onOneFingerMoveCancel()");
-		oneFingerSpinner.setPressed(false);
-		if (getOneFingerDragHandler() == null) return;
-		getOneFingerDragHandler().onCancel();
+	public void onMoveCancel() {
+		debug("onMoveCancel()");
+		if (getDragHandler() == null) return;
+		getDragHandler().onCancel();
 		tapHandler.endGyroGrab();
 	}
 
-	public void onTwoFingerMove(PointerGroup pointers) {
-		twoFingerSpinner.setPressed(true);
-		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(pointers);
+	public AnimationDragHandler getCameraHandler() {
+		return cameraHandler;
 	}
 
-	public void onTwoFingerFling(PointerGroup pointers) {
-		twoFingerSpinner.setPressed(false);
-		if (getTwoFingerDragHandler() == null) return;
-		getTwoFingerDragHandler().onTwoFingerFling(pointers);
-		tapHandler.endGyroGrab();
+	public void setCameraHandler(AnimationDragHandler cameraHandler) {
+		this.cameraHandler = cameraHandler;
 	}
 
-	public void onTwoFingerMoveCancel() {
-		debug("onTwoFingerMoveCancel()");
-		twoFingerSpinner.setPressed(false);
-		if (getTwoFingerDragHandler() == null) return;
-		getTwoFingerDragHandler().onCancel();
-		tapHandler.endGyroGrab();
+	public AnimationDragHandler getPartHandler() {
+		return partHandler;
 	}
 
-	public AnimationOneFingerDragHandler getOneFingerCameraHandler() {
-		return oneFingerCameraHandler;
-	}
-
-	public void setOneFingerCameraHandler(AnimationOneFingerDragHandler oneFingerCameraHandler) {
-		this.oneFingerCameraHandler = oneFingerCameraHandler;
-	}
-
-	public AnimationOneFingerDragHandler getOneFingerPartHandler() {
-		return oneFingerPartHandler;
-	}
-
-	public void setOneFingerPartHandler(AnimationOneFingerDragHandler oneFingerPartHandler) {
-		this.oneFingerPartHandler = oneFingerPartHandler;
-	}
-
-	public AnimationTwoFingerDragHandler getTwoFingerCameraHandler() {
-		return twoFingerCameraHandler;
-	}
-
-	public void setTwoFingerCameraHandler(AnimationTwoFingerDragHandler twoFingerCameraHandler) {
-		this.twoFingerCameraHandler = twoFingerCameraHandler;
-	}
-
-	public AnimationTwoFingerDragHandler getTwoFingerPartHandler() {
-		return twoFingerPartHandler;
-	}
-
-	public void setTwoFingerPartHandler(AnimationTwoFingerDragHandler twoFingerPartHandler) {
-		this.twoFingerPartHandler = twoFingerPartHandler;
+	public void setPartHandler(AnimationDragHandler partHandler) {
+		this.partHandler = partHandler;
 	}
 }

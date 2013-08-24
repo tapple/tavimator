@@ -227,20 +227,20 @@ public class TwoFingerTrackball {
 		updateGyroOffset();
 	}
 
-	public AnimationOneFingerDragHandler getOneFingerDragHandler(int nameId, int shortNameId) {
-		class OneFingerDragHandler extends AbsTouchHandler implements AnimationOneFingerDragHandler {
-			public OneFingerDragHandler(Context context, int nameId, int shortNameId) {
+	public AnimationDragHandler getDragHandler(int nameId, int shortNameId) {
+		class DragHandler extends AbsTouchHandler implements AnimationDragHandler {
+			public DragHandler(Context context, int nameId, int shortNameId) {
 				super(context, nameId, shortNameId);
 			}
 
 			@Override
-			public void onOneFingerMove(PointerGroup pointers) {
+			public void onMove(PointerGroup pointers) {
 				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perFrame);
 				scrollBy(scrollVelocity);
 			}
 
 			@Override
-			public void onOneFingerFling(PointerGroup pointers) {
+			public void onFling(PointerGroup pointers) {
 				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perSecond);
 				fling(scrollVelocity);
 			}
@@ -250,33 +250,7 @@ public class TwoFingerTrackball {
 				stopFling();
 			}
 		}
-		return new OneFingerDragHandler(mContext, nameId, shortNameId);
-	}
-
-	public AnimationTwoFingerDragHandler getTwoFingerDragHandler(int nameId, int shortNameId) {
-		class TwoFingerDragHandler extends AbsTouchHandler implements AnimationTwoFingerDragHandler {
-			public TwoFingerDragHandler(Context context, int nameId, int shortNameId) {
-				super(context, nameId, shortNameId);
-			}
-
-			@Override
-			public void onTwoFingerMove(PointerGroup pointers) {
-				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perFrame);
-				scrollBy(scrollVelocity);
-			}
-
-			@Override
-			public void onTwoFingerFling(PointerGroup pointers) {
-				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perSecond);
-				fling(scrollVelocity);
-			}
-
-			@Override
-			public void onCancel() {
-				stopFling();
-			}
-		}
-		return new TwoFingerDragHandler(mContext, nameId, shortNameId);
+		return new DragHandler(mContext, nameId, shortNameId);
 	}
 
 	private synchronized void scrollBy(float[] angularVelocity) {

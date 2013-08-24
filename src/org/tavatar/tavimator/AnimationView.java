@@ -121,19 +121,10 @@ public class AnimationView extends GLSurfaceView
 	public void initializeTouchDispatcher() {
 		touchDispatcher = new AnimationTouchDispatcher(getContext());
 		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.setOneFingerCameraHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler(
+		touchDispatcher.setCameraHandler(renderer.getCamera().getTrackball().getDragHandler(
 				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.setOneFingerPartHandler(selectionTrackball.getOneFingerDragHandler(
+		touchDispatcher.setPartHandler(selectionTrackball.getDragHandler(
 				R.string.one_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-		touchDispatcher.setTwoFingerCameraHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler(
-				R.string.two_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.setTwoFingerPartHandler(selectionTrackball.getTwoFingerDragHandler(
-				R.string.two_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-
-		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerCameraHandler());
-		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerPartHandler());
-		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerCameraHandler());
-		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerPartHandler());
 	}
 
 	public AnimationRenderer getRenderer() {
@@ -414,7 +405,7 @@ public class AnimationView extends GLSurfaceView
 			 * If being flinged and user touches, stop the fling. isFinished
 			 * will be false if being flinged.
 			 */
-			touchDispatcher.onOneFingerMoveCancel();
+			touchDispatcher.onMoveCancel();
 			touchDispatcher.onFingerDown(pointers);
 			break;
 		}
@@ -426,11 +417,7 @@ public class AnimationView extends GLSurfaceView
 				}
 			}
 			if (pointers.isDragging()) {
-				if (pointers.size() == 1) {
-					touchDispatcher.onOneFingerMove(pointers);
-				} else {
-					touchDispatcher.onTwoFingerMove(pointers);
-				}
+				touchDispatcher.onMove(pointers);
 			}
 			break;
 		case MotionEvent.ACTION_UP: // the last finger was lifted
@@ -438,9 +425,9 @@ public class AnimationView extends GLSurfaceView
 				pointers.computeCurrentVelocity();
 
 				if (pointers.shouldFling()) {
-					touchDispatcher.onOneFingerFling(pointers);
+					touchDispatcher.onFling(pointers);
 				} else {
-					touchDispatcher.onOneFingerMoveCancel();
+					touchDispatcher.onMoveCancel();
 				}
 
 				pointers.endDrag();
@@ -454,7 +441,7 @@ public class AnimationView extends GLSurfaceView
 			if (!pointers.isDragging()) {
 				touchDispatcher.onTapCancel();
 			} else {
-				touchDispatcher.onOneFingerMoveCancel();
+				touchDispatcher.onMoveCancel();
 			}
 			pointers.endDrag();
 			break;
@@ -467,9 +454,9 @@ public class AnimationView extends GLSurfaceView
 					pointers.computeCurrentVelocity();
 
 					if (pointers.shouldFling()) {
-						touchDispatcher.onTwoFingerFling(pointers);
+						touchDispatcher.onFling(pointers);
 					} else {
-						touchDispatcher.onTwoFingerMoveCancel();
+						touchDispatcher.onMoveCancel();
 					}
 
 					pointers.endDrag();
