@@ -54,7 +54,7 @@ public class Camera {
 	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
-	private TwoFingerTrackball trackball;
+	private Trackball trackball;
 
 	/**
 	 * Gyroscope that keeps track of orientation set by device orientation
@@ -62,7 +62,7 @@ public class Camera {
 	private Gyroscope gyroscope;
 
 	public Camera(Context context) {
-		trackball = new TwoFingerTrackball(context);
+		trackball = new Trackball(context);
 		gyroscope = new Gyroscope(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
 		initializeCamera(
@@ -147,7 +147,7 @@ public class Camera {
 		return viewMatrix;
 	}
 
-	public TwoFingerTrackball getTrackball() {
+	public Trackball getTrackball() {
 		return trackball;
 	}
 

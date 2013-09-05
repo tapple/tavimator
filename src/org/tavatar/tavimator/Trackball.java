@@ -10,7 +10,7 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Scroller;
 
-public class TwoFingerTrackball {
+public class Trackball {
 
 	private static String TAG = "TwoFingerTrackball";
 
@@ -88,7 +88,7 @@ public class TwoFingerTrackball {
 		Matrix.rotateM(matrix, 0, angularVelocity[2], 0, 0, 1);
 	}
 
-	public TwoFingerTrackball(Context context) {
+	public Trackball(Context context) {
 		mContext = context;
 
 		Matrix.setIdentityM(orientation, 0);

@@ -62,7 +62,7 @@ public class AnimationTouchDispatcher {
 		this.tapHandler = tapHandler;
 	}
 
-	public TwoFingerTrackball getTrackball() {
+	public Trackball getTrackball() {
 		if (!tapHandler.isPickResultReady) return null;
 		if (tapHandler.pickResult < 0) {
 			return tapHandler.view.getCameraTrackball();

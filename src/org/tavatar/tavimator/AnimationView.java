@@ -53,7 +53,7 @@ public class AnimationView extends GLSurfaceView
 	//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
 	//    private int propDragging;  // holds the actual drag handle id
 
-	private TwoFingerTrackball selectionTrackball;
+	private Trackball selectionTrackball;
 
 	public AnimationView(Context context) {
 		super(context);
@@ -80,7 +80,7 @@ public class AnimationView extends GLSurfaceView
 	private void initialize() {
 		if (isInEditMode()) return;
 
-		selectionTrackball = new TwoFingerTrackball(getContext());
+		selectionTrackball = new Trackball(getContext());
 
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
@@ -135,7 +135,7 @@ public class AnimationView extends GLSurfaceView
 		return getRenderer().getCamera();
 	}
 
-	public TwoFingerTrackball getCameraTrackball() {
+	public Trackball getCameraTrackball() {
 		return getCamera().getTrackball();
 	}
 
@@ -296,7 +296,7 @@ public class AnimationView extends GLSurfaceView
     }
 	 */
 
-	public TwoFingerTrackball getSelectionTrackball() {
+	public Trackball getSelectionTrackball() {
 		return selectionTrackball;
 	}
 
