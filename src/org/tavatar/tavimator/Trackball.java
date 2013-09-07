@@ -11,8 +11,41 @@ import android.view.WindowManager;
 import android.widget.Scroller;
 
 public class Trackball {
+	
+	/**
+	 * Implement this interface to have your orientation be updated with the trackball. All methods will be called from the render thread only
+	 * @author tapple
+	 *
+	 */
+	public interface UpdateListener {
+		
+		/**
+		 * Answer an orientation as a 4x4 matrix. This will be called once from
+		 * the UI thread during initialization, then subsequently only from
+		 * 
+		 * @return a pointer to a 4x4 matrix
+		 */
+		public float[] getOrientation();
+		
+		/**
+		 * Set the orientation for this object. This method is guaranteed to be
+		 * called after every call to getOrientation(), except the first time
+		 * 
+		 * @param orientation
+		 *            The new orientation as a 4x4 matrix. This is guaranteed to
+		 *            be the same array as was returned by getOrientation. It will have been modified
+		 */
+		public void setOrientation(float[] orientation);
+		
+		/**
+		 * 
+		 * Zoom in or out
+		 * @param a zoom fraction. 1 means no change. Less than one: zoom in. Greater than 1: zoom out. Strictly positive
+		 */ 
+		 public void zoomBy(float fraction);
+	}
 
-	private static String TAG = "TwoFingerTrackball";
+	private static String TAG = "Trackball";
 
 	private Scroller mScroller;
 
@@ -21,11 +54,6 @@ public class Trackball {
 	 * translation
 	 */
 	private float[] orientation = new float[16];
-
-	private float distance = 50;
-
-	private float minDistance = 10f;
-	private float maxDistance = 100f;
 
 	/**
 	 * A transform from camera coordinates to my local coordinates. Used for
@@ -58,6 +86,8 @@ public class Trackball {
 	private int prevFlingX;
 	private int prevFlingY;
 	private long prevZoomTime;
+	
+	private UpdateListener listener;
 
 	private Context mContext;
 
@@ -108,10 +138,10 @@ public class Trackball {
 		Matrix.setLookAtM(orientation, 0, eyeX, eyeY, eyeZ, lookX, lookY,
 				lookZ, upX, upY, upZ);
 		Matrix.translateM(orientation, 0, eyeX, eyeY, eyeZ);
-		distance = Matrix.length(
-				lookX - eyeX,
-				lookY - eyeY,
-				lookZ - eyeZ);
+	}
+	
+	public void addUpdateListener(UpdateListener listener) {
+		this.listener = listener;
 	}
 
 	public synchronized float[] getOrientation(float[] dest) {
@@ -136,14 +166,6 @@ public class Trackball {
 	public synchronized float[] rotateMatrix (float[] dest, float[] lhs) {
 		Matrix.multiplyMM(dest, 0, lhs, 0, orientation, 0);
 		return dest;
-	}
-
-	public synchronized float getDistance() {
-		return distance;
-	}
-
-	public synchronized void setDistance(float distance) {
-		this.distance = distance;
 	}
 
 	public float[] getCameraToTrackballOrientation() {
@@ -214,8 +236,10 @@ public class Trackball {
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
-		distance /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
-		distance /= (float)Math.pow(zoomRate, (time - prevZoomTime) / 1000.0);
+		float zoomDelta = 1.0f;
+		zoomDelta /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
+		zoomDelta /= (float)Math.pow(zoomRate, (time - prevZoomTime) / 1000.0);
+		listener.zoomBy(zoomDelta);
 		prevFlingX = x;
 		prevFlingY = y;
 		prevZoomTime = time;
@@ -259,7 +283,7 @@ public class Trackball {
 		rotateAboutCameraAxis(
 				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
 				scrollAxis);
-		distance /= angularVelocity[3];
+		listener.zoomBy(1.0f / angularVelocity[3]);
 	}
 
 	private synchronized void rotateAboutCameraAxis(float angle, float[] axis) {

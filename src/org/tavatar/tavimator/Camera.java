@@ -22,7 +22,7 @@ import android.view.animation.Interpolator;
  * baseDeviceOrientation: the orientation of the phone at which the camera is at its base orientation
  */
 
-public class Camera {
+public class Camera implements Trackball.UpdateListener {
 	private static final String TAG = "Camera";
 
 	/**
@@ -40,9 +40,14 @@ public class Camera {
 	/**
 	 * The point about which the camera rotates
 	 */
-	float originX;
-	float originY;
-	float originZ;
+	private float originX;
+	private float originY;
+	private float originZ;
+
+	private float distance = 50;
+
+	private float minDistance = 10f;
+	private float maxDistance = 100f;
 
 	/**
 	 * The a vector from the old origin + distance to the new origin + distance.
@@ -63,6 +68,7 @@ public class Camera {
 
 	public Camera(Context context) {
 		trackball = new Trackball(context);
+		trackball.addUpdateListener(this);
 		gyroscope = new Gyroscope(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
 		initializeCamera(
@@ -83,6 +89,10 @@ public class Camera {
 		transitionRail[3]  = 1.0f;
 		transition.progress = 0.0f;
 		trackball.setLookAt(eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
+		distance = Matrix.length(
+				lookX - eyeX,
+				lookY - eyeY,
+				lookZ - eyeZ);
 		trackball.setZoomRate(1.0f);
 		updateViewMatrix();
 	}
@@ -102,11 +112,11 @@ public class Camera {
 		Matrix.multiplyMV(transitionRail, 0, viewMatrix, 0, newOrigin, 0);
 		if (transitionRail[2] < 0) {
 			// new origin is in front of the camera. Stay within the current camera plane
-			trackball.setDistance(-transitionRail[2]);
+			distance = -transitionRail[2];
 			transitionRail[2] = 0.0f;
 		} else {
 			// new origin is behind the camera. Move the camera 20 units behind the new origin
-			trackball.setDistance(20.0f);
+			distance = 20.0f;
 			transitionRail[2] += 20.0f;
 		}
 		transition.start();
@@ -132,7 +142,7 @@ public class Camera {
 		Matrix.translateM(temporaryMatrix, 0, 
 				transition.value * transitionRail[0],
 				transition.value * transitionRail[1],
-				transition.value * transitionRail[2] - trackball.getDistance());
+				transition.value * transitionRail[2] - distance);
 		Matrix.multiplyMM(viewMatrix, 0, temporaryMatrix, 0, inverseCameraOrientation, 0);
 		Matrix.translateM(viewMatrix, 0, originX, originY, originZ);
 	}
@@ -153,5 +163,22 @@ public class Camera {
 
 	public Gyroscope getGyroscope() {
 		return gyroscope;
+	}
+
+	@Override
+	public float[] getOrientation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setOrientation(float[] orientation) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void zoomBy(float fraction) {
+		distance *= fraction;
 	}
 }
