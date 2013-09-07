@@ -53,8 +53,6 @@ public class AnimationView extends GLSurfaceView
 	//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
 	//    private int propDragging;  // holds the actual drag handle id
 
-	private Trackball selectionTrackball;
-
 	public AnimationView(Context context) {
 		super(context);
 		initialize();
@@ -79,8 +77,6 @@ public class AnimationView extends GLSurfaceView
 
 	private void initialize() {
 		if (isInEditMode()) return;
-
-		selectionTrackball = new Trackball(getContext());
 
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
@@ -123,8 +119,6 @@ public class AnimationView extends GLSurfaceView
 		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
 		touchDispatcher.setCameraHandler(renderer.getCamera().getTrackball().getDragHandler(
 				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.setPartHandler(selectionTrackball.getDragHandler(
-				R.string.one_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
 	}
 
 	public AnimationRenderer getRenderer() {
@@ -260,10 +254,10 @@ public class AnimationView extends GLSurfaceView
 			return;
 		}
 
-		float[] newOrientation = new float[16];
-		Matrix.setIdentityM(newOrientation, 0);
-		node.rotateMatrixForFrame(newOrientation, animation.getFrame());
-		selectionTrackball.setOrientation(newOrientation);
+//		float[] newOrientation = new float[16];
+//		Matrix.setIdentityM(newOrientation, 0);
+//		node.rotateMatrixForFrame(newOrientation, animation.getFrame());
+//		selectionTrackball.setOrientation(newOrientation);
 
 		Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
 		// make sure no prop is selected anymore
@@ -296,10 +290,10 @@ public class AnimationView extends GLSurfaceView
     }
 	 */
 
-	public Trackball getSelectionTrackball() {
-		return selectionTrackball;
-	}
-
+	// Phase one of selection rotation computing. Save the trackball rotation
+	// into the relative rotation of the selection for this frame. Absolute
+	// rotations have not been computed yet for this frame
+/*
 	public void updateSelectionOrientation() {
 		BVHNode selection = getSelectedPart();
 		if (selection == null) return;
@@ -307,7 +301,12 @@ public class AnimationView extends GLSurfaceView
 		float[] newOrientation = new float[16];
 		animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation(newOrientation));
 	}
+//*/
 
+	// Phase two of selection rotation computing. Orient the selection trackball
+	// relative to the camera trackball so that it knows which direction touch
+	// events are coming from
+/*
 	public void updateSelectionTouchOrientation() {
 		BVHNode selection = getSelectedPart();
 		if (selection == null) return;
@@ -322,6 +321,7 @@ public class AnimationView extends GLSurfaceView
 				renderer.inverseGlobalParentOrientation, 0,
 				cameraTrackballOrientation, 0);
 	}
+//*/
 
 	public void repaint() {
 		// do nothing

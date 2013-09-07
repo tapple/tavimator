@@ -36,7 +36,6 @@ public class AnimationTouchDispatcher {
 
 	private AnimationPartSelector tapHandler;
 	private AnimationDragHandler cameraHandler;
-	private AnimationDragHandler partHandler;
 
 	public AnimationTouchDispatcher(Context context) {
 		mContext = context;
@@ -63,22 +62,11 @@ public class AnimationTouchDispatcher {
 	}
 
 	public Trackball getTrackball() {
-		if (!tapHandler.isPickResultReady) return null;
-		if (tapHandler.pickResult < 0) {
-			return tapHandler.view.getCameraTrackball();
-		} else {
-			return tapHandler.view.getSelectionTrackball();
-		}		
+		return tapHandler.view.getCameraTrackball();
 	}
 
 	public AnimationDragHandler getDragHandler() {
-		//		return (AnimationOneFingerDragHandler) oneFingerSpinner.getSelectedItem();
-		if (!tapHandler.isPickResultReady) return null;
-		if (tapHandler.pickResult < 0) {
-			return cameraHandler;
-		} else {
-			return partHandler;
-		}
+		return cameraHandler;
 	}
 
 	public void onFingerDown(PointerGroup pointers) {
@@ -121,13 +109,5 @@ public class AnimationTouchDispatcher {
 
 	public void setCameraHandler(AnimationDragHandler cameraHandler) {
 		this.cameraHandler = cameraHandler;
-	}
-
-	public AnimationDragHandler getPartHandler() {
-		return partHandler;
-	}
-
-	public void setPartHandler(AnimationDragHandler partHandler) {
-		this.partHandler = partHandler;
 	}
 }

@@ -136,17 +136,6 @@ public class AnimationActivity extends Activity implements FramePicker.OnValueCh
 
 	private View.OnTouchListener onGrabPartTouched = new View.OnTouchListener() {
 		@Override public boolean onTouch(View v, MotionEvent event) {
-			switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				Log.d(TAG, "Grab Part");
-				mGLSurfaceView.getSelectionTrackball().trackGyroscope(
-						mGLSurfaceView.getRenderer().getCamera().getGyroscope(), true);
-				break;
-			case MotionEvent.ACTION_UP:
-				Log.d(TAG, "Release Part");
-				mGLSurfaceView.getSelectionTrackball().trackGyroscope(null, false);
-				break;
-			}
 			return false;
 		}
 	};

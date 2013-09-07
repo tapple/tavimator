@@ -439,7 +439,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
 		getCamera().getGyroscope().updateOrientation();
-		mView.updateSelectionOrientation();
+//		mView.updateSelectionOrientation();
 		updateAnimationsTransforms();
 
 		BVHNode selectedNode = mView.getSelectedPart();
@@ -449,7 +449,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 
 		mCamera.updateViewMatrix();
-		mView.updateSelectionTouchOrientation();
+//		mView.updateSelectionTouchOrientation();
 
 		// Do a complete rotation every 10 seconds.
 		long time = SystemClock.uptimeMillis() % 10000L;        
@@ -483,6 +483,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		figureRenderer.drawPartNamed("head");
 
 		//        if (selectedNode != null) {
+/*
 		if (false) {
 			float[] selectedOrigin = selectedNode.cachedOrigin();
 			Matrix.setIdentityM(mModelMatrix, 0);
@@ -494,6 +495,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 			updateUniforms();
 			figureRenderer.drawPartNamed(selectedNode.name());
 		}
+//*/
 
 		Matrix.setIdentityM(mModelMatrix, 0);
 		Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);

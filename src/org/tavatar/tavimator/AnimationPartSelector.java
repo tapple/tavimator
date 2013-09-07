@@ -100,10 +100,6 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	}
 
 	public void endGyroGrab() {
-		if (pickResult < 0) {
-			view.getCameraTrackball().trackGyroscope(null, false);
-		} else {
-			view.getSelectionTrackball().trackGyroscope(null, false);
-		}
+		view.getCameraTrackball().trackGyroscope(null, false);
 	}
 }
