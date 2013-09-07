@@ -28,7 +28,8 @@ public class AnimationView extends GLSurfaceView
 	public final static int PICK_PART_RESULT = 932023;
 
 	private AnimationRenderer renderer;
-	private AnimationTouchDispatcher touchDispatcher;
+	private AnimationPartSelector tapHandler;
+	private AnimationDragHandler cameraHandler;
 
 	private static final String TAG = "AnimationView";
 
@@ -115,10 +116,9 @@ public class AnimationView extends GLSurfaceView
 
 	// this code probably would be more appropriate in the activity
 	public void initializeTouchDispatcher() {
-		touchDispatcher = new AnimationTouchDispatcher(getContext());
-		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.setCameraHandler(renderer.getCamera().getTrackball().getDragHandler(
-				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
+		tapHandler = new AnimationPartSelector(this);
+		cameraHandler = renderer.getCamera().getTrackball().getDragHandler(
+				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera);
 	}
 
 	public AnimationRenderer getRenderer() {
@@ -405,19 +405,20 @@ public class AnimationView extends GLSurfaceView
 			 * If being flinged and user touches, stop the fling. isFinished
 			 * will be false if being flinged.
 			 */
-			touchDispatcher.onMoveCancel();
-			touchDispatcher.onFingerDown(pointers);
+			cameraHandler.onCancel();
+			tapHandler.endGyroGrab();
+			tapHandler.onFingerDown(pointers);
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
 			if (!pointers.isDragging()) {
 				if (pointers.shouldStartDrag()) pointers.startDrag();
 				if (pointers.isDragging()) {
-					touchDispatcher.onTapCancel();
+					tapHandler.onCancel();
 				}
 			}
 			if (pointers.isDragging()) {
-				touchDispatcher.onMove(pointers);
+				cameraHandler.onMove(pointers);
 			}
 			break;
 		case MotionEvent.ACTION_UP: // the last finger was lifted
@@ -425,24 +426,26 @@ public class AnimationView extends GLSurfaceView
 				pointers.computeCurrentVelocity();
 
 				if (pointers.shouldFling()) {
-					touchDispatcher.onFling(pointers);
+					cameraHandler.onFling(pointers);
 				} else {
-					touchDispatcher.onMoveCancel();
+					cameraHandler.onCancel();
 				}
 
+				tapHandler.endGyroGrab();
 				pointers.endDrag();
 			} else /* if (second finger wasn't just released and we aren't doing a 2 finger fling) */ { // end of tap
-				touchDispatcher.onTap(pointers);
+				tapHandler.onTap(pointers);
 				pointers.endDrag();
 			}
 			pointers.clearUpPointers();
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			if (!pointers.isDragging()) {
-				touchDispatcher.onTapCancel();
+				tapHandler.onCancel();
 			} else {
-				touchDispatcher.onMoveCancel();
+				cameraHandler.onCancel();
 			}
+			tapHandler.endGyroGrab();
 			pointers.endDrag();
 			break;
 		case MotionEvent.ACTION_POINTER_DOWN: {
@@ -454,11 +457,12 @@ public class AnimationView extends GLSurfaceView
 					pointers.computeCurrentVelocity();
 
 					if (pointers.shouldFling()) {
-						touchDispatcher.onFling(pointers);
+						cameraHandler.onFling(pointers);
 					} else {
-						touchDispatcher.onMoveCancel();
+						cameraHandler.onCancel();
 					}
 
+					tapHandler.endGyroGrab();
 					pointers.endDrag();
 				}
 			}
