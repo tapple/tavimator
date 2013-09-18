@@ -1,0 +1,3 @@
+Move gyroscope from camera to trackball
+move trackball from camera to view
+move MotionEvent from view to trackball
