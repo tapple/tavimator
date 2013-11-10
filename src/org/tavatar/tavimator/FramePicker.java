@@ -192,12 +192,12 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * Lower value of the range of numbers allowed for the NumberPicker
 	 */
-	private int mMinValue;
+	private float mMinValue = 0f;
 
 	/**
 	 * Upper value of the range of numbers allowed for the NumberPicker
 	 */
-	private int mMaxValue;
+	private float mMaxValue = 30f;
 
 	/**
 	 * Current value of this NumberPicker
@@ -532,7 +532,7 @@ public class FramePicker extends LinearLayout {
 
 		// create the fling and adjust scrollers
 		mFlingScroller = new Scroller(getContext(), null);
-		mAdjustScroller = new SimpleFloatAnimator(new DecelerateInterpolator(2.5f));
+		mAdjustScroller = new SimpleFloatAnimator(new DecelerateInterpolator(2.5f), mValue, mValue);
 
 		updateInputTextView();
 	}
@@ -1011,7 +1011,7 @@ public class FramePicker extends LinearLayout {
 	 *
 	 * @return The min value
 	 */
-	public int getMinValue() {
+	public float getMinValue() {
 		return mMinValue;
 	}
 
@@ -1041,7 +1041,7 @@ public class FramePicker extends LinearLayout {
 	 *
 	 * @return The max value.
 	 */
-	public int getMaxValue() {
+	public float getMaxValue() {
 		return mMaxValue;
 	}
 
@@ -1086,8 +1086,8 @@ public class FramePicker extends LinearLayout {
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		int firstFrame = (int)getValue() - SELECTOR_MIDDLE_ITEM_INDEX;
-		int lastFrame = firstFrame + SELECTOR_WHEEL_ITEM_COUNT;
+		int firstFrame = Math.max((int)getMinValue(), (int)getValue() - SELECTOR_MIDDLE_ITEM_INDEX);
+		int lastFrame = Math.min((int)getMaxValue(), firstFrame + SELECTOR_WHEEL_ITEM_COUNT);
 		float mCurrentScrollOffset = getWidth()/2f + (firstFrame - mValue) * mFrameSpacing;
 		float x = mCurrentScrollOffset;
 		float y = mInputText.getBaseline() + mInputText.getTop();
@@ -1126,7 +1126,7 @@ public class FramePicker extends LinearLayout {
         }
 		 */
 
-		for (int i = firstFrame; i < lastFrame; i++) {
+		for (int i = firstFrame; i <= lastFrame; i++) {
 			float top;
 			if (i % majorEvery == 0) {
 				top = majorTop;
@@ -1342,7 +1342,7 @@ public class FramePicker extends LinearLayout {
 			updateInputTextView();
 		} else {
 			// Check the new value and ensure it's in range
-			int current = getSelectedPos(str.toString());
+			float current = getSelectedPos(str.toString());
 			setValueInternal(current, true);
 		}
 	}
@@ -1445,9 +1445,9 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * @return The selected index given its displayed <code>value</code>.
 	 */
-	private int getSelectedPos(String value) {
+	private float getSelectedPos(String value) {
 		try {
-			return Integer.parseInt(value);
+			return Float.parseFloat(value);
 		} catch (NumberFormatException e) {
 			// Ignore as if it's not a number we don't care
 		}
@@ -1514,7 +1514,7 @@ public class FramePicker extends LinearLayout {
 			if ("".equals(result)) {
 				return result;
 			}
-			int val = getSelectedPos(result);
+			float val = getSelectedPos(result);
 
 			/*
 			 * Ensure the user can't type in a value greater than the max
