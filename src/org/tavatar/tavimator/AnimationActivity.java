@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -13,7 +14,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class AnimationActivity extends Activity implements FramePicker.OnValueChangeListener
+public class AnimationActivity extends ActionBarActivity implements FramePicker.OnValueChangeListener
 {
 	private static final String TAG = "AnimationActivity";
 	/** Hold a reference to our GLSurfaceView */
