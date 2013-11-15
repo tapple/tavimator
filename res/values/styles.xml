@@ -24,8 +24,10 @@
 
         <!-- FramePicker style-->
         <item name="framePickerStyle">@style/Widget.FramePicker</item>
+        
+        <item name="windowActionBarOverlay">true</item>
 
-        </style>
+    </style>
 
     <style name="Widget.NumberPicker" parent="android:Widget">
         <item name="android:orientation">vertical</item>
