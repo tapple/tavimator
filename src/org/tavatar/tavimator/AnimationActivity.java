@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -82,9 +83,19 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
+		Log.d(TAG, "onCreateOptionsMenu");
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.animation_actions, menu);
 		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		Log.d(TAG, "onCreateOptionsMenu");
+		boolean on = mGLSurfaceView.getRenderer().getCamera().getGyroscope().getSensing();
+		menu.findItem(R.id.action_turn_gyro_on).setVisible(!on);
+		menu.findItem(R.id.action_turn_gyro_off).setVisible(on);
+		return super.onPrepareOptionsMenu(menu);
 	}
 
 	private boolean isVolumeDownPressed = false;
@@ -126,6 +137,27 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 
 		mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(1.0f);
 		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle presses on the action bar items
+	    switch (item.getItemId()) {
+	        case R.id.action_turn_gyro_on:
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(true);
+    			Log.d(TAG, "Tracking on");
+    			supportInvalidateOptionsMenu();
+	            return true;
+	        case R.id.action_turn_gyro_off:
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(false);
+    			Log.d(TAG, "Tracking off");
+    			supportInvalidateOptionsMenu();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
 	}
 
 	private View.OnTouchListener onGrabCameraTouched = new View.OnTouchListener() {
