@@ -40,40 +40,18 @@ public class AnimationTouchDispatcher {
 	private AnimationTwoFingerDragHandler twoFingerCameraHandler;
 	private AnimationTwoFingerDragHandler twoFingerPartHandler;
 	private FingerAdapter<AnimationOneFingerDragHandler> oneFingerHandlers;
-	private Spinner oneFingerSpinner;
 	private FingerAdapter<AnimationTwoFingerDragHandler> twoFingerHandlers;
-	private Spinner twoFingerSpinner;
 
 	public AnimationTouchDispatcher(Context context) {
 		mContext = context;
-
-		oneFingerHandlers = new FingerAdapter<AnimationOneFingerDragHandler>(context, R.layout.one_finger_spinner_item, android.R.id.text1);
-		oneFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		oneFingerSpinner = ((Spinner) ((Activity) mContext)
-				.findViewById(R.id.button_one_finger_action));
-		oneFingerSpinner.setAdapter(oneFingerHandlers);
-
-		twoFingerHandlers = new FingerAdapter<AnimationTwoFingerDragHandler>(context, R.layout.two_finger_spinner_item, android.R.id.text1);
-		twoFingerHandlers.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		twoFingerSpinner = ((Spinner) ((Activity) mContext)
-				.findViewById(R.id.button_two_finger_action));
-		twoFingerSpinner.setAdapter(twoFingerHandlers);
 	}
 
 	public ArrayAdapter<AnimationOneFingerDragHandler> getOneFingerHandlers() {
 		return oneFingerHandlers;
 	}
 
-	public Spinner getOneFingerSpinner() {
-		return oneFingerSpinner;
-	}
-
 	public ArrayAdapter<AnimationTwoFingerDragHandler> getTwoFingerHandlers() {
 		return twoFingerHandlers;
-	}
-
-	public Spinner getTwoFingerSpinner() {
-		return twoFingerSpinner;
 	}
 
 	private void debug(String message) {
@@ -142,14 +120,12 @@ public class AnimationTouchDispatcher {
 
 	public void onOneFingerMove(int x, int y, int dx, int dy) {
 		verbose("onOneFingerMove(" + x + ", " + y + ", " + dx + ", " + dy + ")");
-		oneFingerSpinner.setPressed(true);
 		if (getOneFingerDragHandler() == null) return;
 		getOneFingerDragHandler().onOneFingerMove(x, y, dx, dy);
 	}
 
 	public void onOneFingerFling(int x, int y, float vx, float vy) {
 		debug("onOneFingerFling(" + x + ", " + y + ", " + vx + ", " + vy + ")");
-		oneFingerSpinner.setPressed(false);
 		if (getOneFingerDragHandler() == null) return;
 		getOneFingerDragHandler().onOneFingerFling(x, y, vx, vy);
 		tapHandler.endGyroGrab();
@@ -160,7 +136,6 @@ public class AnimationTouchDispatcher {
 	 */
 	public void onOneFingerMoveCancel() {
 		debug("onOneFingerMoveCancel()");
-		oneFingerSpinner.setPressed(false);
 		if (getOneFingerDragHandler() == null) return;
 		getOneFingerDragHandler().onCancel();
 		tapHandler.endGyroGrab();
@@ -170,7 +145,6 @@ public class AnimationTouchDispatcher {
 		verbose("onTwoFingerMove(" + 
 				x1 + ", " + y1 + ", " + dx1 + ", " + dy1 + ", "  + 
 				x2 + ", " + y2 + ", " + dx2 + ", " + dy2 + ")");
-		twoFingerSpinner.setPressed(true);
 		if (getTwoFingerDragHandler() != null) getTwoFingerDragHandler().onTwoFingerMove(x1, y1, dx1, dy1, x2, y2, dx2, dy2);
 	}
 
@@ -178,7 +152,6 @@ public class AnimationTouchDispatcher {
 		debug("onTwoFingerFling(" + 
 				x1 + ", " + y1 + ", " + vx1 + ", " + vy1 + ", "  + 
 				x2 + ", " + y2 + ", " + vx2 + ", " + vy2 + ")");
-		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() == null) return;
 		getTwoFingerDragHandler().onTwoFingerFling(x1, y1, vx1, vy1, x2, y2, vx2, vy2);
 		tapHandler.endGyroGrab();
@@ -186,7 +159,6 @@ public class AnimationTouchDispatcher {
 
 	public void onTwoFingerMoveCancel() {
 		debug("onTwoFingerMoveCancel()");
-		twoFingerSpinner.setPressed(false);
 		if (getTwoFingerDragHandler() == null) return;
 		getTwoFingerDragHandler().onCancel();
 		tapHandler.endGyroGrab();

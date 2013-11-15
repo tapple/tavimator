@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"	
+	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
@@ -9,77 +9,14 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 	/>
-	
-	<org.tavatar.tavimator.FramePicker		
+
+	<org.tavatar.tavimator.FramePicker
 		android:id="@+id/frame_picker"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_gravity="bottom|left"
 		android:orientation="horizontal"
 	/>
-
-	<LinearLayout
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="bottom|center_horizontal"
-		android:orientation="horizontal"
-		>
-
-		<ToggleButton
-		    android:id="@+id/button_tracking"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:enabled="true"
-		    android:onClick="onTrackingClicked"
-		    android:textOff="@string/button_tracking_off"
-		    android:textOn="@string/button_tracking_on" />
-	
-	    <Spinner
-		    android:id="@+id/button_one_finger_action"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-			android:prompt="@string/one_finger_tool_prompt"
-		/>
-		
-		<Spinner
-			android:id="@+id/button_two_finger_action"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"					
-			android:prompt="@string/two_finger_tool_prompt"
-		/>
-				
-	</LinearLayout>
-
-	<LinearLayout		
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="top|center_horizontal"
-		android:orientation="horizontal"
-		>
-
-		<Button
-		    android:id="@+id/button_grab_constrain"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:text="@string/button_grab_constrain"
-		    android:onClick="onGrabConstrainClicked"
-		/>
-		
-		<Button
-			android:id="@+id/button_grab_part"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"					
-			android:text="@string/button_grab_part"
-		/>
-				
-		<Button
-		    android:id="@+id/button_grab_camera"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-			android:text="@string/button_grab_camera"
-		/>
-	
-	</LinearLayout>
 
 	<TextView
 	    android:id="@+id/debugLabel"
@@ -88,5 +25,5 @@
 		android:layout_gravity="top|center_horizontal"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 	/>
-	
+
 </FrameLayout>

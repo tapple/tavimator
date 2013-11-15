@@ -129,11 +129,6 @@ public class AnimationView extends GLSurfaceView
 				R.string.two_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
 		touchDispatcher.setTwoFingerPartHandler(selectionTrackball.getTwoFingerDragHandler(
 				R.string.two_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-
-		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerCameraHandler());
-		touchDispatcher.getOneFingerHandlers().add(touchDispatcher.getOneFingerPartHandler());
-		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerCameraHandler());
-		touchDispatcher.getTwoFingerHandlers().add(touchDispatcher.getTwoFingerPartHandler());
 	}
 
 	public AnimationRenderer getRenderer() {

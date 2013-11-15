@@ -37,22 +37,6 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
-
-		findViewById(R.id.button_grab_camera).setOnTouchListener(onGrabCameraTouched);
-		findViewById(R.id.button_grab_part).setOnTouchListener(onGrabPartTouched);
-
-/*
-		FramePicker framePicker = (FramePicker) findViewById(R.id.frame_picker);
-		framePicker.setMaxValue(120);
-		framePicker.setWrapSelectorWheel(true);
-		framePicker.setOnLongPressUpdateInterval(33);
-		framePicker.setOnValueChangedListener(this);
-
-		NumberPicker numberPicker = (NumberPicker) findViewById(R.id.number_picker);
-		numberPicker.setMaxValue(120);
-		numberPicker.setWrapSelectorWheel(true);
-		numberPicker.setOnLongPressUpdateInterval(33);
-*/
 	}
 
 	@Override
@@ -98,6 +82,27 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 		return super.onPrepareOptionsMenu(menu);
 	}
 
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle presses on the action bar items
+	    switch (item.getItemId()) {
+	        case R.id.action_turn_gyro_on:
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(true);
+    			Log.d(TAG, "Tracking on");
+    			supportInvalidateOptionsMenu();
+	            return true;
+	        case R.id.action_turn_gyro_off:
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
+	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(false);
+    			Log.d(TAG, "Tracking off");
+    			supportInvalidateOptionsMenu();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+	}
+
 	private boolean isVolumeDownPressed = false;
 	private boolean isVolumeUpPressed = false;
 
@@ -137,82 +142,6 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 
 		mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(1.0f);
 		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle presses on the action bar items
-	    switch (item.getItemId()) {
-	        case R.id.action_turn_gyro_on:
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(true);
-    			Log.d(TAG, "Tracking on");
-    			supportInvalidateOptionsMenu();
-	            return true;
-	        case R.id.action_turn_gyro_off:
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(false);
-    			Log.d(TAG, "Tracking off");
-    			supportInvalidateOptionsMenu();
-	            return true;
-	        default:
-	            return super.onOptionsItemSelected(item);
-	    }
-	}
-
-	private View.OnTouchListener onGrabCameraTouched = new View.OnTouchListener() {
-		@Override public boolean onTouch(View v, MotionEvent event) {
-			switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				Log.d(TAG, "Grab Camera");
-				mGLSurfaceView.getRenderer().getCamera().getTrackball().trackGyroscope(
-						mGLSurfaceView.getRenderer().getCamera().getGyroscope(), true);
-				break;
-			case MotionEvent.ACTION_UP:
-				Log.d(TAG, "Release Camera");
-				mGLSurfaceView.getRenderer().getCamera().getTrackball().trackGyroscope(null, false);
-				break;
-			}
-			return false;
-		}
-	};
-
-	private View.OnTouchListener onGrabPartTouched = new View.OnTouchListener() {
-		@Override public boolean onTouch(View v, MotionEvent event) {
-			switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				Log.d(TAG, "Grab Part");
-				mGLSurfaceView.getSelectionTrackball().trackGyroscope(
-						mGLSurfaceView.getRenderer().getCamera().getGyroscope(), true);
-				break;
-			case MotionEvent.ACTION_UP:
-				Log.d(TAG, "Release Part");
-				mGLSurfaceView.getSelectionTrackball().trackGyroscope(null, false);
-				break;
-			}
-			return false;
-		}
-	};
-
-	public void onTrackingClicked(View view) {
-		// Is the toggle on?
-		boolean on = ((ToggleButton) view).isChecked();
-
-
-		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(on);
-		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(on);
-
-		if (on) {
-			Log.d(TAG, "Tracking on");
-		} else {
-			Log.d(TAG, "Tracking off");
-		}
-	}
-
-	public void onGrabConstrainClicked(View view) {
-		//		mGLSurfaceView.requestRender();
-		Log.d(TAG, "grab constrain");
-
 	}
 
 	@Override
