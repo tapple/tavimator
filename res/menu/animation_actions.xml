@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tavimator="http://schemas.android.com/apk/res-auto">
+	<item android:id="@+id/action_gyro_on"
+		android:icon="@drawable/ic_10_device_access_screen_rotation"
+		android:title="@string/action_gyro_on"
+		tavimator:showAsAction="ifRoom"
+	/>
+	<item android:id="@+id/action_gyro_off"
+		android:icon="@drawable/ic_10_device_access_screen_locked_to_portrait"
+		android:title="@string/action_gyro_off" 
+		tavimator:showAsAction="ifRoom"
+	/>
+</menu>

@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -75,6 +77,14 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 	protected void onSaveInstanceState (Bundle outState)
 	{
 		outState.putBoolean(SHOWED_TOAST, true);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu items for use in the action bar
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.animation_actions, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	private boolean isVolumeDownPressed = false;

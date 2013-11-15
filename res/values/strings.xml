@@ -4,6 +4,9 @@
     
     <string name="no_gyroscope">No gyroscope detected</string>
     
+    <string name="action_gyro_on">Gyroscope On</string>
+    <string name="action_gyro_off">Gyroscope Off</string>
+    
     <string name="button_tracking_on">Rotate Camera</string>
     <string name="button_tracking_off">Hold Camera</string>
     <string name="button_grab_camera">Grab Camera</string>
