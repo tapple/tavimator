@@ -37,6 +37,8 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
+
+		((FramePicker)findViewById(R.id.frame_picker)).setOnValueChangedListener(this);
 	}
 
 	@Override
@@ -148,6 +150,5 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
 		// TODO Auto-generated method stub
 		((TextView) findViewById(R.id.debugLabel)).setText("frame " + newVal);
-
 	}
 }
