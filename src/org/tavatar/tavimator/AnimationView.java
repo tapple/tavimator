@@ -216,6 +216,7 @@ public class AnimationView extends GLSurfaceView implements FramePicker.OnValueC
 	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
 		// TODO Auto-generated method stub
 		debug("frame " + newVal);
+		animation.setFrame(picker.getRoundedValue());
 	}
 
 	public BVHNode getSelectedPart() {
