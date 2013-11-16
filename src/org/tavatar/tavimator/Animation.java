@@ -227,7 +227,7 @@ public class Animation {
 		Log.d(TAG, "Animation.setNumberOfFrames(" + num + ")");
 		totalFrames=num;
 		setDirty(true);
-		emit(numberOfFrames(num));
+		emit.numberOfFrames(num);
 	}
 
 	public int getFrame() {
@@ -253,8 +253,8 @@ public class Animation {
 			}
 			 */
 
-			emit(currentFrame(frame));
-			emit(frameChanged());
+			emit.currentFrame(frame);
+			emit.frameChanged();
 		}
 	}
 
@@ -294,7 +294,7 @@ public class Animation {
 			setDirty(true);
 			node.setEaseIn(frameNum,state);
 			// tell main class that the keyframe has changed
-			emit(redrawTrack(getPartIndex(node)));
+			emit.redrawTrack(getPartIndex(node));
 		}
 	}
 
@@ -308,7 +308,7 @@ public class Animation {
 			setDirty(true);
 			node.setEaseOut(frameNum,state);
 			// tell main class that the keyframe has changed
-			emit(redrawTrack(getPartIndex(node)));
+			emit.redrawTrack(getPartIndex(node));
 		}
 	}
 
@@ -382,7 +382,7 @@ public class Animation {
 			setDirty(true);
 			addKeyFrame(node);
 			node.setKeyframeRotation(frame,rot);
-			emit(redrawTrack(getPartIndex(node)));
+			emit.redrawTrack(getPartIndex(node));
 			//    	    }
 		}
 	}
@@ -570,12 +570,12 @@ public class Animation {
 				}
 
 				// tell timeline that this mirrored keyframe has changed (added or changed is the same here)
-				emit(redrawTrack(getPartIndex(mirrorNode)));
+				emit.redrawTrack(getPartIndex(mirrorNode));
 			}
 			setDirty(true);
 			// tell timeline that this keyframe has changed (added or changed is the same here)
-			emit(redrawTrack(getPartIndex(node)));
-			emit(frameChanged());
+			emit.redrawTrack(getPartIndex(node));
+			emit.frameChanged();
 		} else {
 			Log.d(TAG, "Animaiton.setRotation(): node==0!");
 		}
@@ -648,8 +648,8 @@ public class Animation {
 		}
 		setDirty(true);
 		// tell timeline that this keyframe has changed (added or changed is the same here)
-		emit(redrawTrack(0));
-		emit(frameChanged());
+		emit.redrawTrack(0);
+		emit.frameChanged();
 	}
 
 	public Position getPosition() {
@@ -702,8 +702,8 @@ public class Animation {
 
 		setDirty(true);
 
-		emit(redrawTrack(getPartIndex(joint)));
-		emit(frameChanged());
+		emit.redrawTrack(getPartIndex(joint));
+		emit.frameChanged();
 	}
 
 	private boolean isKeyFrameHelper(BVHNode joint) {
@@ -748,8 +748,8 @@ public class Animation {
 		}
 
 		// if silent is true then only send a signal to the timeline but not to the animation view
-		if(!silent) emit(frameChanged());
-		emit(redrawTrack(getPartIndex(joint)));
+		if(!silent) emit.frameChanged();
+		emit.redrawTrack(getPartIndex(joint));
 	}
 
 	public void deleteKeyFrame(BVHNode joint, int frame) {
@@ -767,7 +767,7 @@ public class Animation {
 		else if(isKeyFrame()) deleteKeyFrameAllJoints();
 
 		// tell main class that the keyframe has changed
-		emit(currentFrame(frameNum));
+		emit.currentFrame(frameNum);
 	}
 
 	private void recursiveDeleteKeyFrame(BVHNode joint) {
@@ -909,7 +909,7 @@ public class Animation {
 		blockSignals(false);
 
 		// tell timeline where we are now
-		emit(currentFrame(frame));
+		emit.currentFrame(frame);
 	}
 
 	public void moveKeyFrame(int jointNumber, int from, int to) {
@@ -955,7 +955,7 @@ public class Animation {
 			if(joint != null) joint.insertFrame(frame);
 		}
 		setDirty(true);
-		emit(frameChanged());
+		emit.frameChanged();
 	}
 
 	// recursively remove frames from joint and all its children
@@ -964,7 +964,7 @@ public class Animation {
 		joint.deleteFrame(frame);
 		for(int i=0;i<joint.numChildren();i++)
 			deleteFrameHelper(joint.child(i),frame);
-		emit(redrawTrack(getPartIndex(joint)));
+		emit.redrawTrack(getPartIndex(joint));
 	}
 
 	// delete frame from a joint, if track==0 recursively delete from all joints
@@ -983,13 +983,13 @@ public class Animation {
 			if(joint != null) joint.deleteFrame(pos);
 		}
 		setDirty(true);
-		emit(frameChanged());
+		emit.frameChanged();
 	}
 
 	private void optimizeHelper(BVHNode joint) {
 		if(joint.type != BVHNodeType.BVH_END) {
 			joint.optimize();
-			emit(redrawTrack(getPartIndex(joint)));
+			emit.redrawTrack(getPartIndex(joint));
 		}
 
 		for(int i=0;i<joint.numChildren();i++)
@@ -1006,9 +1006,9 @@ public class Animation {
 		// make sure only to mirror one side of l/r joints, and joints that have no mirror node
 		if(!joint.name().startsWith("l")) {
 			joint.mirror();
-			emit(redrawTrack(getPartIndex(joint)));
+			emit.redrawTrack(getPartIndex(joint));
 			if(joint.getMirror() != null)
-				emit(redrawTrack(joint.getMirrorIndex()));
+				emit.redrawTrack(joint.getMirrorIndex());
 		}
 
 		for(int i=0;i<joint.numChildren();i++)
@@ -1022,9 +1022,9 @@ public class Animation {
 			mirrorHelper(frames);
 		} else {
 			joint.mirror();
-			emit(redrawTrack(getPartIndex(joint)));
+			emit.redrawTrack(getPartIndex(joint));
 			if(joint.getMirror() != null)
-				emit(redrawTrack(joint.getMirrorIndex()));
+				emit.redrawTrack(joint.getMirrorIndex());
 		}
 		setDirty(true);
 	}
@@ -1035,7 +1035,7 @@ public class Animation {
 
 	public void setDirty(boolean state) {
 		isDirty=state;
-		emit(animationDirty(state));
+		emit.animationDirty(state);
 	}
 
 	public void setLoop(boolean on) {
@@ -1122,19 +1122,31 @@ public class Animation {
     void playbackTimeout();
 
   signals:
-    void numberOfFrames(int num);
-    void currentFrame(int frame);
-    void frameChanged();
-    void redrawTrack(int track);
-    void animationDirty(bool state);
-	 */
+*/
 
-	int numberOfFrames(int num) { return 0; }
-	int currentFrame(int frame) { return 0; }
-	int frameChanged() { return 0; }
-	int redrawTrack(int track) { return 0; }
-	int animationDirty(boolean state) { return 0; }
-	void emit(int num) {}
+	public interface OnAnimationChangeListener {
+		public void numberOfFrames(int num);
+		public void currentFrame(int frame);
+		public void frameChanged();
+		public void redrawTrack(int track);
+		public void animationDirty(boolean state);
+	}
+
+	private class NullListener implements OnAnimationChangeListener {
+		public void numberOfFrames(int num) {}
+		public void currentFrame(int frame) {}
+		public void frameChanged() {}
+		public void redrawTrack(int track) {}
+		public void animationDirty(boolean state) {}
+	}
+
+	private OnAnimationChangeListener emit = new NullListener();
+
+	public void setListener(OnAnimationChangeListener listener) {
+		if (listener == null) emit = new NullListener();
+		else emit = listener;
+	}
+
 	void blockSignals(boolean yes) {}
 
 
