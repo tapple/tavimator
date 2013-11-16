@@ -17,8 +17,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-public class AnimationActivity extends ActionBarActivity implements FramePicker.OnValueChangeListener
-{
+public class AnimationActivity extends ActionBarActivity {
 	private static final String TAG = "AnimationActivity";
 	/** Hold a reference to our GLSurfaceView */
 	private AnimationView mGLSurfaceView;
@@ -38,7 +37,7 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
 
-		((FramePicker)findViewById(R.id.frame_picker)).setOnValueChangedListener(this);
+		((FramePicker)findViewById(R.id.frame_picker)).setOnValueChangedListener(mGLSurfaceView);
 	}
 
 	@Override
@@ -144,11 +143,5 @@ public class AnimationActivity extends ActionBarActivity implements FramePicker.
 
 		mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(1.0f);
 		return true;
-	}
-
-	@Override
-	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
-		// TODO Auto-generated method stub
-		((TextView) findViewById(R.id.debugLabel)).setText("frame " + newVal);
 	}
 }

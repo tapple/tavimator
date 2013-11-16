@@ -23,8 +23,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.widget.TextView;
 
-public class AnimationView extends GLSurfaceView 
-{
+public class AnimationView extends GLSurfaceView implements FramePicker.OnValueChangeListener {
 	public final static int PICK_PART_RESULT = 932023;
 
 	private AnimationRenderer renderer;
@@ -213,6 +212,12 @@ public class AnimationView extends GLSurfaceView
 		animation = null;
 	}
 
+	@Override
+	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
+		// TODO Auto-generated method stub
+		debug("frame " + newVal);
+	}
+
 	public BVHNode getSelectedPart() {
 		return getSelectedAnimation().getNode(partSelected % AnimationRenderer.ANIMATION_INCREMENT);
 	}
@@ -359,7 +364,7 @@ public class AnimationView extends GLSurfaceView
 	}
 
 	private void debug(String message) {
-		Log.d(TAG, message);
+		//Log.d(TAG, message);
 		((TextView) ((Activity) getContext())
 				.findViewById(R.id.debugLabel)).setText(message);
 	}
