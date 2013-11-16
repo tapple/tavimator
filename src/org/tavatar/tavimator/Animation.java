@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -111,6 +112,22 @@ public class Animation {
 	}
 
 	public Animation(Context context, BVH newBVH, String bvhFile) throws IOException {
+		if (bvhFile.length() > 0) {
+			initialize(context, newBVH, BVH.openBVHFile(bvhFile), BVH.isAvm(bvhFile));
+		} else {
+			initialize(context, newBVH, BVH.openBVHFile(context.getAssets().open(DEFAULT_POSE)), true);
+		}
+	}
+	
+	public Animation(Context context, BVH newBVH, InputStream bvhFile, boolean isAvm) throws IOException {
+		initialize(context, newBVH, BVH.openBVHFile(bvhFile), isAvm);
+	}
+
+	public Animation(Context context, BVH newBVH, Reader bvhFile, boolean isAvm) throws IOException {
+		initialize(context, newBVH, bvhFile, isAvm);
+	}
+
+	private void initialize(Context context, BVH newBVH, Reader bvhFile, boolean isAvm) throws IOException {
 		this.context = context;
 		frame = 0;
 		totalFrames = 0;
@@ -125,11 +142,7 @@ public class Animation {
 		}
 
 		// load BVH that defines motion
-		if (bvhFile.length() > 0) {
-			loadBVH(bvhFile);
-		} else {
-			loadBVH(context.getAssets().open(DEFAULT_POSE), true);
-		}
+		loadBVH(bvhFile, isAvm);
 
 		calcPartMirrors();
 		useRotationLimits(true);
@@ -164,7 +177,7 @@ public class Animation {
 		setFrame(0);
 	}
 
-	public void loadBVH(InputStream bvhFile, boolean isAvm) throws IOException {
+	public void loadBVH(Reader bvhFile, boolean isAvm) throws IOException {
 		Log.d(TAG, "Animation.loadBVH(" + bvhFile + ")");
 		InputStream limFile = context.getAssets().open(LIMITS_FILE);
 		frames=bvh.animRead(bvhFile, limFile, isAvm);

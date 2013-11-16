@@ -381,7 +381,7 @@ public class BVH {
 		bvhSetFrameDataHelper(node,frame);
 	}
 
-	Reader openFileNamed(String file, String type) throws FileNotFoundException {
+	private static Reader openFileNamed(String file, String type) throws FileNotFoundException {
 		FileReader animationFile;
 		try {
 			animationFile = new FileReader(file);
@@ -392,13 +392,39 @@ public class BVH {
 		}
 		return animationFile;
 	}
+	
+	public static Reader openBVHFile(String animationFileName) throws FileNotFoundException {
+		// rudimentary file type identification from filename
+		if(animationFileName.toLowerCase().endsWith(".bvh")) {
+			return new BufferedReader(openFileNamed(animationFileName, "BVH"));
+		} else if(animationFileName.toLowerCase().endsWith(".avm")) {
+			return new BufferedReader(openFileNamed(animationFileName, "AVM"));
+		} else {
+			return null;
+		}
+	}
 
-	Reader readerOnStream(InputStream i) {
+	public static Reader openBVHFile(InputStream i) {
+		return bufferedReaderOnStream(i);
+	}
+
+	public static boolean isAvm(String animationFileName) {
+		// rudimentary file type identification from filename
+		if(animationFileName.toLowerCase().endsWith(".bvh")) {
+			return false;
+		} else if(animationFileName.toLowerCase().endsWith(".avm")) {
+			return true;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private static Reader readerOnStream(InputStream i) {
 		if (i == null) return null;
 		return new InputStreamReader(i);
 	}
 
-	BufferedReader bufferedReaderOnStream(InputStream i) {
+	private static BufferedReader bufferedReaderOnStream(InputStream i) {
 		if (i == null) return null;
 		return new BufferedReader(readerOnStream(i));
 	}

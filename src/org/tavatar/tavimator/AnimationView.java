@@ -87,7 +87,8 @@ public class AnimationView extends GLSurfaceView
 		try {
 			joints[1] = bvh.animRead(assets.open("data/SLFemale.bvh"), assets.open(Animation.LIMITS_FILE), false);
 			bvh.dumpNodes(joints[1], "");
-			setAnimation(new Animation(getContext(), bvh));
+//			setAnimation(new Animation(getContext(), bvh));
+			setAnimation(new Animation(getContext(), bvh, assets.open("data/sl_dance1.bvh"), false));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
