@@ -12,7 +12,7 @@ public class SimpleFloatAnimator {
 	public float endValue = 1.0f;
 
 	public long startTime = 0; // ms
-	public float progress = 0.0f;
+	public float progress = 1.0f; // finished (idle) by default
 
 	public float value = 0.0f;
 

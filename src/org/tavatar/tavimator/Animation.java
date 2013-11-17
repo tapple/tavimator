@@ -1042,6 +1042,10 @@ public class Animation {
 		loop=on;
 	}
 
+	public boolean getLoop() {
+		return loop;
+	}
+
 	public float getAvatarScale() {
 		return avatarScale;
 	}
