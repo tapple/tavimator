@@ -10,8 +10,8 @@
 		android:layout_height="match_parent"
 	/>
 
-	<org.tavatar.tavimator.FramePicker
-		android:id="@+id/frame_picker"
+	<org.tavatar.tavimator.AnimationTimeline
+		android:id="@+id/timeline"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_gravity="bottom|left"

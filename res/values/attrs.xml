@@ -7,8 +7,8 @@
         <!-- HNumberPicker style. -->
         <attr name="hNumberPickerStyle" format="reference" />
         
-        <!-- framePicker style. -->
-        <attr name="framePickerStyle" format="reference" />
+        <!-- Timeline style. -->
+        <attr name="timelineStyle" format="reference" />
     </declare-styleable>
         
     <declare-styleable name="NumberPicker">
@@ -57,7 +57,7 @@
         <attr name="virtualButtonPressedDrawable" />
     </declare-styleable>
 
-    <declare-styleable name="FramePicker">
+    <declare-styleable name="AnimationTimeline">
         <!-- @hide Color for the solid color background if such for optimized rendering. -->
         <attr name="solidColor" />
         <!-- @hide The divider for making the selection area. -->

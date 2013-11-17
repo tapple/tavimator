@@ -23,7 +23,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.widget.TextView;
 
-public class AnimationView extends GLSurfaceView implements FramePicker.OnValueChangeListener {
+public class AnimationView extends GLSurfaceView implements AnimationTimeline.OnValueChangeListener {
 	public final static int PICK_PART_RESULT = 932023;
 
 	private AnimationRenderer renderer;
@@ -213,7 +213,7 @@ public class AnimationView extends GLSurfaceView implements FramePicker.OnValueC
 	}
 
 	@Override
-	public void onValueChange(FramePicker picker, float oldVal, float newVal) {
+	public void onValueChange(AnimationTimeline picker, float oldVal, float newVal) {
 		// TODO Auto-generated method stub
 		debug("frame " + newVal);
 		animation.setFrame(picker.getRoundedValue());

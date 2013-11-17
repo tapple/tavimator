@@ -90,9 +90,9 @@ import java.util.Locale;
  * </p>
  */
 
-public class FramePicker extends LinearLayout {
+public class AnimationTimeline extends LinearLayout {
 	
-	private static final String TAG = "FramePicker";
+	private static final String TAG = "AnimationTimeline";
 
 	/**
 	 * The number of items show in the selector wheel.
@@ -142,7 +142,7 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * The resource id for the default layout.
 	 */
-	private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.frame_picker;
+	private static final int DEFAULT_LAYOUT_RESOURCE_ID = R.layout.timeline;
 
 	/**
 	 * Constant for unspecified size.
@@ -368,7 +368,7 @@ public class FramePicker extends LinearLayout {
 		 * @param previous The previous value.
 		 * @param mValue The new value.
 		 */
-		void onValueChange(FramePicker picker, float previous, float mValue);
+		void onValueChange(AnimationTimeline picker, float previous, float mValue);
 	}
 
 	/**
@@ -400,7 +400,7 @@ public class FramePicker extends LinearLayout {
 		 *            {@link #SCROLL_STATE_TOUCH_SCROLL} or
 		 *            {@link #SCROLL_STATE_IDLE}.
 		 */
-		public void onScrollStateChange(FramePicker view, int scrollState);
+		public void onScrollStateChange(AnimationTimeline view, int scrollState);
 	}
 
 	/**
@@ -422,7 +422,7 @@ public class FramePicker extends LinearLayout {
 	 *
 	 * @param context The application environment.
 	 */
-	public FramePicker(Context context) {
+	public AnimationTimeline(Context context) {
 		this(context, null);
 	}
 
@@ -432,41 +432,41 @@ public class FramePicker extends LinearLayout {
 	 * @param context The application environment.
 	 * @param attrs A collection of attributes.
 	 */
-	public FramePicker(Context context, AttributeSet attrs) {
+	public AnimationTimeline(Context context, AttributeSet attrs) {
 		super(context, attrs);
 
 		// process style attributes
 		TypedArray attributesArray = context.obtainStyledAttributes(
-				attrs, R.styleable.FramePicker, R.attr.framePickerStyle, 0);
+				attrs, R.styleable.AnimationTimeline, R.attr.timelineStyle, 0);
 		final int layoutResId = DEFAULT_LAYOUT_RESOURCE_ID;
 
-		mSolidColor = attributesArray.getColor(R.styleable.FramePicker_solidColor, 0);
+		mSolidColor = attributesArray.getColor(R.styleable.AnimationTimeline_solidColor, 0);
 
-		mSelectionDivider = attributesArray.getDrawable(R.styleable.FramePicker_selectionDivider);
+		mSelectionDivider = attributesArray.getDrawable(R.styleable.AnimationTimeline_selectionDivider);
 
 		final int defSelectionDividerWidth = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH);
 		mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_selectionDividerWidth, defSelectionDividerWidth);
+				R.styleable.AnimationTimeline_selectionDividerWidth, defSelectionDividerWidth);
 
 		final int defSelectionDividerDistance = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE);
 		mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_selectionDividersDistance, defSelectionDividerDistance);
+				R.styleable.AnimationTimeline_selectionDividersDistance, defSelectionDividerDistance);
 
 		mMinHeight = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_internalMinHeight, SIZE_UNSPECIFIED);
+				R.styleable.AnimationTimeline_internalMinHeight, SIZE_UNSPECIFIED);
 
 		mMaxHeight = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_internalMaxHeight, SIZE_UNSPECIFIED);
+				R.styleable.AnimationTimeline_internalMaxHeight, SIZE_UNSPECIFIED);
 		if (mMinHeight != SIZE_UNSPECIFIED && mMaxHeight != SIZE_UNSPECIFIED
 				&& mMinHeight > mMaxHeight) {
 			throw new IllegalArgumentException("minHeight > maxHeight");
 		}
 
 		mMinWidth = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_internalMinWidth, SIZE_UNSPECIFIED);
+				R.styleable.AnimationTimeline_internalMinWidth, SIZE_UNSPECIFIED);
 
 		mMaxWidth = attributesArray.getDimensionPixelSize(
-				R.styleable.FramePicker_internalMaxWidth, SIZE_UNSPECIFIED);
+				R.styleable.AnimationTimeline_internalMaxWidth, SIZE_UNSPECIFIED);
 		if (mMinWidth != SIZE_UNSPECIFIED && mMaxWidth != SIZE_UNSPECIFIED
 				&& mMinWidth > mMaxWidth) {
 			throw new IllegalArgumentException("minWidth > maxWidth");
@@ -475,7 +475,7 @@ public class FramePicker extends LinearLayout {
 		mComputeMaxHeight = (mMaxHeight == SIZE_UNSPECIFIED);
 
 		mVirtualButtonPressedDrawable = attributesArray.getDrawable(
-				R.styleable.FramePicker_virtualButtonPressedDrawable);
+				R.styleable.AnimationTimeline_virtualButtonPressedDrawable);
 
 		attributesArray.recycle();
 
@@ -834,24 +834,24 @@ public class FramePicker extends LinearLayout {
 	/**
 	 * Set the current value for the number picker.
 	 * <p>
-	 * If the argument is less than the {@link FramePicker#getMinValue()} and
-	 * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
-	 * current value is set to the {@link FramePicker#getMinValue()} value.
+	 * If the argument is less than the {@link AnimationTimeline#getMinValue()} and
+	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>false</code> the
+	 * current value is set to the {@link AnimationTimeline#getMinValue()} value.
 	 * </p>
 	 * <p>
-	 * If the argument is less than the {@link FramePicker#getMinValue()} and
-	 * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
-	 * current value is set to the {@link FramePicker#getMaxValue()} value.
+	 * If the argument is less than the {@link AnimationTimeline#getMinValue()} and
+	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>true</code> the
+	 * current value is set to the {@link AnimationTimeline#getMaxValue()} value.
 	 * </p>
 	 * <p>
-	 * If the argument is less than the {@link FramePicker#getMaxValue()} and
-	 * {@link FramePicker#getWrapSelectorWheel()} is <code>false</code> the
-	 * current value is set to the {@link FramePicker#getMaxValue()} value.
+	 * If the argument is less than the {@link AnimationTimeline#getMaxValue()} and
+	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>false</code> the
+	 * current value is set to the {@link AnimationTimeline#getMaxValue()} value.
 	 * </p>
 	 * <p>
-	 * If the argument is less than the {@link FramePicker#getMaxValue()} and
-	 * {@link FramePicker#getWrapSelectorWheel()} is <code>true</code> the
-	 * current value is set to the {@link FramePicker#getMinValue()} value.
+	 * If the argument is less than the {@link AnimationTimeline#getMaxValue()} and
+	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>true</code> the
+	 * current value is set to the {@link AnimationTimeline#getMinValue()} value.
 	 * </p>
 	 *
 	 * @param value The current value.
@@ -955,8 +955,8 @@ public class FramePicker extends LinearLayout {
 
 	/**
 	 * Sets whether the selector wheel shown during flinging/scrolling should
-	 * wrap around the {@link FramePicker#getMinValue()} and
-	 * {@link FramePicker#getMaxValue()} values.
+	 * wrap around the {@link AnimationTimeline#getMinValue()} and
+	 * {@link AnimationTimeline#getMaxValue()} values.
 	 * <p>
 	 * By default if the range (max - min) is more than the number of items shown
 	 * on the selector wheel the selector wheel wrapping is enabled.
@@ -1560,7 +1560,7 @@ public class FramePicker extends LinearLayout {
 		public void cancel() {
 			mMode = 0;
 			mManagedButton = 0;
-			FramePicker.this.removeCallbacks(this);
+			AnimationTimeline.this.removeCallbacks(this);
 			if (mIncrementVirtualButtonPressed) {
 				mIncrementVirtualButtonPressed = false;
 				invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
@@ -1575,14 +1575,14 @@ public class FramePicker extends LinearLayout {
 			cancel();
 			mMode = MODE_PRESS;
 			mManagedButton = button;
-			FramePicker.this.postDelayed(this, ViewConfiguration.getTapTimeout());
+			AnimationTimeline.this.postDelayed(this, ViewConfiguration.getTapTimeout());
 		}
 
 		public void buttonTapped(int button) {
 			cancel();
 			mMode = MODE_TAPPED;
 			mManagedButton = button;
-			FramePicker.this.post(this);
+			AnimationTimeline.this.post(this);
 		}
 
 		@Override
@@ -1604,7 +1604,7 @@ public class FramePicker extends LinearLayout {
 				switch (mManagedButton) {
 				case BUTTON_INCREMENT: {
 					if (!mIncrementVirtualButtonPressed) {
-						FramePicker.this.postDelayed(this,
+						AnimationTimeline.this.postDelayed(this,
 								ViewConfiguration.getPressedStateDuration());
 					}
 					mIncrementVirtualButtonPressed ^= true;
@@ -1612,7 +1612,7 @@ public class FramePicker extends LinearLayout {
 				} break;
 				case BUTTON_DECREMENT: {
 					if (!mDecrementVirtualButtonPressed) {
-						FramePicker.this.postDelayed(this,
+						AnimationTimeline.this.postDelayed(this,
 								ViewConfiguration.getPressedStateDuration());
 					}
 					mDecrementVirtualButtonPressed ^= true;

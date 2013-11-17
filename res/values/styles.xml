@@ -22,8 +22,8 @@
         <!-- HNumberPicker style-->
         <item name="hNumberPickerStyle">@style/Widget.HNumberPicker</item>
 
-        <!-- FramePicker style-->
-        <item name="framePickerStyle">@style/Widget.FramePicker</item>
+        <!-- Timeline style-->
+        <item name="timelineStyle">@style/Widget.Timeline</item>
         
         <item name="windowActionBarOverlay">true</item>
 
@@ -69,11 +69,11 @@
 -->
    	</style>
 
-    <style name="Widget.FramePicker" parent="android:Widget">
+    <style name="Widget.Timeline" parent="android:Widget">
         <item name="android:orientation">horizontal</item>
         <item name="android:fadingEdge">horizontal</item>
         <item name="android:fadingEdgeLength">50dip</item>
-        <item name="internalLayout">@layout/frame_picker</item>
+        <item name="internalLayout">@layout/timeline</item>
         <item name="android:solidColor">@android:color/transparent</item>
         <item name="selectionDivider">@drawable/numberpicker_selection_divider</item>
         <item name="selectionDividerWidth">2dip</item>
