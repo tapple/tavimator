@@ -23,7 +23,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.widget.TextView;
 
-public class AnimationView extends GLSurfaceView implements AnimationTimeline.OnValueChangeListener {
+public class AnimationView extends GLSurfaceView {
 	public final static int PICK_PART_RESULT = 932023;
 
 	private AnimationRenderer renderer;
@@ -35,6 +35,7 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 	private List<Animation> animList = new ArrayList<Animation>();
 	private Animation animation; // this is the "currently selected" animation
 	private BVHNode[] joints = new BVHNode[2];
+	private PlaybackController playback;
 	
 	private PointerGroup pointers;
 
@@ -89,6 +90,8 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 //			setAnimation(new Animation(getContext(), bvh));
 //			setAnimation(new Animation(getContext(), bvh, assets.open("data/sl_dance1.bvh"), false));
 			setAnimation(new Animation(getContext(), bvh, assets.open("data/avatar_dance1.bvh"), false));
+			playback = new PlaybackController(getContext());
+			playback.setAnimation(animation);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,6 +119,10 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 		}
 
 		pointers = new PointerGroup(getContext());
+	}
+	
+	public PlaybackController getPlayback() {
+		return playback;
 	}
 
 	// this code probably would be more appropriate in the activity
@@ -194,10 +201,6 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 		if(!inAnimList(anim)) {
 			animList.add(anim);
 			animation = anim; // set it as the current one
-			if (!animList.isEmpty() && anim != animList.get(0)) {
-				anim.setFrame(animList.get(0).getFrame());
-			}
-
 			//connect(anim,SIGNAL(frameChanged()),this,SLOT(repaint()));
 			repaint();
 		}
@@ -210,13 +213,6 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 	public void clear() {
 		animList.clear();
 		animation = null;
-	}
-
-	@Override
-	public void onValueChange(AnimationTimeline picker, float oldVal, float newVal) {
-		// TODO Auto-generated method stub
-		debug("frame " + newVal);
-		animation.setFrame(picker.getRoundedValue());
 	}
 
 	public BVHNode getSelectedPart() {
@@ -274,7 +270,7 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 
 		float[] newOrientation = new float[16];
 		Matrix.setIdentityM(newOrientation, 0);
-		node.rotateMatrixForFrame(newOrientation, animation.getFrame());
+		node.rotateMatrixForFrame(newOrientation, getFrame());
 		selectionTrackball.setOrientation(newOrientation);
 
 		Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
@@ -311,13 +307,17 @@ public class AnimationView extends GLSurfaceView implements AnimationTimeline.On
 	public TwoFingerTrackball getSelectionTrackball() {
 		return selectionTrackball;
 	}
+	
+	public int getFrame() {
+		return playback.getNearestFrame(playback.getTime());
+	}
 
 	public void updateSelectionOrientation() {
 		BVHNode selection = getSelectedPart();
 		if (selection == null) return;
 		selectionTrackball.updateOrientation();
 		float[] newOrientation = new float[16];
-		animation.setRotationFromMatrix(selection, selectionTrackball.getOrientation(newOrientation));
+		animation.setRotationFromMatrix(getFrame(), selection, selectionTrackball.getOrientation(newOrientation));
 	}
 
 	public void updateSelectionTouchOrientation() {

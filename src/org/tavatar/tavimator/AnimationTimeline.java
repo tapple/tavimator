@@ -90,24 +90,9 @@ import java.util.Locale;
  * </p>
  */
 
-public class AnimationTimeline extends LinearLayout {
-	
+public class AnimationTimeline extends LinearLayout implements Animation.OnAnimationChangeListener {
+
 	private static final String TAG = "AnimationTimeline";
-
-	/**
-	 * The number of items show in the selector wheel.
-	 */
-	private int SELECTOR_WHEEL_ITEM_COUNT = 3;
-
-	/**
-	 * The default update interval during long press.
-	 */
-	private static final long DEFAULT_LONG_PRESS_UPDATE_INTERVAL = 300;
-
-	/**
-	 * The index of the middle selector item.
-	 */
-	private int SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
 
 	/**
 	 * The coefficient by which to adjust (divide) the max fling velocity.
@@ -115,29 +100,9 @@ public class AnimationTimeline extends LinearLayout {
 	private static final int SELECTOR_MAX_FLING_VELOCITY_ADJUSTMENT = 8;
 
 	/**
-	 * The the duration for adjusting the selector wheel.
-	 */
-	private static final int SELECTOR_ADJUSTMENT_DURATION_MILLIS = 200;
-
-	/**
-	 * The duration of scrolling while snapping to a given position.
-	 */
-	private static final int SNAP_SCROLL_DURATION = 200;
-
-	/**
 	 * The strength of fading in the top and bottom while drawing the selector.
 	 */
 	private static final float LEFT_AND_RIGHT_FADING_EDGE_STRENGTH = 0.9f;
-
-	/**
-	 * The default unscaled height of the selection divider.
-	 */
-	private static final int UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH = 2;
-
-	/**
-	 * The default unscaled distance between the selection dividers.
-	 */
-	private static final int UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE = 48;
 
 	/**
 	 * The resource id for the default layout.
@@ -150,14 +115,14 @@ public class AnimationTimeline extends LinearLayout {
 	private static final int SIZE_UNSPECIFIED = -1;
 
 	/**
+	 * Holds all playback state and some screen state
+	 */
+	private PlaybackController playback;
+
+	/**
 	 * The text for showing the current value.
 	 */
 	private final EditText mInputText;
-
-	/**
-	 * The distance between the two selection dividers.
-	 */
-	private final int mSelectionDividersDistance;
 
 	/**
 	 * The min height of this widget.
@@ -180,7 +145,7 @@ public class AnimationTimeline extends LinearLayout {
 	private final int mMaxWidth;
 
 	/**
-	 * Flag whether to compute the max width.
+	 * Flag whether to compute the max height.
 	 */
 	private final boolean mComputeMaxHeight;
 
@@ -190,85 +155,19 @@ public class AnimationTimeline extends LinearLayout {
 	private final int mTextSize;
 
 	/**
-	 * Lower value of the range of numbers allowed for the NumberPicker
-	 */
-	private float mMinValue = 0f;
-
-	/**
-	 * Upper value of the range of numbers allowed for the NumberPicker
-	 */
-	private float mMaxValue = 30f;
-
-	/**
-	 * Current value of this NumberPicker
-	 */
-	private float mValue;
-
-	/**
-	 * Listener to be notified upon current value change.
-	 */
-	private OnValueChangeListener mOnValueChangeListener;
-
-	/**
-	 * Listener to be notified upon scroll state change.
-	 */
-	private OnScrollListener mOnScrollListener;
-
-	/**
-	 * The speed for updating the value form long press.
-	 */
-	private long mLongPressUpdateInterval = DEFAULT_LONG_PRESS_UPDATE_INTERVAL;
-
-	/**
 	 * The {@link Paint} for drawing the selector.
 	 */
 	private final Paint mSelectorWheelPaint;
 
 	/**
-	 * The {@link Drawable} for pressed virtual (increment/decrement) buttons.
+	 * The {@link Paint} for drawing the current time hairline.
 	 */
-	private final Drawable mVirtualButtonPressedDrawable;
-
-	/**
-	 * The {@link Scroller} responsible for flinging the selector.
-	 */
-	private final Scroller mFlingScroller;
-
-	/**
-	 * The {@link Scroller} responsible for adjusting the selector.
-	 */
-	private final SimpleFloatAnimator mAdjustScroller;
-
-	/**
-	 * The previous Y coordinate while scrolling the selector.
-	 */
-	private int mPreviousScrollerX;
+	private final Paint mHairlinePaint;
 
 	/**
 	 * Handle to the reusable command for setting the input text selection.
 	 */
 	private SetSelectionCommand mSetSelectionCommand;
-
-	/**
-	 * Handle to the reusable command for changing the current value from long
-	 * press by one.
-	 */
-	private ChangeCurrentByOneFromLongPressCommand mChangeCurrentByOneFromLongPressCommand;
-
-	/**
-	 * Command for beginning an edit of the current value via IME on long press.
-	 */
-	private BeginSoftInputOnLongPressCommand mBeginSoftInputOnLongPressCommand;
-
-	/**
-	 * The Y position of the last down event.
-	 */
-	private float mLastDownEventX;
-
-	/**
-	 * The time of the last down event.
-	 */
-	private long mLastDownEventTime;
 
 	/**
 	 * The Y position of the last down or move event.
@@ -296,112 +195,9 @@ public class AnimationTimeline extends LinearLayout {
 	private int mMaximumFlingVelocity;
 
 	/**
-	 * Flag whether the selector should wrap around.
-	 */
-	private boolean mWrapSelectorWheel;
-
-	/**
 	 * The back ground color used to optimize scroller fading.
 	 */
 	private final int mSolidColor;
-
-	/**
-	 * Divider for showing item to be selected while scrolling
-	 */
-	private final Drawable mSelectionDivider;
-
-	/**
-	 * The height of the selection divider.
-	 */
-	private final int mSelectionDividerWidth;
-
-	/**
-	 * The current scroll state of the number picker.
-	 */
-	private int mScrollState = OnScrollListener.SCROLL_STATE_IDLE;
-
-	/**
-	 * Flag whether to ignore move events - we ignore such when we show in IME
-	 * to prevent the content from scrolling.
-	 */
-	private boolean mIngonreMoveEvents;
-
-	/**
-	 * Flag whether to show soft input on tap. (aka, the keyboard)
-	 */
-	private boolean mShowSoftInputOnTap;
-
-	/**
-	 * The top of the top selection divider.
-	 */
-	private int mLeftSelectionDividerLeft;
-
-	/**
-	 * The bottom of the bottom selection divider.
-	 */
-	private int mRightSelectionDividerRight;
-
-	/**
-	 * Whether the increment virtual button is pressed.
-	 */
-	private boolean mIncrementVirtualButtonPressed;
-
-	/**
-	 * Whether the decrement virtual button is pressed.
-	 */
-	private boolean mDecrementVirtualButtonPressed;
-
-	/**
-	 * Helper class for managing pressed state of the virtual buttons.
-	 */
-	private final PressedStateHelper mPressedStateHelper;
-
-	/**
-	 * Interface to listen for changes of the current value.
-	 */
-	public interface OnValueChangeListener {
-
-		/**
-		 * Called upon a change of the current value.
-		 *
-		 * @param picker The NumberPicker associated with this listener.
-		 * @param previous The previous value.
-		 * @param mValue The new value.
-		 */
-		void onValueChange(AnimationTimeline picker, float previous, float mValue);
-	}
-
-	/**
-	 * Interface to listen for the picker scroll state.
-	 */
-	public interface OnScrollListener {
-
-		/**
-		 * The view is not scrolling.
-		 */
-		public static int SCROLL_STATE_IDLE = 0;
-
-		/**
-		 * The user is scrolling using touch, and his finger is still on the screen.
-		 */
-		public static int SCROLL_STATE_TOUCH_SCROLL = 1;
-
-		/**
-		 * The user had previously been scrolling using touch and performed a fling.
-		 */
-		public static int SCROLL_STATE_FLING = 2;
-
-		/**
-		 * Callback invoked while the number picker scroll state has changed.
-		 *
-		 * @param view The view whose scroll state is being reported.
-		 * @param scrollState The current scroll state. One of
-		 *            {@link #SCROLL_STATE_IDLE},
-		 *            {@link #SCROLL_STATE_TOUCH_SCROLL} or
-		 *            {@link #SCROLL_STATE_IDLE}.
-		 */
-		public void onScrollStateChange(AnimationTimeline view, int scrollState);
-	}
 
 	/**
 	 * Interface used to format current value into a string for presentation.
@@ -442,16 +238,6 @@ public class AnimationTimeline extends LinearLayout {
 
 		mSolidColor = attributesArray.getColor(R.styleable.AnimationTimeline_solidColor, 0);
 
-		mSelectionDivider = attributesArray.getDrawable(R.styleable.AnimationTimeline_selectionDivider);
-
-		final int defSelectionDividerWidth = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDER_WIDTH);
-		mSelectionDividerWidth = attributesArray.getDimensionPixelSize(
-				R.styleable.AnimationTimeline_selectionDividerWidth, defSelectionDividerWidth);
-
-		final int defSelectionDividerDistance = (int) dp2px(UNSCALED_DEFAULT_SELECTION_DIVIDERS_DISTANCE);
-		mSelectionDividersDistance = attributesArray.getDimensionPixelSize(
-				R.styleable.AnimationTimeline_selectionDividersDistance, defSelectionDividerDistance);
-
 		mMinHeight = attributesArray.getDimensionPixelSize(
 				R.styleable.AnimationTimeline_internalMinHeight, SIZE_UNSPECIFIED);
 
@@ -474,12 +260,7 @@ public class AnimationTimeline extends LinearLayout {
 
 		mComputeMaxHeight = (mMaxHeight == SIZE_UNSPECIFIED);
 
-		mVirtualButtonPressedDrawable = attributesArray.getDrawable(
-				R.styleable.AnimationTimeline_virtualButtonPressedDrawable);
-
 		attributesArray.recycle();
-
-		mPressedStateHelper = new PressedStateHelper();
 
 		// By default Linearlayout that we extend is not drawn. This is
 		// its draw() method is not called but dispatchDraw() is called
@@ -530,11 +311,14 @@ public class AnimationTimeline extends LinearLayout {
 		paint.setColor(color);
 		mSelectorWheelPaint = paint;
 
-		// create the fling and adjust scrollers
-		mFlingScroller = new Scroller(getContext(), null);
-		mAdjustScroller = new SimpleFloatAnimator(new DecelerateInterpolator(2.5f), mValue, mValue);
+		mHairlinePaint = new Paint(paint);
+		mHairlinePaint.setColor(Color.YELLOW);
+	}
 
+	public void setPlayback(PlaybackController playback) {
+		this.playback = playback;
 		updateInputTextView();
+		invalidate();
 	}
 
 	private float dp2px(float dp) {
@@ -559,10 +343,6 @@ public class AnimationTimeline extends LinearLayout {
 			// need to do all this when we know our size
 			initializeSelectorWheel();
 			initializeFadingEdges();
-			mLeftSelectionDividerLeft = (getWidth() - mSelectionDividersDistance) / 2
-					- mSelectionDividerWidth;
-			mRightSelectionDividerRight = mLeftSelectionDividerLeft + 2 * mSelectionDividerWidth
-					+ mSelectionDividersDistance;
 		}
 	}
 
@@ -580,24 +360,6 @@ public class AnimationTimeline extends LinearLayout {
 		setMeasuredDimension(widthSize, heightSize);
 	}
 
-	/**
-	 * Move to the final position of a scroller. Ensures to force finish the scroller
-	 * and if it is not at its final position a scroll of the selector wheel is
-	 * performed to fast forward to the final position.
-	 *
-	 * @param scroller The scroller to whose final position to get.
-	 * @return True of the a move was performed, i.e. the scroller was not in final position.
-	 */
-	private boolean moveToFinalScrollerPosition(Scroller scroller) {
-		scroller.forceFinished(true);
-		int amountToScroll = scroller.getFinalX() - scroller.getCurrX();
-		if (amountToScroll != 0) {
-			scrollBy(amountToScroll, 0);
-			return true;
-		}
-		return false;
-	}
-
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent event) {
 		if (!isEnabled()) {
@@ -607,44 +369,11 @@ public class AnimationTimeline extends LinearLayout {
 		switch (action) {
 		case MotionEvent.ACTION_DOWN: {
 			removeAllCallbacks();
-			mInputText.setVisibility(View.INVISIBLE);
-			mLastDownOrMoveEventX = mLastDownEventX = event.getX();
-			mLastDownEventTime = event.getEventTime();
-			mIngonreMoveEvents = false;
-			mShowSoftInputOnTap = false;
+			mLastDownOrMoveEventX = event.getX();
 			// Handle pressed state before any state change.
-			if (mLastDownEventX < mLeftSelectionDividerLeft) {
-				if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-					mPressedStateHelper.buttonPressDelayed(
-							PressedStateHelper.BUTTON_DECREMENT);
-				}
-			} else if (mLastDownEventX > mRightSelectionDividerRight) {
-				if (mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-					mPressedStateHelper.buttonPressDelayed(
-							PressedStateHelper.BUTTON_INCREMENT);
-				}
-			}
 			// Make sure we support flinging inside scrollables.
 			getParent().requestDisallowInterceptTouchEvent(true);
-			if (!mFlingScroller.isFinished()) {
-				mFlingScroller.forceFinished(true);
-				mAdjustScroller.forceFinished(true);
-				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-			} else if (!mAdjustScroller.isFinished()) {
-				mFlingScroller.forceFinished(true);
-				mAdjustScroller.forceFinished(true);
-			} else if (mLastDownEventX < mLeftSelectionDividerLeft) {
-				hideSoftInput();
-				postChangeCurrentByOneFromLongPress(
-						false, ViewConfiguration.getLongPressTimeout());
-			} else if (mLastDownEventX > mRightSelectionDividerRight) {
-				hideSoftInput();
-				postChangeCurrentByOneFromLongPress(
-						true, ViewConfiguration.getLongPressTimeout());
-			} else {
-				mShowSoftInputOnTap = true;
-				postBeginSoftInputOnLongPressCommand();
-			}
+			playback.pause();
 			return true;
 		}
 		}
@@ -663,17 +392,8 @@ public class AnimationTimeline extends LinearLayout {
 		int action = event.getActionMasked();
 		switch (action) {
 		case MotionEvent.ACTION_MOVE: {
-			if (mIngonreMoveEvents) {
-				break;
-			}
 			float currentMoveX = event.getX();
-			if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-				int deltaDownX = (int) Math.abs(currentMoveX - mLastDownEventX);
-				if (deltaDownX > mTouchSlop) {
-					removeAllCallbacks();
-					onScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-				}
-			} else {
+			if (true) { // if (moved enough to scroll) {
 				int deltaMoveX = (int) ((currentMoveX - mLastDownOrMoveEventX));
 				scrollBy(deltaMoveX, 0);
 				invalidate();
@@ -681,40 +401,13 @@ public class AnimationTimeline extends LinearLayout {
 			mLastDownOrMoveEventX = currentMoveX;
 		} break;
 		case MotionEvent.ACTION_UP: {
-			removeBeginSoftInputCommand();
-			removeChangeCurrentByOneFromLongPress();
-			mPressedStateHelper.cancel();
 			VelocityTracker velocityTracker = mVelocityTracker;
 			velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
 			int initialVelocity = (int) velocityTracker.getXVelocity();
 			if (Math.abs(initialVelocity) > mMinimumFlingVelocity) {
 				fling(initialVelocity);
-				onScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
 			} else {
-				int eventX = (int) event.getX();
-				int deltaMoveX = (int) Math.abs(eventX - mLastDownEventX);
-				long deltaTime = event.getEventTime() - mLastDownEventTime;
-				if (deltaMoveX <= mTouchSlop && deltaTime < ViewConfiguration.getTapTimeout()) {
-					if (mShowSoftInputOnTap) {
-						mShowSoftInputOnTap = false;
-						showSoftInput();
-					} else {
-						float selectorIndexOffset = (eventX / mFrameSpacing)
-								- SELECTOR_MIDDLE_ITEM_INDEX;
-						if (selectorIndexOffset > 0) {
-							changeValueByOne(true);
-							mPressedStateHelper.buttonTapped(
-									PressedStateHelper.BUTTON_INCREMENT);
-						} else if (selectorIndexOffset < 0) {
-							changeValueByOne(false);
-							mPressedStateHelper.buttonTapped(
-									PressedStateHelper.BUTTON_DECREMENT);
-						}
-					}
-				} else {
-					ensureScrollWheelAdjusted();
-				}
-				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+				playback.snapIfNeeded();
 			}
 			mVelocityTracker.recycle();
 			mVelocityTracker = null;
@@ -766,32 +459,12 @@ public class AnimationTimeline extends LinearLayout {
 
 	@Override
 	public void computeScroll() {
-		if (!mFlingScroller.isFinished()) {
-			mFlingScroller.computeScrollOffset();
-			int currentScrollerX = mFlingScroller.getCurrX();
-			if (mPreviousScrollerX == 0) {
-				mPreviousScrollerX = mFlingScroller.getStartX();
-			}
-			scrollBy(currentScrollerX - mPreviousScrollerX, 0);
-			mPreviousScrollerX = currentScrollerX;
-			if (mFlingScroller.isFinished()) {
-				if (!ensureScrollWheelAdjusted()) {
-					updateInputTextView();
-				}
-				onScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-			} else {
-				invalidate();
-			}
-		} else if (!mAdjustScroller.isFinished()){
-			mAdjustScroller.update();
-			setValueInternal(mAdjustScroller.value, true);
-			if (mAdjustScroller.isFinished()) {
-				if (mScrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-					updateInputTextView();
-				}
-			}
+		if (!playback.isFinished()) {
+			playback.update();
+			invalidate();
+			updateInputTextView();
 		}
-}
+	}
 
 	@Override
 	public void setEnabled(boolean enabled) {
@@ -801,66 +474,14 @@ public class AnimationTimeline extends LinearLayout {
 
 	@Override
 	public void scrollBy(int x, int y) {
-		scrollBy((float)x, (float)y);
-	}
-
-	public void scrollBy(float x, float y) {
-		setValueInternal(mValue - x/mFrameSpacing, true);
+		playback.scrollBy(x, y);
+		updateInputTextView();
+		invalidate();
 	}
 
 	@Override
 	public int getSolidColor() {
 		return mSolidColor;
-	}
-
-	/**
-	 * Sets the listener to be notified on change of the current value.
-	 *
-	 * @param onValueChangedListener The listener.
-	 */
-	public void setOnValueChangedListener(OnValueChangeListener onValueChangedListener) {
-		mOnValueChangeListener = onValueChangedListener;
-	}
-
-	/**
-	 * Set listener to be notified for scroll state changes.
-	 *
-	 * @param onScrollListener The listener.
-	 */
-	public void setOnScrollListener(OnScrollListener onScrollListener) {
-		mOnScrollListener = onScrollListener;
-	}
-
-	/**
-	 * Set the current value for the number picker.
-	 * <p>
-	 * If the argument is less than the {@link AnimationTimeline#getMinValue()} and
-	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>false</code> the
-	 * current value is set to the {@link AnimationTimeline#getMinValue()} value.
-	 * </p>
-	 * <p>
-	 * If the argument is less than the {@link AnimationTimeline#getMinValue()} and
-	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>true</code> the
-	 * current value is set to the {@link AnimationTimeline#getMaxValue()} value.
-	 * </p>
-	 * <p>
-	 * If the argument is less than the {@link AnimationTimeline#getMaxValue()} and
-	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>false</code> the
-	 * current value is set to the {@link AnimationTimeline#getMaxValue()} value.
-	 * </p>
-	 * <p>
-	 * If the argument is less than the {@link AnimationTimeline#getMaxValue()} and
-	 * {@link AnimationTimeline#getWrapSelectorWheel()} is <code>true</code> the
-	 * current value is set to the {@link AnimationTimeline#getMinValue()} value.
-	 * </p>
-	 *
-	 * @param value The current value.
-	 * @see #setWrapSelectorWheel(boolean)
-	 * @see #setMinValue(int)
-	 * @see #setMaxValue(int)
-	 */
-	public void setValue(int value) {
-		setValueInternal(value, false);
 	}
 
 	/**
@@ -942,128 +563,30 @@ public class AnimationTimeline extends LinearLayout {
 	}
 
 	/**
-	 * Gets whether the selector wheel wraps when reaching the min/max value.
-	 *
-	 * @return True if the selector wheel wraps.
-	 *
-	 * @see #getMinValue()
-	 * @see #getMaxValue()
-	 */
-	public boolean getWrapSelectorWheel() {
-		return mWrapSelectorWheel;
-	}
-
-	/**
-	 * Sets whether the selector wheel shown during flinging/scrolling should
-	 * wrap around the {@link AnimationTimeline#getMinValue()} and
-	 * {@link AnimationTimeline#getMaxValue()} values.
-	 * <p>
-	 * By default if the range (max - min) is more than the number of items shown
-	 * on the selector wheel the selector wheel wrapping is enabled.
-	 * </p>
-	 * <p>
-	 * <strong>Note:</strong> If the number of items, i.e. the range (
-	 * {@link #getMaxValue()} - {@link #getMinValue()}) is less than
-	 * the number of items shown on the selector wheel, the selector wheel will
-	 * not wrap. Hence, in such a case calling this method is a NOP.
-	 * </p>
-	 *
-	 * @param wrapSelectorWheel Whether to wrap.
-	 */
-	public void setWrapSelectorWheel(boolean wrapSelectorWheel) {
-		mWrapSelectorWheel = wrapSelectorWheel;
-	}
-
-	/**
-	 * Sets the speed at which the numbers be incremented and decremented when
-	 * the up and down buttons are long pressed respectively.
-	 * <p>
-	 * The default value is 300 ms.
-	 * </p>
-	 *
-	 * @param intervalMillis The speed (in milliseconds) at which the numbers
-	 *            will be incremented and decremented.
-	 */
-	public void setOnLongPressUpdateInterval(long intervalMillis) {
-		mLongPressUpdateInterval = intervalMillis;
-	}
-
-	/**
-	 * Returns the value of the picker.
-	 *
-	 * @return The value.
-	 */
-	public float getValue() {
-		return mValue;
-	}
-
-	/**
-	 * Returns the rounded value of the picker.
-	 *
-	 * @return The value.
-	 */
-	public int getRoundedValue() {
-		return (int)(mValue + 0.5f);
-	}
-
-	/**
-	 * Returns the min value of the picker.
-	 *
-	 * @return The min value
-	 */
-	public float getMinValue() {
-		return mMinValue;
-	}
-
-	/**
-	 * Sets the min value of the picker.
-	 *
-	 * @param minValue The min value.
-	 */
-	public void setMinValue(int minValue) {
-		if (mMinValue == minValue) {
-			return;
-		}
-		if (minValue < 0) {
-			throw new IllegalArgumentException("minValue must be >= 0");
-		}
-		mMinValue = minValue;
-		if (mMinValue > mValue) {
-			mValue = mMinValue;
-		}
-		updateInputTextView();
-		tryComputeMaxHeight();
-		invalidate();
-	}
-
-	/**
-	 * Returns the max value of the picker.
-	 *
-	 * @return The max value.
-	 */
-	public float getMaxValue() {
-		return mMaxValue;
-	}
-
-	/**
 	 * Sets the max value of the picker.
 	 *
 	 * @param maxValue The max value.
 	 */
-	public void setMaxValue(int maxValue) {
-		if (mMaxValue == maxValue) {
-			return;
-		}
-		if (maxValue < 0) {
-			throw new IllegalArgumentException("maxValue must be >= 0");
-		}
-		mMaxValue = maxValue;
-		if (mMaxValue < mValue) {
-			mValue = mMaxValue;
-		}
+	@Override
+	public void numberOfFrames(int maxValue) {
 		updateInputTextView();
 		tryComputeMaxHeight();
 		invalidate();
+	}
+
+	@Override
+	public void animationDirty(boolean dirty) {
+
+	}
+
+	@Override
+	public void frameChanged(int frame) {
+
+	}
+
+	@Override
+	public void redrawTrack(int track) {
+
 	}
 
 	@Override
@@ -1081,79 +604,47 @@ public class AnimationTimeline extends LinearLayout {
 		removeAllCallbacks();
 	}
 
+	private float pixelToTime(float x) {
+		return playback.getTime() + (x - getWidth()/2f) * playback.getScreenDensity();
+	}
 
-	protected int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
+	private float timeToPixel(float t) {
+		return getWidth()/2f + (t - playback.getTime()) / playback.getScreenDensity();
+	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		int firstFrame = Math.max((int)getMinValue(), (int)getValue() - SELECTOR_MIDDLE_ITEM_INDEX);
-		int lastFrame = Math.min((int)getMaxValue(), firstFrame + SELECTOR_WHEEL_ITEM_COUNT);
-		float mCurrentScrollOffset = getWidth()/2f + (firstFrame - mValue) * mFrameSpacing;
-		float x = mCurrentScrollOffset;
-		float y = mInputText.getBaseline() + mInputText.getTop();
+//		if (true) return;
+ 		float leftTime = Math.max(pixelToTime(0f), playback.playbackStartTime());
+ 		float rightTime = Math.min(pixelToTime(getWidth()), playback.playbackEndTime());
+ 		float minorFrameDuration = playback.getAnimation().frameTime() * minorEvery;
+ 		float minorFrameSpacing = minorFrameDuration / playback.getScreenDensity();
+ 		float leftFrameTime = playback.roundTimeToMultipleOf(leftTime, minorFrameDuration, -1);
+ 		float right = timeToPixel(rightTime);
 
-		// draw the virtual buttons pressed state if needed
-		if (mVirtualButtonPressedDrawable != null
-				&& mScrollState == OnScrollListener.SCROLL_STATE_IDLE) {
-			if (mDecrementVirtualButtonPressed) {
-				mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-				mVirtualButtonPressedDrawable.setBounds(0, 0, mLeftSelectionDividerLeft, getBottom());
-				mVirtualButtonPressedDrawable.draw(canvas);
-			}
-			if (mIncrementVirtualButtonPressed) {
-				mVirtualButtonPressedDrawable.setState(PRESSED_STATE_SET);
-				mVirtualButtonPressedDrawable.setBounds(mRightSelectionDividerRight, 0, getRight(),
-						getBottom());
-				mVirtualButtonPressedDrawable.draw(canvas);
-			}
-		}
+ 		float x = timeToPixel(leftFrameTime);
+ 		int frame = playback.getNearestFrame(leftFrameTime);
+ /*
+ 		Log.d(TAG, "minorFrameSpacing: " + minorFrameSpacing + "; left: " + x + "; right: "
+ 		+ right + "; minorFrameDuration: " + minorFrameDuration +
+ 		"; leftTime: " + leftTime + "; rightTime: " + rightTime);
+ */
 
-		/*
-    	// draw the selector wheel
-        int[] selectorIndices = mSelectorIndices;
-        for (int i = 0; i < selectorIndices.length; i++) {
-            int selectorIndex = selectorIndices[i];
-            String scrollSelectorValue = mSelectorIndexToStringCache.get(selectorIndex);
-            // Do not draw the middle item if input is visible since the input
-            // is shown only if the wheel is static and it covers the middle
-            // item. Otherwise, if the user starts editing the text via the
-            // IME he may see a dimmed version of the old value intermixed
-            // with the new one.
-            if (i != SELECTOR_MIDDLE_ITEM_INDEX || mInputText.getVisibility() != VISIBLE) {
-                canvas.drawText(scrollSelectorValue, x, y, mSelectorWheelPaint);
-            }
-            x += mSelectorElementWidth;
-        }
-		 */
-
-		for (int i = firstFrame; i <= lastFrame; i++) {
+		for (; x <= right; frame += minorEvery, x += minorFrameSpacing) {
 			float top;
-			if (i % majorEvery == 0) {
+			if (frame % majorEvery == 0) {
 				top = majorTop;
-				canvas.drawText(Integer.toString(i), x + textOffset, textBottom, mSelectorWheelPaint);
-			} else if (i % minorEvery == 0) {
+				canvas.drawText(Integer.toString(frame), x + textOffset, textBottom, mSelectorWheelPaint);
+			} else {
 				top = minorTop;
-			} else continue;
+			}
 
 			canvas.drawLine(x, bottom, x, top, mSelectorWheelPaint);
-
-			x += mFrameSpacing;
 		}
 
-		// draw the selection dividers
-		if (mSelectionDivider != null) {
-			// draw the top divider
-			int leftOfLeftDivider = mLeftSelectionDividerLeft;
-			int rightOfLeftDivider = leftOfLeftDivider + mSelectionDividerWidth;
-			mSelectionDivider.setBounds(leftOfLeftDivider, 0, rightOfLeftDivider, getBottom());
-			mSelectionDivider.draw(canvas);
-
-			// draw the bottom divider
-			int rightOfRightDivider = mRightSelectionDividerRight;
-			int leftOfRightDivider = rightOfRightDivider - mSelectionDividerWidth;
-			mSelectionDivider.setBounds(leftOfRightDivider, 0, rightOfRightDivider, getBottom());
-			mSelectionDivider.draw(canvas);
-		}
+		canvas.drawLine(getWidth()/2f, 0f, getWidth()/2f, getHeight(), mHairlinePaint);
+		canvas.drawText("f=" + playback.getNearestFrame(playback.getTime()) + " t=" + playback.getTime(),
+				getWidth()/2, mTextSize, mSelectorWheelPaint);
 	}
 
 	/**
@@ -1201,56 +692,6 @@ public class AnimationTimeline extends LinearLayout {
 		}
 	}
 
-	/**
-	 * Sets the current value of this NumberPicker.
-	 *
-	 * @param current The new value of the NumberPicker.
-	 * @param notifyChange Whether to notify if the current value changed.
-	 */
-	private void setValueInternal(float current, boolean notifyChange) {
-		if (mValue == current) {
-			return;
-		}
-		current = getWrappedSelectorIndex(current);
-		float previous = mValue;
-		mValue = current;
-		onValueChanged(previous, current, notifyChange);
-	}
-
-	private void onValueChanged(float previous, float current, boolean notifyChange) {
-		updateInputTextView();
-		if (notifyChange) {
-			notifyChange(previous, current);
-		}
-		invalidate();
-	}
-
-	/**
-	 * Changes the current value by one which is increment or
-	 * decrement based on the passes argument.
-	 * decrement the current value.
-	 *
-	 * @param increment True to increment, false to decrement.
-	 */
-	private void changeValueByOne(boolean increment) {
-		// TODO: This is incorrect if the frame spacing is less than one pixel
-		mInputText.setVisibility(View.INVISIBLE);
-		if (!moveToFinalScrollerPosition(mFlingScroller)) {
-			mAdjustScroller.forceFinished(true);
-			setValueInternal(mAdjustScroller.endValue, true);
-		}
-		mAdjustScroller.startValue = mValue;
-		if (increment) {
-			mAdjustScroller.endValue = mValue + 1;
-		} else {
-			mAdjustScroller.endValue = mValue - 1;
-		}
-		mAdjustScroller.start(SNAP_SCROLL_DURATION);
-		invalidate();
-	}
-
-	private float mFrameSpacing; // pixels per frame
-
 	float bottom;
 	float minorTop;
 	float majorTop;
@@ -1270,9 +711,7 @@ public class AnimationTimeline extends LinearLayout {
 	}
 
 	private void initializeSelectorWheel() {
-		mFrameSpacing = dp2px(10);
-		SELECTOR_WHEEL_ITEM_COUNT = (int) (getWidth() / mFrameSpacing) + 2;
-		SELECTOR_MIDDLE_ITEM_INDEX = SELECTOR_WHEEL_ITEM_COUNT / 2;
+		playback.setScreenDensity(1f/30/dp2px(10)); // 10 dp between frames at 30fps
 
 		updateCachedMetrics();
 		updateInputTextView();
@@ -1284,51 +723,11 @@ public class AnimationTimeline extends LinearLayout {
 	}
 
 	/**
-	 * Handles transition to a given <code>scrollState</code>
-	 */
-	private void onScrollStateChange(int scrollState) {
-		if (mScrollState == scrollState) {
-			return;
-		}
-		mScrollState = scrollState;
-		if (mOnScrollListener != null) {
-			mOnScrollListener.onScrollStateChange(this, scrollState);
-		}
-	}
-
-	/**
 	 * Flings the selector with the given <code>velocityY</code>.
 	 */
 	private void fling(int velocityX) {
-		mPreviousScrollerX = 0;
-
-		if (velocityX > 0) {
-			mFlingScroller.fling(0, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
-		} else {
-			mFlingScroller.fling(Integer.MAX_VALUE, 0, velocityX, 0, 0, Integer.MAX_VALUE, 0, 0);
-		}
-
+		playback.fling(velocityX);
 		invalidate();
-	}
-
-	/**
-	 * @return The wrapped index <code>selectorIndex</code> value.
-	 */
-	private float getWrappedSelectorIndex(float selectorIndex) {
-		if (selectorIndex >= mMaxValue) {
-			if (mWrapSelectorWheel) {
-				return mMinValue + (selectorIndex - mMaxValue) % (mMaxValue - mMinValue);
-			} else {
-				return mMaxValue;
-			}
-		} else if (selectorIndex < mMinValue) {
-			if (mWrapSelectorWheel) {
-				return mMaxValue - (mMinValue - selectorIndex) % (mMaxValue - mMinValue);
-			} else {
-				return mMinValue;
-			}
-		}
-		return selectorIndex;
 	}
 
 	private String formatNumber(float mValue2) {
@@ -1343,7 +742,8 @@ public class AnimationTimeline extends LinearLayout {
 		} else {
 			// Check the new value and ensure it's in range
 			float current = getSelectedPos(str.toString());
-			setValueInternal(current, true);
+			playback.setTime(current);
+			invalidate();
 		}
 	}
 
@@ -1361,7 +761,7 @@ public class AnimationTimeline extends LinearLayout {
 		 * find the correct value in the displayed values for the current
 		 * number.
 		 */
-		String text = formatNumber(mValue);
+		String text = formatNumber(playback.getNearestFrame(playback.getTime()));
 		if (!TextUtils.isEmpty(text) && !text.equals(mInputText.getText().toString())) {
 			mInputText.setText(text);
 			return true;
@@ -1371,94 +771,32 @@ public class AnimationTimeline extends LinearLayout {
 	}
 
 	/**
-	 * Notifies the listener, if registered, of a change of the value of this
-	 * NumberPicker.
-	 */
-	private void notifyChange(float previous, float current) {
-		if (mOnValueChangeListener != null) {
-			mOnValueChangeListener.onValueChange(this, previous, mValue);
-		}
-	}
-
-	/**
-	 * Posts a command for changing the current value by one.
-	 *
-	 * @param increment Whether to increment or decrement the value.
-	 */
-	private void postChangeCurrentByOneFromLongPress(boolean increment, long delayMillis) {
-		if (mChangeCurrentByOneFromLongPressCommand == null) {
-			mChangeCurrentByOneFromLongPressCommand = new ChangeCurrentByOneFromLongPressCommand();
-		} else {
-			removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-		}
-		mChangeCurrentByOneFromLongPressCommand.setStep(increment);
-		postDelayed(mChangeCurrentByOneFromLongPressCommand, delayMillis);
-	}
-
-	/**
-	 * Removes the command for changing the current value by one.
-	 */
-	private void removeChangeCurrentByOneFromLongPress() {
-		if (mChangeCurrentByOneFromLongPressCommand != null) {
-			removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-		}
-	}
-
-	/**
-	 * Posts a command for beginning an edit of the current value via IME on
-	 * long press.
-	 */
-	private void postBeginSoftInputOnLongPressCommand() {
-		if (mBeginSoftInputOnLongPressCommand == null) {
-			mBeginSoftInputOnLongPressCommand = new BeginSoftInputOnLongPressCommand();
-		} else {
-			removeCallbacks(mBeginSoftInputOnLongPressCommand);
-		}
-		postDelayed(mBeginSoftInputOnLongPressCommand, ViewConfiguration.getLongPressTimeout());
-	}
-
-	/**
-	 * Removes the command for beginning an edit of the current value via IME.
-	 */
-	private void removeBeginSoftInputCommand() {
-		if (mBeginSoftInputOnLongPressCommand != null) {
-			removeCallbacks(mBeginSoftInputOnLongPressCommand);
-		}
-	}
-
-	/**
 	 * Removes all pending callback from the message queue.
 	 */
 	private void removeAllCallbacks() {
-		if (mChangeCurrentByOneFromLongPressCommand != null) {
-			removeCallbacks(mChangeCurrentByOneFromLongPressCommand);
-		}
 		if (mSetSelectionCommand != null) {
 			removeCallbacks(mSetSelectionCommand);
 		}
-		if (mBeginSoftInputOnLongPressCommand != null) {
-			removeCallbacks(mBeginSoftInputOnLongPressCommand);
-		}
-		mPressedStateHelper.cancel();
 	}
 
 	/**
 	 * @return The selected index given its displayed <code>value</code>.
 	 */
 	private float getSelectedPos(String value) {
+
 		try {
-			return Float.parseFloat(value);
+			return playback.getFrameTime(Integer.parseInt(value));
 		} catch (NumberFormatException e) {
 			// Ignore as if it's not a number we don't care
 		}
-		return mMinValue;
+		return playback.getTime();
 	}
 
 	/**
 	 * Posts an {@link SetSelectionCommand} from the given <code>selectionStart
 	 * </code> to <code>selectionEnd</code>.
 	 */
-	private void postSetSelectionCommand(int selectionStart, int selectionEnd) {
+	private void setSelection(int selectionStart, int selectionEnd) {
 		if (mSetSelectionCommand == null) {
 			mSetSelectionCommand = new SetSelectionCommand();
 		} else {
@@ -1521,105 +859,10 @@ public class AnimationTimeline extends LinearLayout {
 			 * allowed. We have to allow less than min as the user might
 			 * want to delete some numbers and then type a new number.
 			 */
-			if (val > mMaxValue) {
+			if (val > playback.animEndTime()) {
 				return "";
 			} else {
 				return filtered;
-			}
-		}
-	}
-
-	/**
-	 * Ensures that the scroll wheel is adjusted i.e. there is no offset and the
-	 * middle element is in the middle of the widget.
-	 *
-	 * @return Whether an adjustment has been made.
-	 */
-	private boolean ensureScrollWheelAdjusted() {
-		// adjust to the closest value
-		if (getRoundedValue() != mValue) {
-			mAdjustScroller.startValue = mValue;
-			mAdjustScroller.endValue = getRoundedValue();
-			mAdjustScroller.start(SELECTOR_ADJUSTMENT_DURATION_MILLIS);
-			invalidate();
-			return true;
-		}
-		return false;
-	}
-
-	class PressedStateHelper implements Runnable {
-		public static final int BUTTON_INCREMENT = 1;
-		public static final int BUTTON_DECREMENT = 2;
-
-		private final int MODE_PRESS = 1;
-		private final int MODE_TAPPED = 2;
-
-		private int mManagedButton;
-		private int mMode;
-
-		public void cancel() {
-			mMode = 0;
-			mManagedButton = 0;
-			AnimationTimeline.this.removeCallbacks(this);
-			if (mIncrementVirtualButtonPressed) {
-				mIncrementVirtualButtonPressed = false;
-				invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-			}
-			mDecrementVirtualButtonPressed = false;
-			if (mDecrementVirtualButtonPressed) {
-				invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-			}
-		}
-
-		public void buttonPressDelayed(int button) {
-			cancel();
-			mMode = MODE_PRESS;
-			mManagedButton = button;
-			AnimationTimeline.this.postDelayed(this, ViewConfiguration.getTapTimeout());
-		}
-
-		public void buttonTapped(int button) {
-			cancel();
-			mMode = MODE_TAPPED;
-			mManagedButton = button;
-			AnimationTimeline.this.post(this);
-		}
-
-		@Override
-		public void run() {
-			switch (mMode) {
-			case MODE_PRESS: {
-				switch (mManagedButton) {
-				case BUTTON_INCREMENT: {
-					mIncrementVirtualButtonPressed = true;
-					invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-				} break;
-				case BUTTON_DECREMENT: {
-					mDecrementVirtualButtonPressed = true;
-					invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-				}
-				}
-			} break;
-			case MODE_TAPPED: {
-				switch (mManagedButton) {
-				case BUTTON_INCREMENT: {
-					if (!mIncrementVirtualButtonPressed) {
-						AnimationTimeline.this.postDelayed(this,
-								ViewConfiguration.getPressedStateDuration());
-					}
-					mIncrementVirtualButtonPressed ^= true;
-					invalidate(mRightSelectionDividerRight, 0, getRight(), getBottom());
-				} break;
-				case BUTTON_DECREMENT: {
-					if (!mDecrementVirtualButtonPressed) {
-						AnimationTimeline.this.postDelayed(this,
-								ViewConfiguration.getPressedStateDuration());
-					}
-					mDecrementVirtualButtonPressed ^= true;
-					invalidate(0, 0, mLeftSelectionDividerLeft, getBottom());
-				}
-				}
-			} break;
 			}
 		}
 	}
@@ -1638,23 +881,6 @@ public class AnimationTimeline extends LinearLayout {
 	}
 
 	/**
-	 * Command for changing the current value from a long press by one.
-	 */
-	class ChangeCurrentByOneFromLongPressCommand implements Runnable {
-		private boolean mIncrement;
-
-		private void setStep(boolean increment) {
-			mIncrement = increment;
-		}
-
-		@Override
-		public void run() {
-			changeValueByOne(mIncrement);
-			postDelayed(this, mLongPressUpdateInterval);
-		}
-	}
-
-	/**
 	 * @hide
 	 */
 	public static class CustomEditText extends EditText {
@@ -1669,18 +895,6 @@ public class AnimationTimeline extends LinearLayout {
 			if (actionCode == EditorInfo.IME_ACTION_DONE) {
 				clearFocus();
 			}
-		}
-	}
-
-	/**
-	 * Command for beginning soft input on long press.
-	 */
-	class BeginSoftInputOnLongPressCommand implements Runnable {
-
-		@Override
-		public void run() {
-			showSoftInput();
-			mIngonreMoveEvents = true;
 		}
 	}
 

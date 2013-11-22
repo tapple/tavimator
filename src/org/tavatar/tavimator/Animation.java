@@ -40,11 +40,6 @@ public class Animation {
 	// private final String DEFAULT_POSE = "data/Relaxed.bvh";
 	public static final String LIMITS_FILE = "data/SL.lim";
 
-	// playback resolution in milliseconds
-	// this is the speed of the internal sync timer, in milliseconds, not of the animation itself
-	private final int PLAYBACK_RESOLUTION = 20;
-
-
 	/* ###IK###
 	public static enum IKPartType {
 		IK_LHAND,
@@ -77,13 +72,8 @@ public class Animation {
 	// display the avatar at another scale (1.0 is default)
 	private float avatarScale;
 
-	private int frame;
 	private int totalFrames;
 	private int framesPerSecond;
-
-	// for playback
-	private float currentPlayTime;
-	private PlayState playstate;
 
 	private boolean loop;            // should we loop when using stepForward()?
 	private int loopInPoint;
@@ -98,14 +88,6 @@ public class Animation {
 	 */
 
 	private String dataPath;
-	private Handler timer = new Handler() {
-		@Override
-		public void handleMessage(Message m) {
-			if (playstate == PlayState.PLAYSTATE_STOPPED) return;
-			playbackTimeout();
-			sendMessageDelayed(Message.obtain(this), PLAYBACK_RESOLUTION);
-		}
-	};
 
 	public Animation(Context context, BVH newBVH) throws IOException {
 		this(context, newBVH, "");
@@ -129,7 +111,6 @@ public class Animation {
 
 	private void initialize(Context context, BVH newBVH, Reader bvhFile, boolean isAvm) throws IOException {
 		this.context = context;
-		frame = 0;
 		totalFrames = 0;
 		mirrored = false;
 
@@ -153,7 +134,7 @@ public class Animation {
 		setLoopOutPoint(bvh.lastLoadedLoopOut);
 		setFrameTime(bvh.lastLoadedFrameTime);
 		positionNode=bvh.lastLoadedPositionNode;
-		addKeyFrameAllJoints();
+		addKeyFrameAllJoints(0);
 
 		/* ###IK###
 		ikTree.set(frames);
@@ -165,23 +146,18 @@ public class Animation {
 
 		setLoop(false);
 		setDirty(false);
-
-		currentPlayTime=0.0f;
-		setPlaystate(PlayState.PLAYSTATE_STOPPED);
 	}
 
 	public void loadBVH(String bvhFile) throws IOException {
 		Log.d(TAG, "Animation.loadBVH(" + bvhFile + ")");
 		InputStream limFile = context.getAssets().open(LIMITS_FILE);
 		frames=bvh.animRead(bvhFile, limFile);
-		setFrame(0);
 	}
 
 	public void loadBVH(Reader bvhFile, boolean isAvm) throws IOException {
 		Log.d(TAG, "Animation.loadBVH(" + bvhFile + ")");
 		InputStream limFile = context.getAssets().open(LIMITS_FILE);
 		frames=bvh.animRead(bvhFile, limFile, isAvm);
-		setFrame(0);
 	}
 
 	public void saveBVH(String bvhFile) throws IOException {
@@ -230,58 +206,12 @@ public class Animation {
 		emit.numberOfFrames(num);
 	}
 
-	public int getFrame() {
-		return frame;
-	}
-
-	public void setFrame(int frameNumber) {
-		if(frameNumber>=0 && frameNumber<totalFrames && frame!=frameNumber)
-		{
-			//    	    for (int i=0; i<NUM_IK; i++) {
-			//    	      setIK((IKPartType)i, false);
-			//    	    }
-			frame=frameNumber;
-
-			/* ###IK###
-			for(int i=0;i<NUM_IK;i++)
-			{
-				if(ikOn[i])
-				{
-					solveIK();
-					break;
-				}
-			}
-			 */
-
-			emit.currentFrame(frame);
-			emit.frameChanged();
-		}
-	}
-
 	public void setMirrored(boolean mirror) {
 		mirrored=mirror;
 	}
 
 	public boolean getMirrored() {
 		return mirrored;
-	}
-
-	// get next frame and take care of looping
-	public int stepForward() {
-		if(frames != null) {
-			int nextFrame=(frame+1) % totalFrames;
-
-			if(loop) {
-				if(nextFrame == 0 || nextFrame > loopOutPoint) nextFrame=loopInPoint;
-			} else {
-				// do not wrap to the beginning when not looping
-				if(nextFrame == 0) nextFrame=frame;
-			}
-			setFrame(nextFrame);
-
-			return nextFrame;
-		}
-		return 0;
 	}
 
 	public void setEaseIn(BVHNode node, int frameNum, boolean state) {
@@ -358,6 +288,7 @@ public class Animation {
 		return loopOutPoint;
 	}
 
+/* ###IK###
 	private void applyIK(String name) {
 		BVHNode node=bvh.bvhFindNode(frames,name);
 
@@ -373,10 +304,8 @@ public class Animation {
 			node.ikRot.x=0;
 			node.ikRot.y=0;
 			node.ikRot.z=0;
-			/*
     	      node.frame[frame][i] += node.ikRot[i];
     	      node.ikRot[i] = 0;
-			 */
 			//    	      node.ikOn = false;
 
 			setDirty(true);
@@ -387,7 +316,6 @@ public class Animation {
 		}
 	}
 
-	/* ###IK###
 	private void setIK(IKPartType part, boolean flag) {
 		if(ikOn[part]==flag) return;
 
@@ -525,15 +453,15 @@ public class Animation {
 	}
 	 */
 
-	public void setRotation(BVHNode node, float x, float y, float z) {
-		setRotation(node, new Rotation(x,y,z));
+	public void setRotation(int frame, BVHNode node, float x, float y, float z) {
+		setRotation(frame, node, new Rotation(x,y,z));
 	}
 
-	public void setRotationFromMatrix(BVHNode node, float[] matrix) {
-		setRotation(node, Math3D.toEulerAngles(new Rotation(), matrix, node.channelOrder));
+	public void setRotationFromMatrix(int frame, BVHNode node, float[] matrix) {
+		setRotation(frame, node, Math3D.toEulerAngles(new Rotation(), matrix, node.channelOrder));
 	}
 
-	public void setRotation(BVHNode node, Rotation rot) {
+	public void setRotation(int frame, BVHNode node, Rotation rot) {
 		if (node != null) {
 			//			Log.v(TAG, "Animation.setRotation(" + node.name() + ")");
 
@@ -575,13 +503,13 @@ public class Animation {
 			setDirty(true);
 			// tell timeline that this keyframe has changed (added or changed is the same here)
 			emit.redrawTrack(getPartIndex(node));
-			emit.frameChanged();
+			emit.frameChanged(frame);
 		} else {
 			Log.d(TAG, "Animaiton.setRotation(): node==0!");
 		}
 	}
 
-	public Rotation getRotation(BVHNode node){
+	public Rotation getRotation(int frame, BVHNode node){
 		if(node != null) {
 			return node.frameData(frame).rotation();
 		}
@@ -629,7 +557,7 @@ public class Animation {
 		// return 0; // zero was not one of the options in the C++ enum. 
 	}
 
-	public void setPosition(float x, float y, float z) {
+	public void setPosition(int frame, float x, float y, float z) {
 		/* ###IK###
 		for(int i=0;i<NUM_IK;i++) {
 			if(ikOn[i]) {
@@ -649,10 +577,10 @@ public class Animation {
 		setDirty(true);
 		// tell timeline that this keyframe has changed (added or changed is the same here)
 		emit.redrawTrack(0);
-		emit.frameChanged();
+		emit.frameChanged(frame);
 	}
 
-	public Position getPosition() {
+	public Position getPosition(int frame) {
 		return positionNode.frameData(frame).position();
 	}
 
@@ -679,23 +607,23 @@ public class Animation {
 		return node;
 	}
 
-	private void recursiveAddKeyFrame(BVHNode joint) {
+	private void recursiveAddKeyFrame(int frame, BVHNode joint) {
 		if(joint.type != BVHNodeType.BVH_END)
-			addKeyFrame(joint);
+			addKeyFrame(frame, joint);
 
 		for(int i=0;i<joint.numChildren();i++)
-			recursiveAddKeyFrame(joint.child(i));
+			recursiveAddKeyFrame(frame, joint.child(i));
 
 		setDirty(true);
 	}
 
-	public void addKeyFrameAllJoints() {
-		addKeyFrame(getNode(0));
-		recursiveAddKeyFrame(frames);
+	public void addKeyFrameAllJoints(int frame) {
+		addKeyFrame(frame, getNode(0));
+		recursiveAddKeyFrame(frame, frames);
 	}
 
-	public void addKeyFrame(BVHNode joint) {
-		joint.addKeyframe(frame,getPosition(),getRotation(joint));
+	public void addKeyFrame(int frame, BVHNode joint) {
+		joint.addKeyframe(frame,getPosition(frame),getRotation(frame, joint));
 
 		setEaseIn(joint, frame, Settings.easeIn());
 		setEaseOut(joint, frame, Settings.easeOut());
@@ -703,15 +631,15 @@ public class Animation {
 		setDirty(true);
 
 		emit.redrawTrack(getPartIndex(joint));
-		emit.frameChanged();
+		emit.frameChanged(frame);
 	}
 
-	private boolean isKeyFrameHelper(BVHNode joint) {
+	private boolean isKeyFrameHelper(int frame, BVHNode joint) {
 		if(joint.isKeyframe(frame))
 			return true;
 
 		for (int i = 0; i < joint.numChildren(); i++) {
-			if(isKeyFrameHelper(joint.child(i))) {
+			if(isKeyFrameHelper(frame, joint.child(i))) {
 				return true;
 			}
 		}
@@ -719,9 +647,9 @@ public class Animation {
 		return false;
 	}
 
-	public boolean isKeyFrame(String jointName) {
+	public boolean isKeyFrame(int frame, String jointName) {
 		if(jointName.length() == 0) {
-			return isKeyFrame();
+			return isKeyFrame(frame);
 		} else {
 			BVHNode node=bvh.bvhFindNode(frames,jointName);
 			return node.isKeyframe(frame);
@@ -729,18 +657,18 @@ public class Animation {
 		// Log.d(TAG, "Animation.isKeyFrame('" + jointName + "'): no node found.");
 	}
 
-	public boolean isKeyFrame() {
+	public boolean isKeyFrame(int frame) {
 		if(positionNode.isKeyframe(frame)) return true;
-		return isKeyFrameHelper(frames);
+		return isKeyFrameHelper(frame, frames);
 	}
 
-	public boolean isKeyFrame(int jointNumber, int frame) {
+	private boolean isKeyFrame(int frame, int jointNumber) {
 		final BVHNode joint=getNode(jointNumber);
 		return joint.isKeyframe(frame);
 	}
 
 	// silent = only send signal to timeline
-	public void deleteKeyFrame(BVHNode joint, int frameNum, boolean silent) {
+	public void deleteKeyFrame(int frameNum, BVHNode joint, boolean silent) {
 		// never delete first keyframe
 		if(frameNum != 0) {
 			joint.deleteKeyframe(frameNum);
@@ -748,85 +676,80 @@ public class Animation {
 		}
 
 		// if silent is true then only send a signal to the timeline but not to the animation view
-		if(!silent) emit.frameChanged();
+		if(!silent) emit.frameChanged(frameNum);
 		emit.redrawTrack(getPartIndex(joint));
 	}
 
-	public void deleteKeyFrame(BVHNode joint, int frame) {
-		deleteKeyFrame(joint, frame, false);
+	public void deleteKeyFrame(int frame, BVHNode joint) {
+		deleteKeyFrame(frame, joint, false);
 	}
 
 	// slot
-	public void deleteKeyFrame(int jointNumber, int frameNum) {
-		// frames should always be current frame, but better play safe for future enhancements
-		setFrame(frameNum);
+	public void deleteKeyFrame(int frameNum, int jointNumber) {
 		if(jointNumber > 0) {
 			BVHNode joint=getNode(jointNumber);
-			if(joint.isKeyframe(frameNum)) deleteKeyFrame(joint,frameNum);
+			if(joint.isKeyframe(frameNum)) deleteKeyFrame(frameNum, joint);
 		}
-		else if(isKeyFrame()) deleteKeyFrameAllJoints();
-
-		// tell main class that the keyframe has changed
-		emit.currentFrame(frameNum);
+		else if(isKeyFrame(frameNum)) deleteKeyFrameAllJoints(frameNum);
 	}
 
-	private void recursiveDeleteKeyFrame(BVHNode joint) {
-		deleteKeyFrame(joint,frame);
+	private void recursiveDeleteKeyFrame(int frame, BVHNode joint) {
+		deleteKeyFrame(frame, joint);
 
 		for(int i=0;i<joint.numChildren();i++)
-			recursiveDeleteKeyFrame(joint.child(i));
+			recursiveDeleteKeyFrame(frame, joint.child(i));
 	}
 
-	public void deleteKeyFrameAllJoints() {
+	public void deleteKeyFrameAllJoints(int frame) {
 		// never delete the first keyframe
 		if(frame==0) return;
-		deleteKeyFrame(getNode(0),frame);
-		recursiveDeleteKeyFrame(frames);
+		deleteKeyFrame(frame, getNode(0));
+		recursiveDeleteKeyFrame(frame, frames);
 	}
 
-	public boolean toggleKeyFrame(BVHNode node) {
+	public boolean toggleKeyFrame(int frame, BVHNode node) {
 		//  Log.d(TAG, "Animation.toggleKeyFrame(node): node %ld",(unsigned long) node);
 		if(node == null) {
-			return toggleKeyFrameAllJoints();
+			return toggleKeyFrameAllJoints(frame);
 		} else {
 			if (node.isKeyframe(frame)) {
-				deleteKeyFrame(node,frame);
+				deleteKeyFrame(frame, node);
 				return false;
 			} else {
-				addKeyFrame(node);
+				addKeyFrame(frame, node);
 				return true;
 			}
 		}
 	}
 
 	// returns TRUE if frame is now a keyframe for entire animation, FALSE if not
-	public boolean toggleKeyFrameAllJoints() {
+	public boolean toggleKeyFrameAllJoints(int frame) {
 		if(frame==0)
 			return true;  // first frame will always stay keyframe
 
-		if(isKeyFrame()) {
-			deleteKeyFrameAllJoints();
+		if(isKeyFrame(frame)) {
+			deleteKeyFrameAllJoints(frame);
 			return false;
 		} else {
-			addKeyFrameAllJoints();
+			addKeyFrameAllJoints(frame);
 			return true;
 		}
 	}
 
-	public void cutFrame() {
+	public void cutFrame(int frame) {
 		// copy frame data into copy buffer
-		copyFrame();
+		copyFrame(frame);
 		// always delete frame from all tracks
-		deleteFrame(0,frame);
+		deleteFrame(frame, 0);
 	}
 
-	public void copyFrame() {
+	public void copyFrame(int frame) {
 		bvh.bvhGetFrameData(frames,frame);
 	}
 
-	public void pasteFrame() {
+	public void pasteFrame(int frame) {
 		bvh.bvhSetFrameData(frames,frame);
-		addKeyFrameAllJoints();
+		addKeyFrameAllJoints(frame);
 	}
 
 	private void calcPartMirrors() {
@@ -876,9 +799,6 @@ public class Animation {
 		// make sure we don't drag a trail of mirror keys behind
 		setMirrored(false);
 
-		// set frame pointer to source frame position
-		setFrame(from);
-
 		// get the joint structure
 		BVHNode joint=getNode(jointNumber);
 		final FrameData frameData = joint.frameData(from);
@@ -889,17 +809,15 @@ public class Animation {
 
 		// silently (true) delete key frame if not copy mode
 		// we do copy mode here to avoid code duplication
-		if(!copy) deleteKeyFrame(joint,from,true);
-
-		setFrame(to);
+		if(!copy) deleteKeyFrame(from, joint, true);
 
 		// move rotation or position of the body part
 		if(joint.type == BVHNodeType.BVH_POS) {
 			Position pos=frameData.position();
-			setPosition(pos.x,pos.y,pos.z);
+			setPosition(to, pos.x,pos.y,pos.z);
 		} else {
 			Rotation rot = frameData.rotation();
-			setRotation(joint, rot.x, rot.y, rot.z);
+			setRotation(to, joint, rot.x, rot.y, rot.z);
 		}
 		// only now set ease in/out, because setRotation/setPosition sets to default when the
 		// target position has no keyframe yet
@@ -907,9 +825,6 @@ public class Animation {
 		joint.setEaseOut(to,frameData.easeOut());
 		// now re-enable signals so we get updates on screen
 		blockSignals(false);
-
-		// tell timeline where we are now
-		emit.currentFrame(frame);
 	}
 
 	public void moveKeyFrame(int jointNumber, int from, int to) {
@@ -936,40 +851,39 @@ public class Animation {
 		return bvh.bvhFindNode(frames,getPartName(jointNumber));
 	}
 
-	private void insertFrameHelper(BVHNode joint, int frame) {
+	private void insertFrameHelper(int frame, BVHNode joint) {
 		joint.insertFrame(frame);
 		for(int i=0;i<joint.numChildren();i++)
-			insertFrameHelper(joint.child(i),frame);
+			insertFrameHelper(frame, joint.child(i));
 	}
 
 	// slot
-	public void insertFrame(int track, int pos) {
+	public void insertFrame(int pos, int track) {
 		if(track==-1) {
 			// insert positional frame
 			BVHNode joint = getNode(0);
 			if(joint != null) joint.insertFrame(pos);
 			// insert all rotational frames
-			insertFrameHelper(frames,pos);
+			insertFrameHelper(pos, frames);
 		} else {
 			BVHNode joint=getNode(track);
-			if(joint != null) joint.insertFrame(frame);
+			if(joint != null) joint.insertFrame(pos);
 		}
 		setDirty(true);
-		emit.frameChanged();
 	}
 
 	// recursively remove frames from joint and all its children
-	private void deleteFrameHelper(BVHNode joint, int frame) {
+	private void deleteFrameHelper(int frame, BVHNode joint) {
 		//  Log.d(TAG, "Animation.deleteFrameHelper(joint %s,frame %d)",joint.name().toLatin1().constData(),frame);
 		joint.deleteFrame(frame);
 		for(int i=0;i<joint.numChildren();i++)
-			deleteFrameHelper(joint.child(i),frame);
+			deleteFrameHelper(frame, joint.child(i));
 		emit.redrawTrack(getPartIndex(joint));
 	}
 
 	// delete frame from a joint, if track==0 recursively delete from all joints
 	// slot
-	public void deleteFrame(int track,int pos) {
+	public void deleteFrame(int pos, int track) {
 		//  Log.d(TAG, "Animation.deleteFrame(joint %d,frame %d)",track,frame);
 
 		if(track==-1) {
@@ -977,13 +891,12 @@ public class Animation {
 			BVHNode joint=getNode(0);
 			if(joint != null) joint.deleteFrame(pos);
 			// delete all rotational frames
-			deleteFrameHelper(frames,pos);
+			deleteFrameHelper(pos, frames);
 		} else {
 			BVHNode joint=getNode(track);
 			if(joint != null) joint.deleteFrame(pos);
 		}
 		setDirty(true);
-		emit.frameChanged();
 	}
 
 	private void optimizeHelper(BVHNode joint) {
@@ -1064,63 +977,11 @@ public class Animation {
 		figureType=type;
 	}
 
-	public void nextPlaystate() {
-	}
-
-	public void setPlaystate(PlayState state) {
-		switch(state)
-		{
-		case PLAYSTATE_LOOPING:
-		case PLAYSTATE_PLAYING:
-			timer.sendMessageDelayed(Message.obtain(timer), PLAYBACK_RESOLUTION);
-			break;
-		case PLAYSTATE_STOPPED:
-		default:
-			break;
-		}
-
-		playstate=state;
-	}
-
-	// slot
-	// advances curentPlayTime and sends appropriate currentFrame signals
-	// slot
-	public void playbackTimeout() {
-		//  Log.d(TAG, "Animation.playbackTimeout()");
-
-		currentPlayTime+=PLAYBACK_RESOLUTION/1000.0;
-
-		while(currentPlayTime>=frameTime())
-		{
-			//    	    Log.d(TAG, "Animation.playbackTimeout(%lx): !!! currentPlayTime=%f frameTime=%f",this,currentPlayTime,frameTime);
-			currentPlayTime-=frameTime();
-			stepForward();
-		}
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	/* Qt signals and slots
   public slots:
-    void deleteKeyFrame(int jointNumber,int frame);
-    void insertFrame(int jointNumber,int frame);
-    void deleteFrame(int jointNumber,int frame);
+    void deleteKeyFrame(int frame, int jointNumber);
+    void insertFrame(int frame, int jointNumber);
+    void deleteFrame(int frame, int jointNumber);
 
     // advances curentPlayTime and sends appropriate currentFrame signals
     void playbackTimeout();
@@ -1130,17 +991,15 @@ public class Animation {
 
 	public interface OnAnimationChangeListener {
 		public void numberOfFrames(int num);
-		public void currentFrame(int frame);
-		public void frameChanged();
 		public void redrawTrack(int track);
+		public void frameChanged(int frame);
 		public void animationDirty(boolean state);
 	}
 
 	private class NullListener implements OnAnimationChangeListener {
 		public void numberOfFrames(int num) {}
-		public void currentFrame(int frame) {}
-		public void frameChanged() {}
 		public void redrawTrack(int track) {}
+		public void frameChanged(int frame) {}
 		public void animationDirty(boolean state) {}
 	}
 

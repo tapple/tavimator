@@ -556,7 +556,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 
 	private void updateAnimationsTransforms() {
-		updateFigureTransforms(mView.getSelectedAnimation(), 0);
+		updateFigureTransforms(mView.getSelectedAnimation(), mView.getFrame(), 0);
 		/*
 		for(int index=0; index < mView.getAnimationCount(); index++) {
 			updateFigureTransforms(mView.getAnimationNumber(index), index);
@@ -564,7 +564,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		 */
 	}
 
-	private void updateFigureTransforms(Animation anim, int index) {
+	private void updateFigureTransforms(Animation anim, int frame, int index) {
 		// int figType = anim.getFigureType().ordinal();
 		int figType = 1;
 
@@ -576,12 +576,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		float scale = anim.getAvatarScale();
 		Matrix.scaleM(modelMatrix, 0, scale, scale, scale);
 
-		Position pos = anim.getPosition();
+		Position pos = anim.getPosition(frame);
 		Matrix.translateM(modelMatrix, 0, pos.x, pos.y, pos.z);
 
 		// visual compensation
 		Matrix.translateM(modelMatrix, 0, 0, 2, 0);
-		updatePartTransforms(anim.getFrame(), anim.getMotion(), mView.getJoints(figType), modelMatrix);
+		updatePartTransforms(frame, anim.getMotion(), mView.getJoints(figType), modelMatrix);
 	}
 
 	float[] inverseGlobalParentOrientation = new float[16];

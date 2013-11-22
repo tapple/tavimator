@@ -37,7 +37,7 @@ public class AnimationActivity extends ActionBarActivity {
 		mGLSurfaceView = (AnimationView)findViewById(R.id.gl_surface_view);
 		mGLSurfaceView.initializeTouchDispatcher();
 
-		((AnimationTimeline)findViewById(R.id.timeline)).setOnValueChangedListener(mGLSurfaceView);
+		((AnimationTimeline)findViewById(R.id.timeline)).setPlayback(mGLSurfaceView.getPlayback());
 	}
 
 	@Override
