@@ -539,7 +539,7 @@ public class BVHNode {
 		Integer[] keys=keyframeList();
 
 		// past the end? return -1
-		if(frame>(int) keys[keyframes.size()-1])
+		if(frame>=(int) keys[keyframes.size()-1])
 			return -1;
 
 		// find next key
