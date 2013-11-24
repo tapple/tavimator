@@ -31,6 +31,8 @@ public class Pointer {
 
 	public float velocityX;
 	public float velocityY;
+	
+	public static enum VelocityType {perSecond, perFrame};
 
 	public Pointer(PointerGroup group) {
 		this.group = group;
@@ -96,5 +98,21 @@ public class Pointer {
 	public boolean shouldFling(float minFlingVelocity) {
 		return  velocityX > minFlingVelocity ||
 				velocityY > minFlingVelocity;
+	}
+	
+	public float vx(VelocityType type) {
+		switch (type) {
+		case perSecond: return velocityX;
+		case perFrame: return dx;
+		}
+		return dx;
+	}
+	
+	public float vy(VelocityType type) {
+		switch (type) {
+		case perSecond: return velocityY;
+		case perFrame: return dy;
+		}
+		return dy;
 	}
 }

@@ -1,6 +1,6 @@
 package org.tavatar.tavimator;
 
-public interface AnimationOneFingerDragHandler extends AnimationTouchHandler {
+public interface AnimationDragHandler extends AnimationTouchHandler {
 	/**
 	 * user moved her finger to x, y. She moved her finger dx, dy pixels since the last call
 	 * 
@@ -9,7 +9,7 @@ public interface AnimationOneFingerDragHandler extends AnimationTouchHandler {
 	 * @param dx
 	 * @param dy
 	 */
-	public void onOneFingerMove(int x, int y, int dx, int dy);
+	public void onMove(PointerGroup pointers);
 
 	/**
 	 * user lifted her finger at x, y, while it was moving at vx, vy pixels per second
@@ -19,5 +19,5 @@ public interface AnimationOneFingerDragHandler extends AnimationTouchHandler {
 	 * @param vx
 	 * @param vy
 	 */
-	public void onOneFingerFling(int x, int y, float vx, float vy);
+	public void onFling(PointerGroup pointers);
 }

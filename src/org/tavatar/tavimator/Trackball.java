@@ -10,9 +10,42 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Scroller;
 
-public class TwoFingerTrackball {
+public class Trackball {
+	
+	/**
+	 * Implement this interface to have your orientation be updated with the trackball. All methods will be called from the render thread only
+	 * @author tapple
+	 *
+	 */
+	public interface UpdateListener {
+		
+		/**
+		 * Answer an orientation as a 4x4 matrix. This will be called once from
+		 * the UI thread during initialization, then subsequently only from
+		 * 
+		 * @return a pointer to a 4x4 matrix
+		 */
+		public float[] getOrientation();
+		
+		/**
+		 * Set the orientation for this object. This method is guaranteed to be
+		 * called after every call to getOrientation(), except the first time
+		 * 
+		 * @param orientation
+		 *            The new orientation as a 4x4 matrix. This is guaranteed to
+		 *            be the same array as was returned by getOrientation. It will have been modified
+		 */
+		public void setOrientation(float[] orientation);
+		
+		/**
+		 * 
+		 * Zoom in or out
+		 * @param a zoom fraction. 1 means no change. Less than one: zoom in. Greater than 1: zoom out. Strictly positive
+		 */ 
+		 public void zoomBy(float fraction);
+	}
 
-	private static String TAG = "TwoFingerTrackball";
+	private static String TAG = "Trackball";
 
 	private Scroller mScroller;
 
@@ -21,11 +54,6 @@ public class TwoFingerTrackball {
 	 * translation
 	 */
 	private float[] orientation = new float[16];
-
-	private float distance = 50;
-
-	private float minDistance = 10f;
-	private float maxDistance = 100f;
 
 	/**
 	 * A transform from camera coordinates to my local coordinates. Used for
@@ -58,8 +86,8 @@ public class TwoFingerTrackball {
 	private int prevFlingX;
 	private int prevFlingY;
 	private long prevZoomTime;
-
-	private float mDensity = 1.0f;
+	
+	private UpdateListener listener;
 
 	private Context mContext;
 
@@ -83,61 +111,6 @@ public class TwoFingerTrackball {
 		return ans;
 	}
 
-	/**
-	 * Converts touch data into an angular velocity vector, in degrees per unit
-	 * time. The angular velocity vector will be in camera-local coordinates.
-	 * Data is provided in screen coordinates (pixels starting at zero in the
-	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
-	 * frame, or whatever
-	 * 
-	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for OpenGL)
-	 * @param dx x component of the velocity vector, in pixels per unit time
-	 * @param dy y component of the velocity vector, in pixels per unit time
-	 */
-	public void oneFingerDragToAngularVelocity(float[] angularVelocity, float dx, float dy) {
-		angularVelocity[0] = dy / mDensity / 2f;
-		angularVelocity[1] = dx / mDensity / 2f;
-		angularVelocity[2] = 0.0f;
-		angularVelocity[3] = 1.0f;
-	}
-
-	/**
-	 * Converts touch data into an angular velocity vector, in degrees per unit
-	 * time. The angular velocity vector will be in camera-local coordinates.
-	 * Data is provided in screen coordinates (pixels starting at zero in the
-	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
-	 * frame, or whatever
-	 * 
-	 * @param angularVelocity The computed angular velocity vector is stored here (length 3 + 1 extra for zoom factor)
-	 * @param x1 x position of the first finger
-	 * @param y1 y position of the first finger
-	 * @param dx1 x component of the first finger velocity vector, in pixels per unit time
-	 * @param dy1 y component of the first finger velocity vector, in pixels per unit time
-	 * @param x2 x position of the second finger
-	 * @param y2 y position of the second finger
-	 * @param dx2 x component of the second finger velocity vector, in pixels per unit time
-	 * @param dy2 y component of the second finger velocity vector, in pixels per unit time
-	 */
-	public void twoFingerDragToAngularVelocity(float[] angularVelocity, int x1, int y1, float dx1, float dy1, int x2, int y2, float dx2, float dy2) {
-		// mathematically, r and v should both be divided by
-		// 2, but it ends up canceling out (radius is half
-		// the distance, velocity is the average of the two
-		// measurements, one of which is inverted)
-		int rx = x2-x1; // radius vector, x component
-		int ry = y2-y1; // radius vector, y component
-		int r2 = rx*rx + ry*ry; // radius squared
-		float vx = dx2-dx1; // velocity vector, x component
-		float vy = dy2-dy1; // velocity vector, y component
-		float projection = (rx*vx + ry*vy) / r2; // projection of v onto r, as a fraction of r
-		float vxPerp = vx - projection * rx; // tangential velocity vector, x component
-		float vyPerp = vy - projection * ry; // tangential velocity vector, y component
-
-		angularVelocity[0] = (dy1+dy2) / mDensity / 4f;
-		angularVelocity[1] = (dx1+dx2) / mDensity / 4f;
-		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
-		angularVelocity[3] = (float)Math.exp(projection);
-	}
-
 	public void angularVelocityToRotationMatrix(float[] matrix, float[] angularVelocity) {
 		Matrix.setIdentityM(matrix, 0);
 		Matrix.rotateM(matrix, 0, angularVelocity[0], 1, 0, 0);
@@ -145,7 +118,7 @@ public class TwoFingerTrackball {
 		Matrix.rotateM(matrix, 0, angularVelocity[2], 0, 0, 1);
 	}
 
-	public TwoFingerTrackball(Context context) {
+	public Trackball(Context context) {
 		mContext = context;
 
 		Matrix.setIdentityM(orientation, 0);
@@ -153,10 +126,6 @@ public class TwoFingerTrackball {
 		Matrix.setIdentityM(gyroToTrackball, 0);
 
 		mScroller = new Scroller(mContext);
-
-		final DisplayMetrics displayMetrics = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-		this.mDensity = displayMetrics.density;
 	}
 
 	public WindowManager getWindowManager() {
@@ -169,10 +138,10 @@ public class TwoFingerTrackball {
 		Matrix.setLookAtM(orientation, 0, eyeX, eyeY, eyeZ, lookX, lookY,
 				lookZ, upX, upY, upZ);
 		Matrix.translateM(orientation, 0, eyeX, eyeY, eyeZ);
-		distance = Matrix.length(
-				lookX - eyeX,
-				lookY - eyeY,
-				lookZ - eyeZ);
+	}
+	
+	public void addUpdateListener(UpdateListener listener) {
+		this.listener = listener;
 	}
 
 	public synchronized float[] getOrientation(float[] dest) {
@@ -197,14 +166,6 @@ public class TwoFingerTrackball {
 	public synchronized float[] rotateMatrix (float[] dest, float[] lhs) {
 		Matrix.multiplyMM(dest, 0, lhs, 0, orientation, 0);
 		return dest;
-	}
-
-	public synchronized float getDistance() {
-		return distance;
-	}
-
-	public synchronized void setDistance(float distance) {
-		this.distance = distance;
 	}
 
 	public float[] getCameraToTrackballOrientation() {
@@ -275,8 +236,10 @@ public class TwoFingerTrackball {
 			return;
 
 		rotateAboutCameraAxis(x - prevFlingX, flingAxis);
-		distance /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
-		distance /= (float)Math.pow(zoomRate, (time - prevZoomTime) / 1000.0);
+		float zoomDelta = 1.0f;
+		zoomDelta /= (float)Math.exp((y - prevFlingY) / ZOOM_FACTOR);
+		zoomDelta /= (float)Math.pow(zoomRate, (time - prevZoomTime) / 1000.0);
+		listener.zoomBy(zoomDelta);
 		prevFlingX = x;
 		prevFlingY = y;
 		prevZoomTime = time;
@@ -288,21 +251,21 @@ public class TwoFingerTrackball {
 		updateGyroOffset();
 	}
 
-	public AnimationOneFingerDragHandler getOneFingerDragHandler(int nameId, int shortNameId) {
-		class OneFingerDragHandler extends AbsTouchHandler implements AnimationOneFingerDragHandler {
-			public OneFingerDragHandler(Context context, int nameId, int shortNameId) {
+	public AnimationDragHandler getDragHandler(int nameId, int shortNameId) {
+		class DragHandler extends AbsTouchHandler implements AnimationDragHandler {
+			public DragHandler(Context context, int nameId, int shortNameId) {
 				super(context, nameId, shortNameId);
 			}
 
 			@Override
-			public void onOneFingerMove(int x, int y, int dx, int dy) {
-				oneFingerDragToAngularVelocity(scrollVelocity, dx, dy);
+			public void onMove(PointerGroup pointers) {
+				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perFrame);
 				scrollBy(scrollVelocity);
 			}
 
 			@Override
-			public void onOneFingerFling(int x, int y, float vx, float vy) {
-				oneFingerDragToAngularVelocity(scrollVelocity, vx, vy);
+			public void onFling(PointerGroup pointers) {
+				pointers.getAngularVelocity(scrollVelocity, Pointer.VelocityType.perSecond);
 				fling(scrollVelocity);
 			}
 
@@ -311,33 +274,7 @@ public class TwoFingerTrackball {
 				stopFling();
 			}
 		}
-		return new OneFingerDragHandler(mContext, nameId, shortNameId);
-	}
-
-	public AnimationTwoFingerDragHandler getTwoFingerDragHandler(int nameId, int shortNameId) {
-		class TwoFingerDragHandler extends AbsTouchHandler implements AnimationTwoFingerDragHandler {
-			public TwoFingerDragHandler(Context context, int nameId, int shortNameId) {
-				super(context, nameId, shortNameId);
-			}
-
-			@Override
-			public void onTwoFingerMove(int x1, int y1, int dx1, int dy1, int x2, int y2, int dx2, int dy2) {
-				twoFingerDragToAngularVelocity(scrollVelocity, x1, y1, dx1, dy1, x2, y2, dx2, dy2);
-				scrollBy(scrollVelocity);
-			}
-
-			@Override
-			public void onTwoFingerFling(int x1, int y1, float vx1, float vy1, int x2, int y2, float vx2, float vy2) {
-				twoFingerDragToAngularVelocity(scrollVelocity, x1, y1, vx1, vy1, x2, y2, vx2, vy2);
-				fling(scrollVelocity);
-			}
-
-			@Override
-			public void onCancel() {
-				stopFling();
-			}
-		}
-		return new TwoFingerDragHandler(mContext, nameId, shortNameId);
+		return new DragHandler(mContext, nameId, shortNameId);
 	}
 
 	private synchronized void scrollBy(float[] angularVelocity) {
@@ -346,7 +283,7 @@ public class TwoFingerTrackball {
 		rotateAboutCameraAxis(
 				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
 				scrollAxis);
-		distance /= angularVelocity[3];
+		listener.zoomBy(1.0f / angularVelocity[3]);
 	}
 
 	private synchronized void rotateAboutCameraAxis(float angle, float[] axis) {

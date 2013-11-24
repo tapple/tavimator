@@ -27,7 +27,8 @@ public class AnimationView extends GLSurfaceView {
 	public final static int PICK_PART_RESULT = 932023;
 
 	private AnimationRenderer renderer;
-	private AnimationTouchDispatcher touchDispatcher;
+	private AnimationPartSelector tapHandler;
+	private AnimationDragHandler cameraHandler;
 
 	private static final String TAG = "AnimationView";
 
@@ -53,8 +54,6 @@ public class AnimationView extends GLSurfaceView {
 	//    private int propSelected;  // needs an own variable, because we will drag the handle, not the prop
 	//    private int propDragging;  // holds the actual drag handle id
 
-	private TwoFingerTrackball selectionTrackball;
-
 	public AnimationView(Context context) {
 		super(context);
 		initialize();
@@ -79,8 +78,6 @@ public class AnimationView extends GLSurfaceView {
 
 	private void initialize() {
 		if (isInEditMode()) return;
-
-		selectionTrackball = new TwoFingerTrackball(getContext());
 
 		bvh = new BVH();
 		AssetManager assets = getContext().getAssets();
@@ -127,16 +124,9 @@ public class AnimationView extends GLSurfaceView {
 
 	// this code probably would be more appropriate in the activity
 	public void initializeTouchDispatcher() {
-		touchDispatcher = new AnimationTouchDispatcher(getContext());
-		touchDispatcher.setTapHandler(new AnimationPartSelector(this));
-		touchDispatcher.setOneFingerCameraHandler(renderer.getCamera().getTrackball().getOneFingerDragHandler(
-				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.setOneFingerPartHandler(selectionTrackball.getOneFingerDragHandler(
-				R.string.one_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
-		touchDispatcher.setTwoFingerCameraHandler(renderer.getCamera().getTrackball().getTwoFingerDragHandler(
-				R.string.two_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera));
-		touchDispatcher.setTwoFingerPartHandler(selectionTrackball.getTwoFingerDragHandler(
-				R.string.two_finger_tool_name_rotate_bone, R.string.short_tool_name_rotate_bone));
+		tapHandler = new AnimationPartSelector(this);
+		cameraHandler = renderer.getCamera().getTrackball().getDragHandler(
+				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera);
 	}
 
 	public AnimationRenderer getRenderer() {
@@ -147,7 +137,7 @@ public class AnimationView extends GLSurfaceView {
 		return getRenderer().getCamera();
 	}
 
-	public TwoFingerTrackball getCameraTrackball() {
+	public Trackball getCameraTrackball() {
 		return getCamera().getTrackball();
 	}
 
@@ -268,10 +258,10 @@ public class AnimationView extends GLSurfaceView {
 			return;
 		}
 
-		float[] newOrientation = new float[16];
-		Matrix.setIdentityM(newOrientation, 0);
-		node.rotateMatrixForFrame(newOrientation, getFrame());
-		selectionTrackball.setOrientation(newOrientation);
+//		float[] newOrientation = new float[16];
+//		Matrix.setIdentityM(newOrientation, 0);
+//		node.rotateMatrixForFrame(newOrientation, animation.getFrame());
+//		selectionTrackball.setOrientation(newOrientation);
 
 		Log.d(TAG, "AnimationView::selectPart(node): " + node.name());
 		// make sure no prop is selected anymore
@@ -304,14 +294,14 @@ public class AnimationView extends GLSurfaceView {
     }
 	 */
 
-	public TwoFingerTrackball getSelectionTrackball() {
-		return selectionTrackball;
-	}
-	
 	public int getFrame() {
 		return playback.getNearestFrame(playback.getTime());
 	}
 
+	// Phase one of selection rotation computing. Save the trackball rotation
+	// into the relative rotation of the selection for this frame. Absolute
+	// rotations have not been computed yet for this frame
+/*
 	public void updateSelectionOrientation() {
 		BVHNode selection = getSelectedPart();
 		if (selection == null) return;
@@ -319,7 +309,12 @@ public class AnimationView extends GLSurfaceView {
 		float[] newOrientation = new float[16];
 		animation.setRotationFromMatrix(getFrame(), selection, selectionTrackball.getOrientation(newOrientation));
 	}
+//*/
 
+	// Phase two of selection rotation computing. Orient the selection trackball
+	// relative to the camera trackball so that it knows which direction touch
+	// events are coming from
+/*
 	public void updateSelectionTouchOrientation() {
 		BVHNode selection = getSelectedPart();
 		if (selection == null) return;
@@ -334,6 +329,7 @@ public class AnimationView extends GLSurfaceView {
 				renderer.inverseGlobalParentOrientation, 0,
 				cameraTrackballOrientation, 0);
 	}
+//*/
 
 	public void repaint() {
 		// do nothing
@@ -417,26 +413,20 @@ public class AnimationView extends GLSurfaceView {
 			 * If being flinged and user touches, stop the fling. isFinished
 			 * will be false if being flinged.
 			 */
-			touchDispatcher.onOneFingerMoveCancel();
-			touchDispatcher.onFingerDown(pointers.get(0).x, pointers.get(0).y);
+			cameraHandler.onCancel();
+			tapHandler.endGyroGrab();
+			tapHandler.onFingerDown(pointers);
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
 			if (!pointers.isDragging()) {
 				if (pointers.shouldStartDrag()) pointers.startDrag();
 				if (pointers.isDragging()) {
-					touchDispatcher.onTapCancel();
+					tapHandler.onCancel();
 				}
 			}
 			if (pointers.isDragging()) {
-				if (pointers.size() == 1) {
-					touchDispatcher.onOneFingerMove(
-							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy);
-				} else {
-					touchDispatcher.onTwoFingerMove(
-							pointers.get(0).x, pointers.get(0).y, pointers.get(0).dx, pointers.get(0).dy,
-							pointers.get(1).x, pointers.get(1).y, pointers.get(1).dx, pointers.get(1).dy);
-				}
+				cameraHandler.onMove(pointers);
 			}
 			break;
 		case MotionEvent.ACTION_UP: // the last finger was lifted
@@ -444,24 +434,26 @@ public class AnimationView extends GLSurfaceView {
 				pointers.computeCurrentVelocity();
 
 				if (pointers.shouldFling()) {
-					touchDispatcher.onOneFingerFling(pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY);
+					cameraHandler.onFling(pointers);
 				} else {
-					touchDispatcher.onOneFingerMoveCancel();
+					cameraHandler.onCancel();
 				}
 
+				tapHandler.endGyroGrab();
 				pointers.endDrag();
 			} else /* if (second finger wasn't just released and we aren't doing a 2 finger fling) */ { // end of tap
-				touchDispatcher.onTap(pointers.get(0).x, pointers.get(0).x);
+				tapHandler.onTap(pointers);
 				pointers.endDrag();
 			}
 			pointers.clearUpPointers();
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			if (!pointers.isDragging()) {
-				touchDispatcher.onTapCancel();
+				tapHandler.onCancel();
 			} else {
-				touchDispatcher.onOneFingerMoveCancel();
+				cameraHandler.onCancel();
 			}
+			tapHandler.endGyroGrab();
 			pointers.endDrag();
 			break;
 		case MotionEvent.ACTION_POINTER_DOWN: {
@@ -473,13 +465,12 @@ public class AnimationView extends GLSurfaceView {
 					pointers.computeCurrentVelocity();
 
 					if (pointers.shouldFling()) {
-						touchDispatcher.onTwoFingerFling(
-								pointers.get(0).x, pointers.get(0).y, pointers.get(0).velocityX, pointers.get(0).velocityY,
-								pointers.get(1).x, pointers.get(1).y, pointers.get(1).velocityX, pointers.get(1).velocityY);
+						cameraHandler.onFling(pointers);
 					} else {
-						touchDispatcher.onTwoFingerMoveCancel();
+						cameraHandler.onCancel();
 					}
 
+					tapHandler.endGyroGrab();
 					pointers.endDrag();
 				}
 			}

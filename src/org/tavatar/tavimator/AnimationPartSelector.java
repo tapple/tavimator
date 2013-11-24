@@ -40,14 +40,14 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	}
 
 	@Override
-	public void onFingerDown(int x, int y) {
-		view.pickPart(x, y, pickResultHandler);
+	public void onFingerDown(PointerGroup pointers) {
+		view.pickPart(pointers.last().x, pointers.last().y, pickResultHandler);
 		isPickResultReady = false;
 		status = TapStatus.DOWN;
 	}
 
 	@Override
-	public void onTap(int x, int y) {
+	public void onTap(PointerGroup pointers) {
 		status = TapStatus.FINISHED;
 		update();
 	}
@@ -100,10 +100,6 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 	}
 
 	public void endGyroGrab() {
-		if (pickResult < 0) {
-			view.getCameraTrackball().trackGyroscope(null, false);
-		} else {
-			view.getSelectionTrackball().trackGyroscope(null, false);
-		}
+		view.getCameraTrackball().trackGyroscope(null, false);
 	}
 }
