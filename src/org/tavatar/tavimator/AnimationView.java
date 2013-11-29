@@ -89,6 +89,7 @@ public class AnimationView extends GLSurfaceView {
 			setAnimation(new Animation(getContext(), bvh, assets.open("data/avatar_dance1.bvh"), false));
 			playback = new PlaybackController(getContext());
 			playback.setAnimation(animation);
+			playback.setSnapToFrames(true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
