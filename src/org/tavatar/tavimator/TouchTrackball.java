@@ -10,7 +10,7 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Scroller;
 
-public class Trackball {
+public class TouchTrackball {
 	
 	/**
 	 * Implement this interface to have your orientation be updated with the trackball. All methods will be called from the render thread only
@@ -118,7 +118,7 @@ public class Trackball {
 		Matrix.rotateM(matrix, 0, angularVelocity[2], 0, 0, 1);
 	}
 
-	public Trackball(Context context) {
+	public TouchTrackball(Context context) {
 		mContext = context;
 
 		Matrix.setIdentityM(orientation, 0);

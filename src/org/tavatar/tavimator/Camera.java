@@ -22,7 +22,7 @@ import android.view.animation.Interpolator;
  * baseDeviceOrientation: the orientation of the phone at which the camera is at its base orientation
  */
 
-public class Camera implements Trackball.UpdateListener {
+public class Camera implements TouchTrackball.UpdateListener {
 	private static final String TAG = "Camera";
 
 	/**
@@ -59,7 +59,7 @@ public class Camera implements Trackball.UpdateListener {
 	/**
 	 * Trackball that keeps track of orientation set by touch
 	 */
-	private Trackball trackball;
+	private TouchTrackball trackball;
 
 	/**
 	 * Gyroscope that keeps track of orientation set by device orientation
@@ -67,7 +67,7 @@ public class Camera implements Trackball.UpdateListener {
 	private Gyroscope gyroscope;
 
 	public Camera(Context context) {
-		trackball = new Trackball(context);
+		trackball = new TouchTrackball(context);
 		trackball.addUpdateListener(this);
 		gyroscope = new Gyroscope(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
@@ -157,7 +157,7 @@ public class Camera implements Trackball.UpdateListener {
 		return viewMatrix;
 	}
 
-	public Trackball getTrackball() {
+	public TouchTrackball getTrackball() {
 		return trackball;
 	}
 
