@@ -138,7 +138,7 @@ public class AnimationView extends GLSurfaceView {
 		return getRenderer().getCamera();
 	}
 
-	public TouchTrackball getCameraTrackball() {
+	public Trackball getCameraTrackball() {
 		return getCamera().getTrackball();
 	}
 
