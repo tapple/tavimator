@@ -1,5 +1,7 @@
 package org.tavatar.tavimator;
 
+import java.util.List;
+
 import org.tavatar.tavimator.Trackball.UpdateListener;
 
 import android.content.Context;
@@ -12,6 +14,48 @@ import android.widget.Scroller;
 public class Trackball {
 	private static final String TAG = "Trackball";
 	static final float ZOOM_FACTOR = 100.0f;
+	
+	private Trackball parent;
+	private List<Trackball> children;
+
+	protected Scroller mScroller;
+	
+	/**
+	 * The global orientation matrix this frame. Should contain only orientation; no scale or
+	 * translation. Updated each frame
+	 */
+	protected float[] orientation = new float[16];
+	
+	
+	protected float[] gyroToTrackball = new float[16];
+	private float[] trackballToGyro = new float[16];
+	/**
+	 * The rotation that happened since the last frame
+	 */
+	private float[] localFrameRotation = new float[16];
+	protected float[] globalFrameRotation = new float[16];
+	private float[] newOrientation = new float[16];
+	private Gyroscope trackingGyroscope = null;
+	private float[] gyroOffset = new float[16];
+	private float[] localGyroOrientation = new float[16];
+	private float[] inverseLocalGyroOrientation = new float[16];
+	private boolean invertGyro = false;
+
+	
+	protected float[] scrollVelocity = new float[4];
+	protected float[] scrollAxis = new float[4];
+	protected float[] flingAxis = new float[4];
+	private float zoomRate = 1.0f;
+	protected int prevFlingX;
+	protected int prevFlingY;
+	private long prevZoomTime;
+	protected UpdateListener listener;
+	/**
+	 * A transform from camera coordinates to my local coordinates. Used for
+	 * touch processing
+	 */
+	protected float[] cameraToTrackball = new float[16];
+	protected Context mContext;
 
 	/**
 	 * Implement this interface to have your orientation be updated with the trackball. All methods will be called from the render thread only
@@ -45,40 +89,6 @@ public class Trackball {
 		 */
 		 public void zoomBy(float fraction);
 	}
-
-	protected Scroller mScroller;
-	/**
-	 * The base orientation matrix. Should contain only orientation; no scale or
-	 * translation
-	 */
-	protected float[] orientation = new float[16];
-	protected float[] gyroToTrackball = new float[16];
-	private float[] trackballToGyro = new float[16];
-	/**
-	 * The rotation that happened since the last frame
-	 */
-	private float[] localFrameRotation = new float[16];
-	protected float[] globalFrameRotation = new float[16];
-	private float[] newOrientation = new float[16];
-	protected float[] scrollVelocity = new float[4];
-	protected float[] scrollAxis = new float[4];
-	protected float[] flingAxis = new float[4];
-	private float zoomRate = 1.0f;
-	private Gyroscope trackingGyroscope = null;
-	private float[] gyroOffset = new float[16];
-	private float[] localGyroOrientation = new float[16];
-	private float[] inverseLocalGyroOrientation = new float[16];
-	private boolean invertGyro = false;
-	protected int prevFlingX;
-	protected int prevFlingY;
-	private long prevZoomTime;
-	protected UpdateListener listener;
-	/**
-	 * A transform from camera coordinates to my local coordinates. Used for
-	 * touch processing
-	 */
-	protected float[] cameraToTrackball = new float[16];
-	protected Context mContext;
 
 	public Trackball(Context context) {
 		mContext = context;
@@ -241,6 +251,7 @@ public class Trackball {
 		updateGyroOffset();
 	}
 
+/*
 	public float[] getGyroToTrackball() {
 		return gyroToTrackball;
 	}
@@ -248,6 +259,7 @@ public class Trackball {
 	public void setGyroToTrackball(float[] gyroToTrackball) {
 		this.gyroToTrackball = gyroToTrackball;
 	}
+*/
 
 	public float[] getCameraToTrackballOrientation() {
 		return cameraToTrackball;
