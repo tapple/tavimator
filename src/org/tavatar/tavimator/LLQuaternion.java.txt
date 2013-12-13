@@ -1,0 +1,1414 @@
+package org.tavatar.tavimator;
+
+/** 
+ * @file llquaternion.h
+ * @brief LLQuaternion class header file.
+ *
+ * $LicenseInfo:firstyear=2000license=viewerlgpl$
+ * Second Life Viewer Source Code
+ * Copyright (C) 2010, Linden Research, Inc.
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation;
+ * version 2.1 of the License only.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
+ * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
+ * $/LicenseInfo$
+ */
+
+//NOTA BENE: Quaternion code is written assuming Unit Quaternions!!!!
+//Moreover, it is written assuming that all vectors and matricies
+//passed as arguments are normalized and unitary respectively.
+//VERY VERY VERY VERY BAD THINGS will happen if these assumptions fail.
+
+// Some notes about Quaternions
+
+// What is a Quaternion?
+// ---------------------
+// A quaternion is a point in 4-dimensional complex space.
+// Q = { Qx, Qy, Qz, Qw }
+// 
+//
+// Why Quaternions?
+// ----------------
+// The set of quaternions that make up the the 4-D unit sphere 
+// can be mapped to the set of all rotations in 3-D space.  Sometimes
+// it is easier to describe/manipulate rotations in quaternion space
+// than rotation-matrix space.
+//
+//
+// How Quaternions?
+// ----------------
+// In order to take advantage of quaternions we need to know how to
+// go from rotation-matricies to quaternions and back.  We also have
+// to agree what variety of rotations we're generating.
+// 
+// Consider the equation...   v' = v * R 
+//
+// There are two ways to think about rotations of vectors.
+// 1) v' is the same vector in a different reference frame
+// 2) v' is a new vector in the same reference frame
+//
+// bookmark -- which way are we using?
+// 
+// 
+// Quaternion from Angle-Axis:
+// ---------------------------
+// Suppose we wanted to represent a rotation of some angle (theta) 
+// about some axis ({Ax, Ay, Az})...
+//
+// axis of rotation = {Ax, Ay, Az} 
+// angle_of_rotation = theta
+//
+// s = sin(0.5 * theta)
+// c = cos(0.5 * theta)
+// Q = { s * Ax, s * Ay, s * Az, c }
+//
+//
+// 3x3 Matrix from Quaternion
+// --------------------------
+//
+//     |                                                                    |
+//     | 1 - 2 * (y^2 + z^2)   2 * (x * y + z * w)     2 * (y * w - x * z)  |
+//     |                                                                    |
+// M = | 2 * (x * y - z * w)   1 - 2 * (x^2 + z^2)     2 * (y * z + x * w)  |
+//     |                                                                    |
+//     | 2 * (x * z + y * w)   2 * (y * z - x * w)     1 - 2 * (x^2 + y^2)  |
+//     |                                                                    |
+
+/** 
+ * @file llquaternion.cpp
+ * @brief LLQuaternion class implementation.
+ *
+ * $LicenseInfo:firstyear=2000license=viewerlgpl$
+ * Second Life Viewer Source Code
+ * Copyright (C) 2010, Linden Research, Inc.
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation;
+ * version 2.1 of the License only.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
+ * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
+ * $/LicenseInfo$
+ */
+
+
+public class LLQuaternion {
+	
+	public final int	VX			= 0;
+	public final int	VY			= 1;
+	public final int	VZ			= 2;
+	public final int	VW			= 3;
+	public final int	VS			= 3;
+
+
+
+	static final int LENGTHOFQUAT = 4;
+
+	public float[] mQ = new float[LENGTHOFQUAT];
+
+	public static final LLQuaternion DEFAULT;
+
+	// Constructors
+
+	// Initializes Quaternion to (0,0,0,1)
+	public LLQuaternion() {
+		mQ[VX] = 0.f;
+		mQ[VY] = 0.f;
+		mQ[VZ] = 0.f;
+		mQ[VS] = 1.f;
+	}
+
+	// Initializes Quaternion from Matrix4
+	public explicit LLQuaternion(final LLMatrix4 mat) {
+		*this = mat.quaternion();
+		normalize();
+	}
+
+	// Initializes Quaternion from Matrix3
+	public explicit LLQuaternion(final LLMatrix3 mat) {
+		*this = mat.quaternion();
+		normalize();
+	}
+
+	// Initializes Quaternion to normalize(x, y, z, w)
+	public LLQuaternion(float x, float y, float z, float w) {
+		mQ[VX] = x;
+		mQ[VY] = y;
+		mQ[VZ] = z;
+		mQ[VS] = w;
+	
+		//RN: don't normalize this case as its used mainly for temporaries during calculations
+		//normalize();
+		/*
+		float mag = sqrtf(mQ[VX]*mQ[VX] + mQ[VY]*mQ[VY] + mQ[VZ]*mQ[VZ] + mQ[VS]*mQ[VS]);
+		mag -= 1.f;
+		mag = fabs(mag);
+		llassert(mag < 10.f*FP_MAG_THRESHOLD);
+		*/
+	}
+
+	// Initializes Quaternion to axis_angle2quat(angle, vec)
+	public LLQuaternion(float angle, final LLVector4 vec) {
+		LLVector3 v(vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
+		v.normalize();
+	
+		float c, s;
+		c = cosf(angle*0.5f);
+		s = sinf(angle*0.5f);
+	
+		mQ[VX] = v.mV[VX] * s;
+		mQ[VY] = v.mV[VY] * s;
+		mQ[VZ] = v.mV[VZ] * s;
+		mQ[VW] = c;
+		normalize();
+	}
+
+	// Initializes Quaternion to axis_angle2quat(angle, vec)
+	public LLQuaternion(float angle, final LLVector3 vec) {
+		LLVector3 v = new LLVector3(vec);
+		v.normalize();
+	
+		float c, s;
+		c = cosf(angle*0.5f);
+		s = sinf(angle*0.5f);
+	
+		mQ[VX] = v.mV[VX] * s;
+		mQ[VY] = v.mV[VY] * s;
+		mQ[VZ] = v.mV[VZ] * s;
+		mQ[VW] = c;
+		normalize();
+	}
+
+	// Initializes Quaternion to normalize(x, y, z, w)
+	public LLQuaternion(float[] q) {
+		mQ[VX] = q[VX];
+		mQ[VY] = q[VY];
+		mQ[VZ] = q[VZ];
+		mQ[VS] = q[VW];
+	
+		normalize();
+		/*
+		float mag = sqrtf(mQ[VX]*mQ[VX] + mQ[VY]*mQ[VY] + mQ[VZ]*mQ[VZ] + mQ[VS]*mQ[VS]);
+		mag -= 1.f;
+		mag = fabs(mag);
+		llassert(mag < FP_MAG_THRESHOLD);
+		*/
+	}
+
+	// Initializes Quaternion from Matrix3 = [x_axis ; y_axis ; z_axis]
+	public LLQuaternion(final LLVector3 x_axis,
+				 final LLVector3 y_axis,
+				 final LLVector3 z_axis) {
+		LLMatrix3 mat;
+		mat.setRows(x_axis, y_axis, z_axis);
+		*this = mat.quaternion();
+		normalize();
+	}
+
+	public boolean isIdentity() {
+		return 
+			( mQ[VX] == 0.f ) &
+			( mQ[VY] == 0.f ) &
+			( mQ[VZ] == 0.f ) &
+			( mQ[VS] == 1.f );
+	}
+	
+	public boolean isNotIdentity() {
+		return 
+			( mQ[VX] != 0.f ) ||
+			( mQ[VY] != 0.f ) ||
+			( mQ[VZ] != 0.f ) ||
+			( mQ[VS] != 1.f );
+	}
+
+	// checks to see if all values of LLQuaternion are finite
+	// checker
+	public boolean isFinite() {
+		return (llfinite(mQ[VX]) & llfinite(mQ[VY]) & llfinite(mQ[VZ]) & llfinite(mQ[VS]));
+	}
+
+	// Quatizations
+
+	// changes the vector to reflect quatization
+	public void quantize16(float lower, float upper) {
+		float x = mQ[VX];
+		float y = mQ[VY];
+		float z = mQ[VZ];
+		float s = mQ[VS];
+	
+		x = U16_to_float(float_to_U16_ROUND(x, lower, upper), lower, upper);
+		y = U16_to_float(float_to_U16_ROUND(y, lower, upper), lower, upper);
+		z = U16_to_float(float_to_U16_ROUND(z, lower, upper), lower, upper);
+		s = U16_to_float(float_to_U16_ROUND(s, lower, upper), lower, upper);
+	
+		mQ[VX] = x;
+		mQ[VY] = y;
+		mQ[VZ] = z;
+		mQ[VS] = s;
+	
+		normalize();
+	}
+
+	// changes the vector to reflect quatization
+	public void quantize8(float lower, float upper) {
+		mQ[VX] = U8_to_float(float_to_U8_ROUND(mQ[VX], lower, upper), lower, upper);
+		mQ[VY] = U8_to_float(float_to_U8_ROUND(mQ[VY], lower, upper), lower, upper);
+		mQ[VZ] = U8_to_float(float_to_U8_ROUND(mQ[VZ], lower, upper), lower, upper);
+		mQ[VS] = U8_to_float(float_to_U8_ROUND(mQ[VS], lower, upper), lower, upper);
+	
+		normalize();
+	}
+
+	// Loads the quaternion that represents the identity rotation
+	public void loadIdentity() {
+		mQ[VX] = 0.0f;
+		mQ[VY] = 0.0f;
+		mQ[VZ] = 0.0f;
+		mQ[VW] = 1.0f;
+	}
+
+	// Sets Quaternion to normalize(x, y, z, w)
+	public final LLQuaternion	set(float x, float y, float z, float w) {
+		mQ[VX] = x;
+		mQ[VY] = y;
+		mQ[VZ] = z;
+		mQ[VS] = w;
+		normalize();
+		return (*this);
+	}
+	
+	// Copies Quaternion
+	public final LLQuaternion	set(final LLQuaternion quat) {
+		mQ[VX] = quat.mQ[VX];
+		mQ[VY] = quat.mQ[VY];
+		mQ[VZ] = quat.mQ[VZ];
+		mQ[VW] = quat.mQ[VW];
+		normalize();
+		return (*this);
+	}
+	
+	// Sets Quaternion to normalize(quat[VX], quat[VY], quat[VZ], quat[VW])
+	public final LLQuaternion	set(float[] q) {
+		mQ[VX] = q[VX];
+		mQ[VY] = q[VY];
+		mQ[VZ] = q[VZ];
+		mQ[VS] = q[VW];
+		normalize();
+		return (*this);
+	}
+
+	// Sets Quaternion to mat2quat(mat)
+	// deprecated
+	public final LLQuaternion	set(LLMatrix3 mat) {
+		*this = mat.quaternion();
+		normalize();
+		return (*this);
+	}
+	
+	// Sets Quaternion to mat2quat(mat)
+	// deprecated
+	public final LLQuaternion	set(LLMatrix4 mat) {
+		*this = mat.quaternion();
+		normalize();
+		return (*this);
+	}
+
+
+	// LLVector3 Magnitude and Normalization Functions
+
+
+	// Set LLQuaternion routines
+
+	// Sets Quaternion to axis_angle2quat(angle, x, y, z)
+	public final LLQuaternion	setAngleAxis(float angle, float x, float y, float z) {
+		LLVector3 vec(x, y, z);
+		vec.normalize();
+	
+		angle *= 0.5f;
+		float c, s;
+		c = cosf(angle);
+		s = sinf(angle);
+	
+		mQ[VX] = vec.mV[VX]*s;
+		mQ[VY] = vec.mV[VY]*s;
+		mQ[VZ] = vec.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// Sets Quaternion to axis_angle2quat(angle, vec)
+	public final LLQuaternion	setAngleAxis(float angle, final LLVector3 vec) {
+		LLVector3 v(vec);
+		v.normalize();
+	
+		angle *= 0.5f;
+		float c, s;
+		c = cosf(angle);
+		s = sinf(angle);
+	
+		mQ[VX] = v.mV[VX]*s;
+		mQ[VY] = v.mV[VY]*s;
+		mQ[VZ] = v.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// Sets Quaternion to axis_angle2quat(angle, vec)
+	public final LLQuaternion	setAngleAxis(float angle, final LLVector4 vec) {
+		LLVector3 v(vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
+		v.normalize();
+	
+		float c, s;
+		c = cosf(angle*0.5f);
+		s = sinf(angle*0.5f);
+	
+		mQ[VX] = v.mV[VX]*s;
+		mQ[VY] = v.mV[VY]*s;
+		mQ[VZ] = v.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// Sets Quaternion to euler2quat(pitch, yaw, roll)
+	public final LLQuaternion	setEulerAngles(float roll, float pitch, float yaw) {
+		LLMatrix3 rot_mat(roll, pitch, yaw);
+		rot_mat.orthogonalize();
+		*this = rot_mat.quaternion();
+			
+		normalize();
+		return (*this);
+	}
+
+
+	// deprecated
+	public final LLQuaternion	setQuatInit(float x, float y, float z, float w) {
+		mQ[VX] = x;
+		mQ[VY] = y;
+		mQ[VZ] = z;
+		mQ[VS] = w;
+		normalize();
+		return (*this);
+	}
+	
+	// deprecated
+	public final LLQuaternion	setQuat(final LLQuaternion quat) {
+		mQ[VX] = quat.mQ[VX];
+		mQ[VY] = quat.mQ[VY];
+		mQ[VZ] = quat.mQ[VZ];
+		mQ[VW] = quat.mQ[VW];
+		normalize();
+		return (*this);
+	}
+	
+	// deprecated
+	public final LLQuaternion	setQuat(final float *q) {
+		mQ[VX] = q[VX];
+		mQ[VY] = q[VY];
+		mQ[VZ] = q[VZ];
+		mQ[VS] = q[VW];
+		normalize();
+		return (*this);
+	}
+
+	// deprecated
+	public final LLQuaternion	setQuat(final LLMatrix3 mat) {
+		*this = mat.quaternion();
+		normalize();
+		return (*this);
+	}
+	
+	// deprecated
+	public final LLQuaternion	setQuat(final LLMatrix4 mat) {
+		*this = mat.quaternion();
+		normalize();
+		return (*this);
+	//#if 1
+	//	// NOTE: LLQuaternion's are actually inverted with respect to
+	//	// the matrices, so this code also assumes inverted quaternions
+	//	// (-x, -y, -z, w). The result is that roll,pitch,yaw are applied
+	//	// in reverse order (yaw,pitch,roll).
+	//	double cosX = cos(roll);
+	//    double cosY = cos(pitch);
+	//    double cosZ = cos(yaw);
+	//
+	//    double sinX = sin(roll);
+	//    double sinY = sin(pitch);
+	//    double sinZ = sin(yaw);
+	//
+	//    mQ[VW] = (float)sqrt(cosY*cosZ - sinX*sinY*sinZ + cosX*cosZ + cosX*cosY + 1.0)*.5;
+	//	if (fabs(mQ[VW]) < F_APPROXIMATELY_ZERO)
+	//	{
+	//		// null rotation, any axis will do
+	//		mQ[VX] = 0.0f;
+	//		mQ[VY] = 1.0f;
+	//		mQ[VZ] = 0.0f;
+	//	}
+	//	else
+	//	{
+	//		float inv_s = 1.0f / (4.0f * mQ[VW]);
+	//		mQ[VX] = (float)-(-sinX*cosY - cosX*sinY*sinZ - sinX*cosZ) * inv_s;
+	//		mQ[VY] = (float)-(-cosX*sinY*cosZ + sinX*sinZ - sinY) * inv_s;
+	//		mQ[VZ] = (float)-(-cosY*sinZ - sinX*sinY*cosZ - cosX*sinZ) * inv_s;		
+	//	}
+	//
+	//#else // This only works on a certain subset of roll/pitch/yaw
+	//	
+	//	double cosX = cosf(roll/2.0);
+	//    double cosY = cosf(pitch/2.0);
+	//    double cosZ = cosf(yaw/2.0);
+	//
+	//    double sinX = sinf(roll/2.0);
+	//    double sinY = sinf(pitch/2.0);
+	//    double sinZ = sinf(yaw/2.0);
+	//
+	//    mQ[VW] = (float)(cosX*cosY*cosZ + sinX*sinY*sinZ);
+	//    mQ[VX] = (float)(sinX*cosY*cosZ - cosX*sinY*sinZ);
+	//    mQ[VY] = (float)(cosX*sinY*cosZ + sinX*cosY*sinZ);
+	//    mQ[VZ] = (float)(cosX*cosY*sinZ - sinX*sinY*cosZ);
+	//#endif
+	//
+	//	normalize();
+	//	return (*this);
+	}
+
+	// deprecated
+	public final LLQuaternion	setQuat(float angle, float x, float y, float z) {
+		LLVector3 vec(x, y, z);
+		vec.normalize();
+	
+		angle *= 0.5f;
+		float c, s;
+		c = cosf(angle);
+		s = sinf(angle);
+	
+		mQ[VX] = vec.mV[VX]*s;
+		mQ[VY] = vec.mV[VY]*s;
+		mQ[VZ] = vec.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// deprecated
+	public final LLQuaternion	setQuat(float angle, final LLVector3 vec) {
+		LLVector3 v(vec);
+		v.normalize();
+	
+		angle *= 0.5f;
+		float c, s;
+		c = cosf(angle);
+		s = sinf(angle);
+	
+		mQ[VX] = v.mV[VX]*s;
+		mQ[VY] = v.mV[VY]*s;
+		mQ[VZ] = v.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// deprecated
+	public final LLQuaternion	setQuat(float angle, final LLVector4 vec) {
+		LLVector3 v(vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
+		v.normalize();
+	
+		float c, s;
+		c = cosf(angle*0.5f);
+		s = sinf(angle*0.5f);
+	
+		mQ[VX] = v.mV[VX]*s;
+		mQ[VY] = v.mV[VY]*s;
+		mQ[VZ] = v.mV[VZ]*s;
+		mQ[VW] = c;
+	
+		normalize();
+		return (*this);
+	}
+
+	// deprecated
+	public final LLQuaternion	setQuat(float roll, float pitch, float yaw) {
+		LLMatrix3 rot_mat(roll, pitch, yaw);
+		rot_mat.orthogonalize();
+		*this = rot_mat.quaternion();
+			
+		normalize();
+		return (*this);
+	}
+
+	// Returns the Matrix4 equivalent of Quaternion
+	public LLMatrix4	getMatrix4() {
+		LLMatrix4	mat;
+		float		xx, xy, xz, xw, yy, yz, yw, zz, zw;
+	
+	    xx      = mQ[VX] * mQ[VX];
+	    xy      = mQ[VX] * mQ[VY];
+	    xz      = mQ[VX] * mQ[VZ];
+	    xw      = mQ[VX] * mQ[VW];
+	
+	    yy      = mQ[VY] * mQ[VY];
+	    yz      = mQ[VY] * mQ[VZ];
+	    yw      = mQ[VY] * mQ[VW];
+	
+	    zz      = mQ[VZ] * mQ[VZ];
+	    zw      = mQ[VZ] * mQ[VW];
+	
+	    mat.mMatrix[0][0]  = 1.f - 2.f * ( yy + zz );
+	    mat.mMatrix[0][1]  =	   2.f * ( xy + zw );
+	    mat.mMatrix[0][2]  =	   2.f * ( xz - yw );
+	
+	    mat.mMatrix[1][0]  =	   2.f * ( xy - zw );
+	    mat.mMatrix[1][1]  = 1.f - 2.f * ( xx + zz );
+	    mat.mMatrix[1][2]  =	   2.f * ( yz + xw );
+	
+	    mat.mMatrix[2][0]  =	   2.f * ( xz + yw );
+	    mat.mMatrix[2][1]  =	   2.f * ( yz - xw );
+	    mat.mMatrix[2][2]  = 1.f - 2.f * ( xx + yy );
+	
+		// TODO -- should we set the translation portion to zero?
+	
+		return mat;
+	}
+
+	// Returns the Matrix3 equivalent of Quaternion
+	// SJB: This code is correct for a logicly stored (non-transposed) matrix;
+//	Our matrices are stored transposed, OpenGL style, so this generates the
+//	INVERSE matrix, or the CORRECT matrix form an INVERSE quaternion.
+//	Because we use similar logic in LLMatrix3::quaternion(),
+//	we are internally consistant so everything works OK :)
+	public LLMatrix3	getMatrix3() {
+		LLMatrix3	mat;
+		float		xx, xy, xz, xw, yy, yz, yw, zz, zw;
+	
+	    xx      = mQ[VX] * mQ[VX];
+	    xy      = mQ[VX] * mQ[VY];
+	    xz      = mQ[VX] * mQ[VZ];
+	    xw      = mQ[VX] * mQ[VW];
+	
+	    yy      = mQ[VY] * mQ[VY];
+	    yz      = mQ[VY] * mQ[VZ];
+	    yw      = mQ[VY] * mQ[VW];
+	
+	    zz      = mQ[VZ] * mQ[VZ];
+	    zw      = mQ[VZ] * mQ[VW];
+	
+	    mat.mMatrix[0][0]  = 1.f - 2.f * ( yy + zz );
+	    mat.mMatrix[0][1]  =	   2.f * ( xy + zw );
+	    mat.mMatrix[0][2]  =	   2.f * ( xz - yw );
+	
+	    mat.mMatrix[1][0]  =	   2.f * ( xy - zw );
+	    mat.mMatrix[1][1]  = 1.f - 2.f * ( xx + zz );
+	    mat.mMatrix[1][2]  =	   2.f * ( yz + xw );
+	
+	    mat.mMatrix[2][0]  =	   2.f * ( xz + yw );
+	    mat.mMatrix[2][1]  =	   2.f * ( yz - xw );
+	    mat.mMatrix[2][2]  = 1.f - 2.f * ( xx + yy );
+	
+		return mat;
+	}
+
+	// returns rotation in radians about axis x,y,z
+	// There may be a cheaper way that avoids the sqrt.
+	// Does sin_a = VX*VX + VY*VY + VZ*VZ?
+	// Copied from Matrix and Quaternion FAQ 1.12
+	public void		getAngleAxis(float* angle, float* x, float* y, float* z) {
+		float cos_a = mQ[VW];
+		if (cos_a > 1.0f) cos_a = 1.0f;
+		if (cos_a < -1.0f) cos_a = -1.0f;
+	
+	    float sin_a = (float) sqrt( 1.0f - cos_a * cos_a );
+	
+	    if ( fabs( sin_a ) < 0.0005f )
+			sin_a = 1.0f;
+		else
+			sin_a = 1.f/sin_a;
+	
+	    float temp_angle = 2.0f * (float) acos( cos_a );
+		if (temp_angle > F_PI)
+		{
+			// The (angle,axis) pair should never have angles outside [PI, -PI]
+			// since we want the _shortest_ (angle,axis) solution.
+			// Since acos is defined for [0, PI], and we multiply by 2.0, we
+			// can push the angle outside the acceptible range.
+			// When this happens we set the angle to the other portion of a 
+			// full 2PI rotation, and negate the axis, which reverses the 
+			// direction of the rotation (by the right-hand rule).
+			*angle = 2.f * F_PI - temp_angle;
+	    	*x = - mQ[VX] * sin_a;
+	    	*y = - mQ[VY] * sin_a;
+	    	*z = - mQ[VZ] * sin_a;
+		}
+		else
+		{
+			*angle = temp_angle;
+	    	*x = mQ[VX] * sin_a;
+	    	*y = mQ[VY] * sin_a;
+	    	*z = mQ[VZ] * sin_a;
+		}
+	}
+
+	public void		getAngleAxis(float* angle, LLVector3 vec) {
+		float cos_a = mQ[VW];
+		if (cos_a > 1.0f) cos_a = 1.0f;
+		if (cos_a < -1.0f) cos_a = -1.0f;
+	
+	    float sin_a = (float) sqrt( 1.0f - cos_a * cos_a );
+	
+	    if ( fabs( sin_a ) < 0.0005f )
+			sin_a = 1.0f;
+		else
+			sin_a = 1.f/sin_a;
+	
+	    float temp_angle = 2.0f * (float) acos( cos_a );
+		if (temp_angle > F_PI)
+		{
+			// The (angle,axis) pair should never have angles outside [PI, -PI]
+			// since we want the _shortest_ (angle,axis) solution.
+			// Since acos is defined for [0, PI], and we multiply by 2.0, we
+			// can push the angle outside the acceptible range.
+			// When this happens we set the angle to the other portion of a 
+			// full 2PI rotation, and negate the axis, which reverses the 
+			// direction of the rotation (by the right-hand rule).
+			*angle = 2.f * F_PI - temp_angle;
+	    	vec.mV[VX] = - mQ[VX] * sin_a;
+	    	vec.mV[VY] = - mQ[VY] * sin_a;
+	    	vec.mV[VZ] = - mQ[VZ] * sin_a;
+		}
+		else
+		{
+			*angle = temp_angle;
+	    	vec.mV[VX] = mQ[VX] * sin_a;
+	    	vec.mV[VY] = mQ[VY] * sin_a;
+	    	vec.mV[VZ] = mQ[VZ] * sin_a;
+		}
+	}
+
+	// quaternion does not need to be normalized
+	public void		getEulerAngles(float *roll, float* pitch, float *yaw) {
+		LLMatrix3 rot_mat(*this);
+		rot_mat.orthogonalize();
+		rot_mat.getEulerAngles(roll, pitch, yaw);
+	
+	//	// NOTE: LLQuaternion's are actually inverted with respect to
+	//	// the matrices, so this code also assumes inverted quaternions
+	//	// (-x, -y, -z, w). The result is that roll,pitch,yaw are applied
+	//	// in reverse order (yaw,pitch,roll).
+	//	float x = -mQ[VX], y = -mQ[VY], z = -mQ[VZ], w = mQ[VW];
+	//	double m20 = 2.0*(x*z-y*w);
+	//	if (1.0f - fabsf(m20) < F_APPROXIMATELY_ZERO)
+	//	{
+	//		*roll = 0.0f;
+	//		*pitch = (float)asin(m20);
+	//		*yaw = (float)atan2(2.0*(x*y-z*w), 1.0 - 2.0*(x*x+z*z));
+	//	}
+	//	else
+	//	{
+	//		*roll  = (float)atan2(-2.0*(y*z+x*w), 1.0-2.0*(x*x+y*y));
+	//		*pitch = (float)asin(m20);
+	//		*yaw   = (float)atan2(-2.0*(x*y+z*w), 1.0-2.0*(y*y+z*z));
+	//	}
+	}
+
+
+final float ONE_PART_IN_A_MILLION = 0.000001f;
+
+// Normalizes Quaternion and returns magnitude
+	public float	normalize() {
+		float mag = sqrtf(mQ[VX]*mQ[VX] + mQ[VY]*mQ[VY] + mQ[VZ]*mQ[VZ] + mQ[VS]*mQ[VS]);
+	
+		if (mag > FP_MAG_THRESHOLD)
+		{
+			// Floating point error can prevent some quaternions from achieving
+			// exact unity length.  When trying to renormalize such quaternions we
+			// can oscillate between multiple quantized states.  To prevent such
+			// drifts we only renomalize if the length is far enough from unity.
+			if (fabs(1.f - mag) > ONE_PART_IN_A_MILLION)
+			{
+				float oomag = 1.f/mag;
+				mQ[VX] *= oomag;
+				mQ[VY] *= oomag;
+				mQ[VZ] *= oomag;
+				mQ[VS] *= oomag;
+			}
+		}
+		else
+		{
+			// we were given a very bad quaternion so we set it to identity
+			mQ[VX] = 0.f;
+			mQ[VY] = 0.f;
+			mQ[VZ] = 0.f;
+			mQ[VS] = 1.f;
+		}
+	
+		return mag;
+	}
+
+	// deprecated
+	public float	normQuat() {
+		float mag = sqrtf(mQ[VX]*mQ[VX] + mQ[VY]*mQ[VY] + mQ[VZ]*mQ[VZ] + mQ[VS]*mQ[VS]);
+	
+		if (mag > FP_MAG_THRESHOLD)
+		{
+			if (fabs(1.f - mag) > ONE_PART_IN_A_MILLION)
+			{
+				// only renormalize if length not close enough to 1.0 already
+				float oomag = 1.f/mag;
+				mQ[VX] *= oomag;
+				mQ[VY] *= oomag;
+				mQ[VZ] *= oomag;
+				mQ[VS] *= oomag;
+			}
+		}
+		else
+		{
+			mQ[VX] = 0.f;
+			mQ[VY] = 0.f;
+			mQ[VZ] = 0.f;
+			mQ[VS] = 1.f;
+		}
+	
+		return mag;
+	}
+
+	// Conjugates Quaternion and returns result
+	public final LLQuaternion	conjugate(void) {
+		mQ[VX] *= -1.f;
+		mQ[VY] *= -1.f;
+		mQ[VZ] *= -1.f;
+		return (*this);
+	}
+	
+	// deprecated
+	public final LLQuaternion	conjQuat(void) {
+		mQ[VX] *= -1.f;
+		mQ[VY] *= -1.f;
+		mQ[VZ] *= -1.f;
+		return (*this);
+	}
+
+	// Other useful methods
+
+	// transpose (same as conjugate)
+	// Transpose
+	public final LLQuaternion	transpose() {
+		mQ[VX] *= -1.f;
+		mQ[VY] *= -1.f;
+		mQ[VZ] *= -1.f;
+		return (*this);
+	}
+	
+	// deprecated
+	final LLQuaternion	transQuat() {
+		mQ[VX] *= -1.f;
+		mQ[VY] *= -1.f;
+		mQ[VZ] *= -1.f;
+		return (*this);
+	}
+
+	// Other useful methods
+
+
+	// calculate the shortest rotation from a to b
+	// shortest rotation from a to b
+	void			shortestArc(final LLVector3 a, final LLVector3 b) {
+		// Make a local copy of both vectors.
+		LLVector3 vec_a = a;
+		LLVector3 vec_b = b;
+	
+		// Make sure neither vector is zero length.  Also normalize
+		// the vectors while we are at it.
+		float vec_a_mag = vec_a.normalize();
+		float vec_b_mag = vec_b.normalize();
+		if (vec_a_mag < F_APPROXIMATELY_ZERO ||
+			vec_b_mag < F_APPROXIMATELY_ZERO)
+		{
+			// Can't calculate a rotation from this.
+			// Just return ZERO_ROTATION instead.
+			loadIdentity();
+			return;
+		}
+	
+		// Create an axis to rotate around, and the cos of the angle to rotate.
+		LLVector3 axis = vec_a % vec_b;
+		float cos_theta  = vec_a * vec_b;
+	
+		// Check the angle between the vectors to see if they are parallel or anti-parallel.
+		if (cos_theta > 1.0 - F_APPROXIMATELY_ZERO)
+		{
+			// a and b are parallel.  No rotation is necessary.
+			loadIdentity();
+		}
+		else if (cos_theta < -1.0 + F_APPROXIMATELY_ZERO)
+		{
+			// a and b are anti-parallel.
+			// Rotate 180 degrees around some orthogonal axis.
+			// Find the projection of the x-axis onto a, and try
+			// using the vector between the projection and the x-axis
+			// as the orthogonal axis.
+			LLVector3 proj = vec_a.mV[VX] / (vec_a * vec_a) * vec_a;
+			LLVector3 ortho_axis(1.f, 0.f, 0.f);
+			ortho_axis -= proj;
+			
+			// Turn this into an orthonormal axis.
+			float ortho_length = ortho_axis.normalize();
+			// If the axis' length is 0, then our guess at an orthogonal axis
+			// was wrong (a is parallel to the x-axis).
+			if (ortho_length < F_APPROXIMATELY_ZERO)
+			{
+				// Use the z-axis instead.
+				ortho_axis.setVec(0.f, 0.f, 1.f);
+			}
+	
+			// Construct a quaternion from this orthonormal axis.
+			mQ[VX] = ortho_axis.mV[VX];
+			mQ[VY] = ortho_axis.mV[VY];
+			mQ[VZ] = ortho_axis.mV[VZ];
+			mQ[VW] = 0.f;
+		}
+		else
+		{
+			// a and b are NOT parallel or anti-parallel.
+			// Return the rotation between these vectors.
+			float theta = (float)acos(cos_theta);
+	
+			setAngleAxis(theta, axis);
+		}
+	}
+
+	// constrains rotation to a cone angle specified in radians
+	// constrains rotation to a cone angle specified in radians
+	public final LLQuaternion constrain(float radians) {
+		final float cos_angle_lim = cosf( radians/2 );	// mQ[VW] limit
+		final float sin_angle_lim = sinf( radians/2 );	// rotation axis length	limit
+	
+		if (mQ[VW] < 0.f)
+		{
+			mQ[VX] *= -1.f;
+			mQ[VY] *= -1.f;
+			mQ[VZ] *= -1.f;
+			mQ[VW] *= -1.f;
+		}
+	
+		// if rotation angle is greater than limit (cos is less than limit)
+		if( mQ[VW] < cos_angle_lim )
+		{
+			mQ[VW] = cos_angle_lim;
+			float axis_len = sqrtf( mQ[VX]*mQ[VX] + mQ[VY]*mQ[VY] + mQ[VZ]*mQ[VZ] ); // sin(theta/2)
+			float axis_mult_fact = sin_angle_lim / axis_len;
+			mQ[VX] *= axis_mult_fact;
+			mQ[VY] *= axis_mult_fact;
+			mQ[VZ] *= axis_mult_fact;
+		}
+	
+		return *this;
+	}
+
+
+	// Standard operators
+	// Operators
+
+	// Prints a
+	@Override public String printString() {
+		return "{ " + mQ[VX] + ", " + mQ[VY] + ", " + mQ[VZ] + ", " + mQ[VW] + " }";
+	}
+
+	// Addition
+	public friend LLQuaternion operatorAdd(final LLQuaternion a, final LLQuaternion b) {
+		return LLQuaternion( 
+			a.mQ[VX] + b.mQ[VX],
+			a.mQ[VY] + b.mQ[VY],
+			a.mQ[VZ] + b.mQ[VZ],
+			a.mQ[VW] + b.mQ[VW] );
+	}
+	
+	// Subtraction
+	public friend LLQuaternion operatorSubtract(final LLQuaternion a, final LLQuaternion b) {
+		return LLQuaternion( 
+			a.mQ[VX] - b.mQ[VX],
+			a.mQ[VY] - b.mQ[VY],
+			a.mQ[VZ] - b.mQ[VZ],
+			a.mQ[VW] - b.mQ[VW] );
+	}
+	
+	// Negation
+	public friend LLQuaternion operatorNegate(final LLQuaternion a) {
+		return LLQuaternion(
+			-a.mQ[VX],
+			-a.mQ[VY],
+			-a.mQ[VZ],
+			-a.mQ[VW] );
+	}
+	
+	// Scale
+	public friend LLQuaternion operatorScale(float a, final LLQuaternion q) {
+		return LLQuaternion(
+			a * q.mQ[VX],
+			a * q.mQ[VY],
+			a * q.mQ[VZ],
+			a * q.mQ[VW] );
+	}
+	
+	// Scale
+	public friend LLQuaternion operatorScale(final LLQuaternion q, float b) {
+		return LLQuaternion(
+			a * q.mQ[VX],
+			a * q.mQ[VY],
+			a * q.mQ[VZ],
+			a * q.mQ[VW] );
+	}
+	
+	// Returns a * b
+	// Does NOT renormalize the result
+	public friend LLQuaternion operatorMultiply(final LLQuaternion a, final LLQuaternion b) {
+	//	LLQuaternion::mMultCount++;
+	
+		LLQuaternion q(
+			b.mQ[3] * a.mQ[0] + b.mQ[0] * a.mQ[3] + b.mQ[1] * a.mQ[2] - b.mQ[2] * a.mQ[1],
+			b.mQ[3] * a.mQ[1] + b.mQ[1] * a.mQ[3] + b.mQ[2] * a.mQ[0] - b.mQ[0] * a.mQ[2],
+			b.mQ[3] * a.mQ[2] + b.mQ[2] * a.mQ[3] + b.mQ[0] * a.mQ[1] - b.mQ[1] * a.mQ[0],
+			b.mQ[3] * a.mQ[3] - b.mQ[0] * a.mQ[0] - b.mQ[1] * a.mQ[1] - b.mQ[2] * a.mQ[2]
+		);
+		return q;
+	}
+
+	/*
+	LLMatrix4	operatorMultiply(final LLMatrix4 m, final LLQuaternion q)
+	{
+		LLMatrix4 qmat(q);
+		return (m*qmat);
+	}
+	*/
+	
+	// Returns a* (Conjugate of a)
+	public friend LLQuaternion operatorConjugate(final LLQuaternion a) {
+		LLQuaternion q(a);
+		q.conjQuat();
+		return q;
+	}
+	
+	// Returns a == b
+	public bool operatorEquals(final LLQuaternion b) {
+		return (  (mQ[VX] == b.mQ[VX])
+				&(mQ[VY] == b.mQ[VY])
+				&(mQ[VZ] == b.mQ[VZ])
+				&(mQ[VS] == b.mQ[VS]));
+	}
+
+	// Returns a != b
+	public bool operatorNotEquals(final LLQuaternion b) {
+		return (  (mQ[VX] != b.mQ[VX])
+				||(mQ[VY] != b.mQ[VY])
+				||(mQ[VZ] != b.mQ[VZ])
+				||(mQ[VS] != b.mQ[VS]));
+	}
+
+	// Returns a * b
+	public friend final LLQuaternion& operatorMultiplyAndSet(LLQuaternion a, final LLQuaternion b) {
+//*
+	LLQuaternion q(
+		b.mQ[3] * a.mQ[0] + b.mQ[0] * a.mQ[3] + b.mQ[1] * a.mQ[2] - b.mQ[2] * a.mQ[1],
+		b.mQ[3] * a.mQ[1] + b.mQ[1] * a.mQ[3] + b.mQ[2] * a.mQ[0] - b.mQ[0] * a.mQ[2],
+		b.mQ[3] * a.mQ[2] + b.mQ[2] * a.mQ[3] + b.mQ[0] * a.mQ[1] - b.mQ[1] * a.mQ[0],
+		b.mQ[3] * a.mQ[3] - b.mQ[0] * a.mQ[0] - b.mQ[1] * a.mQ[1] - b.mQ[2] * a.mQ[2]
+	);
+	a = q;
+/*/
+	a = a * b;
+//*/
+	return a;
+}
+
+	// Rotates a by rot
+	public friend LLVector4 operatorRotate(final LLVector4 a, final LLQuaternion rot) {
+	    float rw = - rot.mQ[VX] * a.mV[VX] - rot.mQ[VY] * a.mV[VY] - rot.mQ[VZ] * a.mV[VZ];
+	    float rx =   rot.mQ[VW] * a.mV[VX] + rot.mQ[VY] * a.mV[VZ] - rot.mQ[VZ] * a.mV[VY];
+	    float ry =   rot.mQ[VW] * a.mV[VY] + rot.mQ[VZ] * a.mV[VX] - rot.mQ[VX] * a.mV[VZ];
+	    float rz =   rot.mQ[VW] * a.mV[VZ] + rot.mQ[VX] * a.mV[VY] - rot.mQ[VY] * a.mV[VX];
+	
+	    float nx = - rw * rot.mQ[VX] +  rx * rot.mQ[VW] - ry * rot.mQ[VZ] + rz * rot.mQ[VY];
+	    float ny = - rw * rot.mQ[VY] +  ry * rot.mQ[VW] - rz * rot.mQ[VX] + rx * rot.mQ[VZ];
+	    float nz = - rw * rot.mQ[VZ] +  rz * rot.mQ[VW] - rx * rot.mQ[VY] + ry * rot.mQ[VX];
+	
+	    return LLVector4(nx, ny, nz, a.mV[VW]);
+	}
+
+	// Rotates a by rot
+	public friend LLVector3 operatorRotate(final LLVector3 a, final LLQuaternion rot) {
+	    float rw = - rot.mQ[VX] * a.mV[VX] - rot.mQ[VY] * a.mV[VY] - rot.mQ[VZ] * a.mV[VZ];
+	    float rx =   rot.mQ[VW] * a.mV[VX] + rot.mQ[VY] * a.mV[VZ] - rot.mQ[VZ] * a.mV[VY];
+	    float ry =   rot.mQ[VW] * a.mV[VY] + rot.mQ[VZ] * a.mV[VX] - rot.mQ[VX] * a.mV[VZ];
+	    float rz =   rot.mQ[VW] * a.mV[VZ] + rot.mQ[VX] * a.mV[VY] - rot.mQ[VY] * a.mV[VX];
+	
+	    float nx = - rw * rot.mQ[VX] +  rx * rot.mQ[VW] - ry * rot.mQ[VZ] + rz * rot.mQ[VY];
+	    float ny = - rw * rot.mQ[VY] +  ry * rot.mQ[VW] - rz * rot.mQ[VX] + rx * rot.mQ[VZ];
+	    float nz = - rw * rot.mQ[VZ] +  rz * rot.mQ[VW] - rx * rot.mQ[VY] + ry * rot.mQ[VX];
+	
+	    return LLVector3(nx, ny, nz);
+	}
+
+	// Rotates a by rot
+	public friend LLVector3d operatorRotate(final LLVector3d a, final LLQuaternion rot) {
+	    double rw = - rot.mQ[VX] * a.mdV[VX] - rot.mQ[VY] * a.mdV[VY] - rot.mQ[VZ] * a.mdV[VZ];
+	    double rx =   rot.mQ[VW] * a.mdV[VX] + rot.mQ[VY] * a.mdV[VZ] - rot.mQ[VZ] * a.mdV[VY];
+	    double ry =   rot.mQ[VW] * a.mdV[VY] + rot.mQ[VZ] * a.mdV[VX] - rot.mQ[VX] * a.mdV[VZ];
+	    double rz =   rot.mQ[VW] * a.mdV[VZ] + rot.mQ[VX] * a.mdV[VY] - rot.mQ[VY] * a.mdV[VX];
+	
+	    double nx = - rw * rot.mQ[VX] +  rx * rot.mQ[VW] - ry * rot.mQ[VZ] + rz * rot.mQ[VY];
+	    double ny = - rw * rot.mQ[VY] +  ry * rot.mQ[VW] - rz * rot.mQ[VX] + rx * rot.mQ[VZ];
+	    double nz = - rw * rot.mQ[VZ] +  rz * rot.mQ[VW] - rx * rot.mQ[VY] + ry * rot.mQ[VX];
+	
+	    return LLVector3d(nx, ny, nz);
+	}
+
+
+	// Non-standard operators
+	public friend float dot(final LLQuaternion a, final LLQuaternion b) {
+		return a.mQ[VX] * b.mQ[VX] + 
+			   a.mQ[VY] * b.mQ[VY] + 
+			   a.mQ[VZ] * b.mQ[VZ] + 
+			   a.mQ[VW] * b.mQ[VW]; 
+	}
+
+
+	// DEMO HACK: This lerp is probably inocrrect now due intermediate normalization
+	// it should look more like the lerp below
+	/*
+	// linear interpolation
+	public friend LLQuaternion lerp(float t, final LLQuaternion p, final LLQuaternion q) {
+		LLQuaternion r;
+		r = t * (q - p) + p;
+		r.normalize();
+		return r;
+	}
+	*/
+
+	// linear interpolation (t = 0 to 1) from p to q
+	public friend LLQuaternion lerp(float t, final LLQuaternion p, final LLQuaternion q) {
+		LLQuaternion r;
+		float inv_t;
+	
+		inv_t = 1.f - t;
+	
+		r.mQ[VX] = t * q.mQ[VX] + (inv_t * p.mQ[VX]);
+		r.mQ[VY] = t * q.mQ[VY] + (inv_t * p.mQ[VY]);
+		r.mQ[VZ] = t * q.mQ[VZ] + (inv_t * p.mQ[VZ]);
+		r.mQ[VW] = t * q.mQ[VW] + (inv_t * p.mQ[VW]);
+		r.normalize();
+		return r;
+	}
+
+	// linear interpolation (t = 0 to 1) from identity to q
+	// lerp from identity to q
+	public friend LLQuaternion lerp(float t, final LLQuaternion q) {
+		LLQuaternion r;
+		r.mQ[VX] = t * q.mQ[VX];
+		r.mQ[VY] = t * q.mQ[VY];
+		r.mQ[VZ] = t * q.mQ[VZ];
+		r.mQ[VW] = t * (q.mQ[VZ] - 1.f) + 1.f;
+		r.normalize();
+		return r;
+	}
+
+ 	// spherical linear interpolation from p to q
+	// spherical linear interpolation
+	public friend LLQuaternion slerp(float u, final LLQuaternion a, final LLQuaternion b) {
+		// cosine theta = dot product of a and b
+		float cos_t = a.mQ[0]*b.mQ[0] + a.mQ[1]*b.mQ[1] + a.mQ[2]*b.mQ[2] + a.mQ[3]*b.mQ[3];
+		
+		// if b is on opposite hemisphere from a, use -a instead
+		int bflip;
+	 	if (cos_t < 0.0f)
+		{
+			cos_t = -cos_t;
+			bflip = TRUE;
+		}
+		else
+			bflip = FALSE;
+	
+		// if B is (within precision limits) the same as A,
+		// just linear interpolate between A and B.
+		float alpha;	// interpolant
+		float beta;		// 1 - interpolant
+		if (1.0f - cos_t < 0.00001f)
+		{
+			beta = 1.0f - u;
+			alpha = u;
+	 	}
+		else
+		{
+	 		float theta = acosf(cos_t);
+	 		float sin_t = sinf(theta);
+	 		beta = sinf(theta - u*theta) / sin_t;
+	 		alpha = sinf(u*theta) / sin_t;
+	 	}
+	
+		if (bflip)
+			beta = -beta;
+	
+		// interpolate
+		LLQuaternion ret;
+		ret.mQ[0] = beta*a.mQ[0] + alpha*b.mQ[0];
+	 	ret.mQ[1] = beta*a.mQ[1] + alpha*b.mQ[1];
+	 	ret.mQ[2] = beta*a.mQ[2] + alpha*b.mQ[2];
+	 	ret.mQ[3] = beta*a.mQ[3] + alpha*b.mQ[3];
+	
+		return ret;
+	}
+
+	// spherical linear interpolation from identity to q
+	// slerp from identity quaternion to another quaternion
+	public friend LLQuaternion slerp(float t, final LLQuaternion q) {
+		float c = q.mQ[VW];
+		if (1.0f == t  ||  1.0f == c)
+		{
+			// the trivial cases
+			return q;
+		}
+	
+		LLQuaternion r;
+		float s, angle, stq, stp;
+	
+		s = (float) sqrt(1.f - c*c);
+	
+	    if (c < 0.0f)
+	    {
+	        // when c < 0.0 then theta > PI/2 
+	        // since quat and -quat are the same rotation we invert one of  
+	        // p or q to reduce unecessary spins
+	        // A equivalent way to do it is to convert acos(c) as if it had 
+			// been negative, and to negate stp 
+	        angle   = (float) acos(-c); 
+	        stp     = -(float) sin(angle * (1.f - t));
+	        stq     = (float) sin(angle * t);
+	    }   
+	    else
+	    {
+			angle 	= (float) acos(c);
+	        stp     = (float) sin(angle * (1.f - t));
+	        stq     = (float) sin(angle * t);
+	    }
+	
+		r.mQ[VX] = (q.mQ[VX] * stq) / s;
+		r.mQ[VY] = (q.mQ[VY] * stq) / s;
+		r.mQ[VZ] = (q.mQ[VZ] * stq) / s;
+		r.mQ[VW] = (stp + q.mQ[VW] * stq) / s;
+	
+		return r;
+	}
+
+ 	// normalized linear interpolation from p to q
+	// lerp whenever possible
+	public friend LLQuaternion nlerp(float t, final LLQuaternion p, final LLQuaternion q) {
+		if (dot(a, b) < 0.f)
+		{
+			return slerp(t, a, b);
+		}
+		else
+		{
+			return lerp(t, a, b);
+		}
+	}
+
+		// normalized linear interpolation from p to q
+	public friend LLQuaternion nlerp(float t, final LLQuaternion q) {
+		if (q.mQ[VW] < 0.f)
+		{
+			return slerp(t, q);
+		}
+		else
+		{
+			return lerp(t, q);
+		}
+	}
+
+	// Saves space by using the fact that our quaternions are normalized
+	// Saves space by using the fact that our quaternions are normalized
+	public LLVector3	packToVector3() {
+		if( mQ[VW] >= 0 )
+		{
+			return LLVector3( mQ[VX], mQ[VY], mQ[VZ] );
+		}
+		else
+		{
+			return LLVector3( -mQ[VX], -mQ[VY], -mQ[VZ] );
+		}
+	}
+	
+	// Saves space by using the fact that our quaternions are normalized
+	// Saves space by using the fact that our quaternions are normalized
+	public void		unpackFromVector3(final LLVector3& vec) {
+		mQ[VX] = vec.mV[VX];
+		mQ[VY] = vec.mV[VY];
+		mQ[VZ] = vec.mV[VZ];
+		float t = 1.f - vec.magVecSquared();
+		if( t > 0 )
+		{
+			mQ[VW] = sqrt( t );
+		}
+		else
+		{
+			// Need this to avoid trying to find the square root of a negative number due
+			// to floating point error.
+			mQ[VW] = 0;
+		}
+	}
+
+	public enum Order {
+		XYZ = 0,
+		YZX = 1,
+		ZXY = 2,
+		XZY = 3,
+		YXZ = 4,
+		ZYX = 5
+	};
+
+	// Creates a quaternions from maya's rotation representation,
+	// which is 3 rotations (in DEGREES) in the specified order
+	public friend LLQuaternion mayaQ(float x, float y, float z, Order order) {
+		LLQuaternion xQ( xRot*DEG_TO_RAD, LLVector3(1.0f, 0.0f, 0.0f) );
+		LLQuaternion yQ( yRot*DEG_TO_RAD, LLVector3(0.0f, 1.0f, 0.0f) );
+		LLQuaternion zQ( zRot*DEG_TO_RAD, LLVector3(0.0f, 0.0f, 1.0f) );
+		LLQuaternion ret;
+		switch( order )
+		{
+		case LLQuaternion::XYZ:
+			ret = xQ * yQ * zQ;
+			break;
+		case LLQuaternion::YZX:
+			ret = yQ * zQ * xQ;
+			break;
+		case LLQuaternion::ZXY:
+			ret = zQ * xQ * yQ;
+			break;
+		case LLQuaternion::XZY:
+			ret = xQ * zQ * yQ;
+			break;
+		case LLQuaternion::YXZ:
+			ret = yQ * xQ * zQ;
+			break;
+		case LLQuaternion::ZYX:
+			ret = zQ * yQ * xQ;
+			break;
+		}
+		return ret;
+	}
+
+
+	// Conversions between Order and strings like "xyz" or "ZYX"
+	public friend final char *OrderToString( final Order order ) {
+		final char *p = NULL;
+		switch( order )
+		{
+		default:
+		case LLQuaternion::XYZ:
+			p = "XYZ";
+			break;
+		case LLQuaternion::YZX:
+			p = "YZX";
+			break;
+		case LLQuaternion::ZXY:
+			p = "ZXY";
+			break;
+		case LLQuaternion::XZY:
+			p = "XZY";
+			break;
+		case LLQuaternion::YXZ:
+			p = "YXZ";
+			break;
+		case LLQuaternion::ZYX:
+			p = "ZYX";
+			break;
+		}
+		return p;
+	}
+	
+	public friend Order StringToOrder( final char *str ) {
+		if (strncmp(str, "XYZ", 3)==0 || strncmp(str, "xyz", 3)==0)
+			return LLQuaternion::XYZ;
+	
+		if (strncmp(str, "YZX", 3)==0 || strncmp(str, "yzx", 3)==0)
+			return LLQuaternion::YZX;
+	
+		if (strncmp(str, "ZXY", 3)==0 || strncmp(str, "zxy", 3)==0)
+			return LLQuaternion::ZXY;
+	
+		if (strncmp(str, "XZY", 3)==0 || strncmp(str, "xzy", 3)==0)
+			return LLQuaternion::XZY;
+	
+		if (strncmp(str, "YXZ", 3)==0 || strncmp(str, "yxz", 3)==0)
+			return LLQuaternion::YXZ;
+	
+		if (strncmp(str, "ZYX", 3)==0 || strncmp(str, "zyx", 3)==0)
+			return LLQuaternion::ZYX;
+	
+		return LLQuaternion::XYZ;
+	}
+
+
+	public static boolean parseQuat(final std::string& buf, LLQuaternion* value) {
+		if( buf.empty() || value == NULL)
+		{
+			return FALSE;
+		}
+	
+		LLQuaternion quat;
+		S32 count = sscanf( buf.c_str(), "%f %f %f %f", quat.mQ + 0, quat.mQ + 1, quat.mQ + 2, quat.mQ + 3 );
+		if( 4 == count )
+		{
+			value->set( quat );
+			return TRUE;
+		}
+	
+		return FALSE;
+	}
+
+
+	// For debugging, only
+	//public static U32 mMultCount;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// End
+
+}
+

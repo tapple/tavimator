@@ -1,3 +1,13 @@
+
 refactor gyroscope and TouchTrackball to inherit from a common ancestor, Trackball
+	remove trackball-to-bvhNode rotation copying
+	remove gyro from camera and trackball
+	Make touchTrackball inherit from Joint
+	make gyroscope inheritt from Joint, and re-add it to the view heiarchy
+	make bvhNode inherit from Joint, and get that working again
+	make camera reparenting work again by moving the camera rig
+	Make joint rotating work by inserting the camera rig in the bvh heiarchy during rotation gesture
+	
+
 move trackball from camera to view
 move MotionEvent from view to trackball

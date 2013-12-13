@@ -28,7 +28,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private final String TAG = "AnimationRenderer";
 	private final AnimationView mView;
 	private final Context mActivityContext;
-
+	
 	// defines where we start counting opengl ids for parts with multiple animations
 	// first animation counts 0-ANIMATION_INCREMENT-1, next ANIMATION_INCREMENT++
 	public static final int ANIMATION_INCREMENT = 100;

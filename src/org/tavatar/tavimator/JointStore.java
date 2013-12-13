@@ -28,7 +28,7 @@ public class JointStore {
 	private Joint[] joint;
 	
 	/**
-	 * if true, all rotations are stored, interpolated, and animated as euler angles (a, b, c, 0) (the angle order is stored in the joint)
+	 * if true, all rotations are stored, interpolated, and animated as euler angles (in DEGREES) (a, b, c, 0) (the angle order is stored in the joint)
 	 * if false, as quaternions (i, j, k, real)
 	 */
 	public boolean useEulerAngles = true;

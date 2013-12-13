@@ -27,9 +27,6 @@ public class Trackball {
 	protected float[] orientation = new float[16];
 	
 	
-	/**
-	 * These two are always identity
-	 */
 	protected float[] gyroToTrackball = new float[16];
 	private float[] trackballToGyro = new float[16];
 	/**

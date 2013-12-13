@@ -74,6 +74,9 @@ public class Joint implements Cloneable {
 		return children;
 	}
 
+	/**
+	 * compute my global transform, and all my children. Should only be called from the render thread
+	 */
 	public void updateTweenedGlobalTransform() {
 		if (parent == null) {
 			Matrix.setIdentityM(store.tweenedGlobalTransform, index * JointStore.MATRIX_STRIDE);
@@ -83,7 +86,7 @@ public class Joint implements Cloneable {
 		}
 
 		Matrix.translateM(store.tweenedGlobalTransform, index * JointStore.MATRIX_STRIDE, xOrigin(), yOrigin(), zOrigin());
-		rotateMatrix(store.tweenedGlobalTransform, index * JointStore.MATRIX_STRIDE);
+		basicRotateMatrix(store.tweenedGlobalTransform, index * JointStore.MATRIX_STRIDE, store.tempUpdateMatrix1, store.tempUpdateMatrix2);
 		Matrix.translateM(store.tweenedGlobalTransform, index * JointStore.MATRIX_STRIDE, xPosition(), yPosition(), zPosition());
 
 		for(Joint child : children) {
@@ -91,7 +94,7 @@ public class Joint implements Cloneable {
 		}
 	}
 
-	public void rotateMatrix(float[] matrix, int matrixIndex) {
+	public void basicRotateMatrix(float[] matrix, int matrixIndex, float[] tempMatrix1, float[] tempMatrix2) {
 		if (store.useEulerAngles) {
 			for(int i = 0; i < BVHOrderType.NUM_AXES; i++) {
 				// need to do rotations in the right order
@@ -103,7 +106,9 @@ public class Joint implements Cloneable {
 				}
 			}
 		} else {
-			throw new UnsupportedOperationException("Quaternions not yet implemented");
+			Quaternion.toMatrix(store.value, index * JointStore.VALUE_STRIDE + JointStore.ROTATION_INDEX, tempMatrix1, 0);
+			Matrix.multiplyMM(tempMatrix2, 0, tempMatrix1, 0, matrix, matrixIndex);
+			System.arraycopy(tempMatrix2, 0, matrix, matrixIndex, JointStore.MATRIX_STRIDE);
 		}
 	}
 
