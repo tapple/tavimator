@@ -3,6 +3,8 @@ package org.tavatar.tavimator;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -321,12 +323,12 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	}	
 
 	//*
-	public static void printMatrix(float[] m) {
-		System.out.println("" + 
+	public static String printMatrix(float[] m) {
+		return "" + 
 				m[ 0]+" "+ m[ 4]+" "+m[ 8]+" "+m[12]+"\n"+
 				m[ 1]+" "+ m[ 5]+" "+m[ 9]+" "+m[13]+"\n"+
 				m[ 2]+" "+ m[ 6]+" "+m[10]+" "+m[14]+"\n"+
-				m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15]);
+				m[ 3]+" "+ m[ 7]+" "+m[11]+" "+m[15];
 	}
 
 	public static void printVector(float[] m) {

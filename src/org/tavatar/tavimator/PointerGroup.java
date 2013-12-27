@@ -60,7 +60,7 @@ public class PointerGroup {
 	}
 	
 	/**
-	 * Converts touch data into an angular velocity vector, in degrees per unit
+	 * Converts touch data into an angular velocity vector, in radians per unit
 	 * time. The angular velocity vector will be in camera-local coordinates.
 	 * Data is provided in screen coordinates (pixels starting at zero in the
 	 * top left corner). dx, Unit time is arbitrary; it can be one second, one
@@ -79,8 +79,8 @@ public class PointerGroup {
 			angularVelocity[3] = 1.0f;
 			return;
 		case 1:
-			angularVelocity[0] = pointers.get(0).vy(type) / displayDensity / 2f;
-			angularVelocity[1] = pointers.get(0).vx(type) / displayDensity / 2f;
+			angularVelocity[0] = pointers.get(0).vy(type) / displayDensity / 2f * Quaternion.DEGREES_TO_RADIANS;
+			angularVelocity[1] = pointers.get(0).vx(type) / displayDensity / 2f * Quaternion.DEGREES_TO_RADIANS;
 			angularVelocity[2] = 0.0f;
 			angularVelocity[3] = 1.0f;
 			return;
@@ -101,9 +101,9 @@ public class PointerGroup {
 		float vxPerp = vx - projection * rx; // tangential velocity vector, x component
 		float vyPerp = vy - projection * ry; // tangential velocity vector, y component
 
-		angularVelocity[0] = (p1.vy(type)+p2.vy(type)) / displayDensity / 4f;
-		angularVelocity[1] = (p1.vx(type)+p2.vx(type)) / displayDensity / 4f;
-		angularVelocity[2] = (float) ((vxPerp*ry - vyPerp*rx) / r2 * 180/Math.PI);
+		angularVelocity[0] = (p1.vy(type)+p2.vy(type)) / displayDensity / 4f * Quaternion.DEGREES_TO_RADIANS;
+		angularVelocity[1] = (p1.vx(type)+p2.vx(type)) / displayDensity / 4f * Quaternion.DEGREES_TO_RADIANS;
+		angularVelocity[2] = (vxPerp*ry - vyPerp*rx) / r2;
 		angularVelocity[3] = (float)Math.exp(projection);
 	}
 	

@@ -1,11 +1,14 @@
 package org.tavatar.tavimator;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
+import android.opengl.Matrix;
 
 /**
- * I allocate the storage for a set of joints that are allocated, deleted, and animated as a unit
+ * I allocate the storage for a set of joints that are animated as a unit
  * @author tapple
  *
  */
@@ -21,6 +24,15 @@ public class JointStore {
 	public static final int SCALE_INDEX = 4;
 	public static final int POSITION_INDEX = 5;
 	public static final int ORIGIN_INDEX = 8; // not part of global arrays
+	
+	
+	public static interface Animation {
+		/**
+		 * Read the store's tweenedValue and update it. Must read tweenedValue so animations can be chained
+		 * @param store
+		 */
+		public void updateTweenedValue(JointStore store);
+	}
 	
 	/*
 	 * The joints I store
@@ -73,12 +85,44 @@ public class JointStore {
 	public float[] tempModificationMatrix1 = new float[16];
 	public float[] tempModificationMatrix2 = new float[16];
 	
-	
+	/**
+	 * The animations applied to my tweenedValue
+	 */
+	public List<Animation> animation = new ArrayList<Animation>();
 	
 	/**
 	 * The android context for all my joints and animations
 	 */
 	public Context context;
+	
+	/**
+	 * Creates an empty "unistore", a store with capacity for a single joint. 
+	 * @param jointCount
+	 * @param context
+	 */
+	public JointStore(Context context) {
+		this(1, context);
+	}
+	
+	/**
+	 * Creates an empty store with capacity of jointCount
+	 * @param jointCount
+	 * @param context
+	 */
+	public JointStore(int jointCount, Context context) {
+		this.context = context;
+		joint = new Joint[jointCount];
+		value = new float[jointCount * VALUE_STRIDE];
+		tweenedValue = new float[jointCount * VALUE_STRIDE];
+		global = new float[jointCount * GLOBAL_STRIDE];
+		tweenedGlobal = new float[jointCount * GLOBAL_STRIDE];
+		tweenedGlobalTransform = new float[jointCount * MATRIX_STRIDE];
+
+		for (int i = 0; i < jointCount; i++) {
+			Quaternion.setIdentity(value, VALUE_STRIDE * i + ROTATION_INDEX);
+			Matrix.setIdentityM(tweenedGlobalTransform, MATRIX_STRIDE * i);
+		}
+	}
 	
 	/**
 	 * Populates myself with clones of jointTemplate. jointTemplate itself is not stored
@@ -87,18 +131,9 @@ public class JointStore {
 	 * @param context
 	 */
 	public JointStore(Joint jointTemplate, int jointCount, Context context) {
-		this.context = context;
-		joint = new Joint[jointCount];
-		value = new float[jointCount * VALUE_STRIDE];
-		tweenedValue = new float[jointCount * VALUE_STRIDE];
-		global = new float[jointCount * GLOBAL_STRIDE];
-		tweenedGlobal = new float[jointCount * GLOBAL_STRIDE];
-		tweenedGlobalTransform = new float[jointCount * MATRIX_STRIDE];
-		
+		this(jointCount, context);
 		for (int i = 0; i < jointCount; i++) {
 			setJoint(i, jointTemplate.clone());
-			getJoint(i).setIndex(i);
-			getJoint(i).setStore(this);
 		}
 	}
 	
@@ -108,5 +143,28 @@ public class JointStore {
 	
 	public void setJoint(int i, Joint j) {
 		joint[i] = j;
+		j.setStore(this);
+		j.setIndex(i);
 	}
+
+	/**
+	 * Compute a new frame. Should only be called once, from the root of the joint heiarchy
+	 */
+	public void update() {
+		updateValue();
+		updateTweenedValue();
+	}
+	
+	public void updateValue() {
+		// Override me
+	}
+	
+	public void updateTweenedValue() {
+		System.arraycopy(value, 0, tweenedValue, 0, value.length);
+		for (Animation animation : this.animation) {
+			animation.updateTweenedValue(this);
+		}
+	}
+	
+
 }

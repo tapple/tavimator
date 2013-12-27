@@ -5,6 +5,7 @@ import android.content.Context;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.widget.Scroller;
 
 public class TouchTrackball extends Trackball {
@@ -38,15 +39,13 @@ public class TouchTrackball extends Trackball {
 				stopFling();
 			}
 		}
-		return new DragHandler(mContext, nameId, shortNameId);
+		return new DragHandler(getStore().context, nameId, shortNameId);
 	}
 
-	private synchronized void scrollBy(float[] angularVelocity) {
-		//		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
-		Matrix.multiplyMV(scrollAxis, 0, cameraToTrackball, 0, angularVelocity, 0);
-		rotateAboutCameraAxis(
-				Matrix.length(angularVelocity[0], angularVelocity[1], angularVelocity[2]),
-				scrollAxis);
-		listener.zoomBy(1.0f / angularVelocity[3]);
+	private void scrollBy(float[] angularVelocity) {
+		Log.d(TAG, "scrollBy(" + arrayToString(angularVelocity) + ");");
+		Matrix.multiplyMV(scrollAxis, 0, getCameraToTrackballOrientation(), 0, angularVelocity, 0);
+		basicRotateAbout(scrollAxis, 0, getStore().tempModificationMatrix1, getStore().tempModificationMatrix2);
+		scaleBy(angularVelocity[3]);
 	}
 }

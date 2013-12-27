@@ -37,7 +37,9 @@ public class AnimationView extends GLSurfaceView {
 	private Animation animation; // this is the "currently selected" animation
 	private BVHNode[] joints = new BVHNode[2];
 	private PlaybackController playback;
-	
+	private List<JointStore> jointStore = new ArrayList<JointStore>();
+	private Joint rootNode;
+
 	private PointerGroup pointers;
 
 	/**
@@ -415,7 +417,6 @@ public class AnimationView extends GLSurfaceView {
 			 * will be false if being flinged.
 			 */
 			cameraHandler.onCancel();
-			tapHandler.endGyroGrab();
 			tapHandler.onFingerDown(pointers);
 			break;
 		}
@@ -440,7 +441,6 @@ public class AnimationView extends GLSurfaceView {
 					cameraHandler.onCancel();
 				}
 
-				tapHandler.endGyroGrab();
 				pointers.endDrag();
 			} else /* if (second finger wasn't just released and we aren't doing a 2 finger fling) */ { // end of tap
 				tapHandler.onTap(pointers);
@@ -454,7 +454,6 @@ public class AnimationView extends GLSurfaceView {
 			} else {
 				cameraHandler.onCancel();
 			}
-			tapHandler.endGyroGrab();
 			pointers.endDrag();
 			break;
 		case MotionEvent.ACTION_POINTER_DOWN: {
@@ -471,7 +470,6 @@ public class AnimationView extends GLSurfaceView {
 						cameraHandler.onCancel();
 					}
 
-					tapHandler.endGyroGrab();
 					pointers.endDrag();
 				}
 			}

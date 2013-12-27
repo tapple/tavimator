@@ -6,6 +6,10 @@ public class Quaternion {
 	public static final int VZ = 2;
 	public static final int VW = 3;
 	public static final int VS = 3;
+	public static final int LENGTH = 4;
+	
+	public static final float DEGREES_TO_RADIANS = (float)(Math.PI / 180);
+	public static final float RADIANS_TO_DEGREES = (float)(180 / Math.PI);
 
 	public static void setIdentity(float[] sq, int sqOffset) {
 		sq[sqOffset + VX] = 0.0f;
@@ -46,7 +50,12 @@ public class Quaternion {
 		}
 	}
 
+	// angle in radians
 	public static void fromAxisAngle(float sq[], int sqOffset, float[] av, int avOffset, float angle) {
+		if (angle == 0.0f) {
+			setIdentity(sq, sqOffset);
+			return;
+		}
 		float avMag = Vector3.magnitude(av, avOffset);
 	
 		float c, s;
@@ -58,6 +67,11 @@ public class Quaternion {
 		sq[sqOffset + VZ] = av[avOffset + VZ] * s / avMag;
 		sq[sqOffset + VW] = c;
 		normalize(sq, sqOffset);
+	}
+	
+	// angle is magnitude, in radians
+	public static void fromAngularVelocity(float sq[], int sqOffset, float[] av, int avOffset) {
+		fromAxisAngle(sq, sqOffset, av, avOffset, Vector3.magnitude(av, avOffset));
 	}
 	
 	// Returns the Matrix3 equivalent of Quaternion
