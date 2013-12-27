@@ -91,8 +91,7 @@ public class BVH {
 		char[] buffer = new char[4096];
 		StringBuilder contents = new StringBuilder();
 		int readLength;
-		while(animationFile.ready()) {
-			readLength = animationFile.read(buffer, 0, buffer.length);
+		while((readLength = animationFile.read(buffer, 0, buffer.length)) > 0) {
 			contents.append(buffer, 0, readLength);
 		}
 		animationFile.close();
@@ -152,10 +151,9 @@ public class BVH {
 
 	public void parseLimFile(BVHNode root, BufferedReader limit) throws IOException {
 		try {
-			while(limit.ready()) {
-
-				String line = limit.readLine().trim();
-
+			String line;
+			while((line = limit.readLine()) != null) {
+				line = line.trim();
 				String[] parameters = line.split(" ");
 				String name = parameters[0];
 				float weight = Float.parseFloat(parameters[1]);
@@ -528,8 +526,7 @@ public class BVH {
 		char[] buffer = new char[4096];
 		StringBuilder contents = new StringBuilder();
 		int readLength;
-		while(animationFile.ready()) {
-			readLength = animationFile.read(buffer, 0, buffer.length);
+		while((readLength = animationFile.read(buffer, 0, buffer.length)) > 0) {
 			contents.append(buffer, 0, readLength);
 		}
 		animationFile.close();
