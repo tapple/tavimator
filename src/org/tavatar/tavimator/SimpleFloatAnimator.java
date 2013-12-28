@@ -5,7 +5,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 
 public class SimpleFloatAnimator {
-	public Interpolator interpolator = new AccelerateDecelerateInterpolator();
+	public Interpolator interpolator;
 	public int duration = 300; // ms
 
 	public float startValue = 0.0f;
@@ -17,10 +17,12 @@ public class SimpleFloatAnimator {
 	public float value = 0.0f;
 
 	public SimpleFloatAnimator() {
+		this.interpolator = new AccelerateDecelerateInterpolator();
 	}
 
 	public SimpleFloatAnimator(int duration) {
 		this.duration = duration;
+		this.interpolator = new AccelerateDecelerateInterpolator();
 	}
 
 	public SimpleFloatAnimator(Interpolator interpolator) {
@@ -33,6 +35,7 @@ public class SimpleFloatAnimator {
 	}
 
 	public SimpleFloatAnimator(float startValue, float endValue) {
+		this.interpolator = new AccelerateDecelerateInterpolator();
 		this.startValue = startValue;
 		this.endValue = endValue;
 	}
@@ -45,6 +48,7 @@ public class SimpleFloatAnimator {
 
 	public SimpleFloatAnimator(int duration, float startValue, float endValue) {
 		this.duration = duration;
+		this.interpolator = new AccelerateDecelerateInterpolator();
 		this.startValue = startValue;
 		this.endValue = endValue;
 	}

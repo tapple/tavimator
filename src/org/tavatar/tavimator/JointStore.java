@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.view.animation.Interpolator;
 import android.opengl.Matrix;
 
 /**
@@ -30,8 +31,9 @@ public class JointStore {
 		/**
 		 * Read the store's tweenedValue and update it. Must read tweenedValue so animations can be chained
 		 * @param store
+		 * @return isFinished
 		 */
-		public void updateTweenedValue(JointStore store);
+		public boolean updateTweenedValue(JointStore store);
 	}
 	
 	/*
@@ -43,7 +45,7 @@ public class JointStore {
 	 * if true, all rotations are stored, interpolated, and animated as euler angles (in DEGREES) (a, b, c, 0) (the angle order is stored in the joint)
 	 * if false, as quaternions (i, j, k, real)
 	 */
-	public boolean useEulerAngles = true;
+	public boolean useEulerAngles = false;
 	/*
 	 * The true value vectors
 	 */
@@ -88,7 +90,7 @@ public class JointStore {
 	/**
 	 * The animations applied to my tweenedValue
 	 */
-	public List<Animation> animation = new ArrayList<Animation>();
+	public List<Animation> animations = new ArrayList<Animation>();
 	
 	/**
 	 * The android context for all my joints and animations
@@ -161,10 +163,14 @@ public class JointStore {
 	
 	public void updateTweenedValue() {
 		System.arraycopy(value, 0, tweenedValue, 0, value.length);
-		for (Animation animation : this.animation) {
-			animation.updateTweenedValue(this);
+		for (Animation animation : this.animations) {
+			if (animation.updateTweenedValue(this)) {
+				this.animations.remove(animation);
+			}
 		}
 	}
 	
-
+	public void startTweeneAnimation(int duration, Interpolator interpolator) {
+		animations.add(new TweenAnimation(duration, interpolator, this));
+	}
 }
