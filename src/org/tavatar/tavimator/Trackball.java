@@ -29,7 +29,7 @@ public class Trackball extends Joint {
 	protected int prevFlingY;
 	private long prevZoomTime;
 
-	private Camera camera;
+	private Joint camera;
 	private float[] cameraToTrackball = new float[16];
 	
 	public Trackball(Context context) {

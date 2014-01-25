@@ -77,7 +77,7 @@ public class AnimationPartSelector implements AnimationTapHandler, Handler.Callb
 		BVHNode selectedPart = view.getSelectedPart();
 		if (selectedPart != null) {
 			float[] origin = selectedPart.cachedOrigin();
-			view.getRenderer().getCamera().moveToOrigin(origin);
+//			view.getCamera().moveToOrigin(origin);
 		}
 
 		/*

@@ -77,7 +77,7 @@ public class AnimationActivity extends ActionBarActivity {
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		Log.d(TAG, "onCreateOptionsMenu");
-		boolean on = mGLSurfaceView.getRenderer().getCamera().getGyroscope().getSensing();
+		boolean on = mGLSurfaceView.getGyroscope().getSensing();
 		menu.findItem(R.id.action_turn_gyro_on).setVisible(!on);
 		menu.findItem(R.id.action_turn_gyro_off).setVisible(on);
 		return super.onPrepareOptionsMenu(menu);
@@ -88,14 +88,14 @@ public class AnimationActivity extends ActionBarActivity {
 	    // Handle presses on the action bar items
 	    switch (item.getItemId()) {
 	        case R.id.action_turn_gyro_on:
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(true);
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(true);
+	    		mGLSurfaceView.getGyroscope().setTracking(true);
+	    		mGLSurfaceView.getGyroscope().setSensing(true);
     			Log.d(TAG, "Tracking on");
     			supportInvalidateOptionsMenu();
 	            return true;
 	        case R.id.action_turn_gyro_off:
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setTracking(false);
-	    		mGLSurfaceView.getRenderer().getCamera().getGyroscope().setSensing(false);
+	    		mGLSurfaceView.getGyroscope().setTracking(false);
+	    		mGLSurfaceView.getGyroscope().setSensing(false);
     			Log.d(TAG, "Tracking off");
     			supportInvalidateOptionsMenu();
 	            return true;
@@ -115,16 +115,16 @@ public class AnimationActivity extends ActionBarActivity {
 
 		if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
 			isVolumeUpPressed = true;
-			mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(4.0f);
+			mGLSurfaceView.getCameraTrackball().setZoomRate(4.0f);
 			Log.d(TAG, "keyDown: volume up");
 		} else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
 			isVolumeDownPressed = true;
-			mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(0.25f);
+			mGLSurfaceView.getCameraTrackball().setZoomRate(0.25f);
 			Log.d(TAG, "keyDown: volume down");
 		}
 
 		if (isVolumeUpPressed && isVolumeDownPressed) {
-			mGLSurfaceView.getRenderer().resetCamera();
+			mGLSurfaceView.resetCamera();
 		}
 		return true;
 	}
@@ -141,7 +141,7 @@ public class AnimationActivity extends ActionBarActivity {
 			Log.d(TAG, "keyUp: volume down");
 		}
 
-		mGLSurfaceView.getRenderer().getCamera().getTrackball().setZoomRate(1.0f);
+		mGLSurfaceView.getCameraTrackball().setZoomRate(1.0f);
 		return true;
 	}
 }

@@ -51,7 +51,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	 * Store the view matrix. This can be thought of as our camera. This matrix transforms world space to eye space;
 	 * it positions things relative to our eye.
 	 */
-	private Camera mCamera;
+	private float[] viewMatrix = new float[16];
 	private float[] tempViewMatrix = new float[16];
 
 	/** Store the projection matrix. This is used to project the scene onto a 2D viewport. */
@@ -110,8 +110,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	public AnimationRenderer(AnimationView view) {
 		mView = view;
 		mActivityContext = view.getContext();
-		mCamera = new Camera(mActivityContext);
-		resetCamera();
 
 		// Define points for a cube.		
 
@@ -248,18 +246,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 
 	}
 
-	public void onResume() {
-		mCamera.onResume();
-	}
-
-	public void onPause() {
-		mCamera.onPause();
-	}	
-
-	public Camera getCamera() {
-		return mCamera;
-	}
-
 	protected String getVertexShader()
 	{
 		return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.color_vertex_shader);
@@ -338,14 +324,6 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		System.out.println();
 	}
 	//*/
-
-	public void resetCamera() {
-		mCamera.initializeCamera(
-				0, 40, 100,
-				0, 40,   0,
-				0,  1,   0);
-
-	}
 
 	/**
 	 * Answers a color for color picking, basis. Works on a color buffer with as
@@ -440,17 +418,14 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-		getCamera().getGyroscope().updateOrientation();
+		mView.getGyroscope().updateOrientation();
 //		mView.updateSelectionOrientation();
 		updateAnimationsTransforms();
 
-		BVHNode selectedNode = mView.getSelectedPart();
-		if (selectedNode != null) {
-			mCamera.setOrigin(selectedNode.cachedOrigin());
-		}
-
-
-		mCamera.updateViewMatrix();
+		mView.getCameraTrackball().basicUpdateOrientation();
+		mView.getCameraTrackball().getStore().update();
+		mView.getCameraTrackball().updateTweenedGlobalTransform();
+		mView.getCamera().getViewMatrix(viewMatrix, 0);
 //		mView.updateSelectionTouchOrientation();
 
 		// Do a complete rotation every 10 seconds.
@@ -475,6 +450,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		updateUniforms();
 		figureRenderer.drawPartNamed("hip");
 
+/*
 		Matrix.setIdentityM(mModelMatrix, 0);
 		Matrix.translateM(mModelMatrix, 0, 0.0f, 20.0f, -7.0f);
 		//Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 0.0f, 0.0f, 1.0f);        
@@ -483,6 +459,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 		GLES20.glUniform4f(mColorHandle, 0.0f, 0.0f, 1.0f, 1.0f); // blue
 		updateUniforms();
 		figureRenderer.drawPartNamed("head");
+*/
 
 		//        if (selectedNode != null) {
 /*
@@ -520,7 +497,7 @@ public class AnimationRenderer implements GLSurfaceView.Renderer {
 	private void updateUniforms() {
 		// This multiplies the view matrix by the model matrix, and stores the result in the MVP matrix
 		// (which currently contains model * view).
-		Matrix.multiplyMM(mMVPMatrix, 0, mCamera.getViewMatrix(), 0, mModelMatrix, 0);   
+		Matrix.multiplyMM(mMVPMatrix, 0, viewMatrix, 0, mModelMatrix, 0);   
 
 		// Pass in the modelview matrix.
 		GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVPMatrix, 0);                

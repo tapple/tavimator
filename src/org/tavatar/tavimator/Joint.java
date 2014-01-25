@@ -53,7 +53,7 @@ public class Joint implements Cloneable {
 	public void setStore(JointStore store) {
 		this.store = store;
 	}
-	
+
 	/**
 	 * Convenience method for initializing me as the only joint in my joint store.
 	 * @param store
@@ -61,7 +61,7 @@ public class Joint implements Cloneable {
 	public void setUniStore(JointStore store) {
 		store.setJoint(0, this);
 	}
-	
+
 	public int getIndex() {
 		return index;
 	}
@@ -125,6 +125,22 @@ public class Joint implements Cloneable {
 		}
 	}
 
+	private void unrotateTweenedGlobalTransform() {
+		// Also resets scaling for now
+		int i = getMatrixIndex();
+		store.tweenedGlobalTransform[i +  0] = 1f;
+		store.tweenedGlobalTransform[i +  1] = 0f;
+		store.tweenedGlobalTransform[i +  2] = 0f;
+
+		store.tweenedGlobalTransform[i +  4] = 0f;
+		store.tweenedGlobalTransform[i +  5] = 1f;
+		store.tweenedGlobalTransform[i +  6] = 0f;
+
+		store.tweenedGlobalTransform[i +  8] = 0f;
+		store.tweenedGlobalTransform[i +  9] = 0f;
+		store.tweenedGlobalTransform[i + 10] = 1f;
+	}
+	
 	public void basicRotateMatrix(float[] matrix, int matrixIndex, float[] tempMatrix1, float[] tempMatrix2) {
 		if (store.useEulerAngles) {
 			for(int i = 0; i < BVHOrderType.NUM_AXES; i++) {
@@ -177,7 +193,23 @@ public class Joint implements Cloneable {
 	}
 
 	public void scaleBy(float fraction) {
-		store.value[index * JointStore.VALUE_STRIDE + JointStore.SCALE_INDEX] *= fraction;
+		store.value[getScaleIndex()] *= fraction;
+	}
+
+	public void setOrigin(float x, float y, float z) {
+		store.value[getOriginIndex() + 0] = x;
+		store.value[getOriginIndex() + 1] = y;
+		store.value[getOriginIndex() + 2] = z;
+	}
+
+	public void setPosition(float x, float y, float z) {
+		store.value[getPositionIndex() + 0] = x;
+		store.value[getPositionIndex() + 1] = y;
+		store.value[getPositionIndex() + 2] = z;
+	}
+
+	public void clearRotation() {
+		Quaternion.setIdentity(store.value, getRotationIndex());
 	}
 
 	public float xAngle() {
@@ -255,6 +287,10 @@ public class Joint implements Cloneable {
 
 	public void getTweenedGlobalTransform(float[] dest, int destOffset) {
 		System.arraycopy(store.tweenedGlobalTransform, getMatrixIndex(), dest, destOffset, JointStore.MATRIX_STRIDE);
+	}
+
+	public void getViewMatrix(float[] dest, int destOffset) {
+		Matrix.invertM(dest, destOffset, store.tweenedGlobalTransform, getMatrixIndex());
 	}
 
 	public void getRotation(float[] q, int qOffset) {

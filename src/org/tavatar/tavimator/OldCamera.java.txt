@@ -22,7 +22,7 @@ import android.view.animation.Interpolator;
  * baseDeviceOrientation: the orientation of the phone at which the camera is at its base orientation
  */
 
-public class Camera implements TouchTrackball.UpdateListener {
+public class Camera {
 	private static final String TAG = "Camera";
 
 	/**
@@ -68,7 +68,6 @@ public class Camera implements TouchTrackball.UpdateListener {
 
 	public Camera(Context context) {
 		trackball = new TouchTrackball(context);
-		trackball.addUpdateListener(this);
 		gyroscope = new Gyroscope(context);
 		// Start out facing and rotating about the origin, pointing in the default OpenGL direction of z, with y being up and x right
 		initializeCamera(
@@ -132,11 +131,13 @@ public class Camera implements TouchTrackball.UpdateListener {
 	}
 
 	public void updateViewMatrix() {
-		trackball.updateOrientation();
+		trackball.basicUpdateOrientation();
+		trackball.getStore().update();
+		trackball.updateTweenedGlobalTransform();
 		transition.update();
 		System.arraycopy(gyroscope.getInverseOrientation(), 0, trackball.getCameraToTrackballOrientation(), 0, 16);
 
-		trackball.rotateMatrix(inverseCameraOrientation, gyroscope.getOrientation());
+		trackball.getTweenedGlobalTransform(inverseCameraOrientation, 0);
 
 		Matrix.setIdentityM(temporaryMatrix, 0);
 		Matrix.translateM(temporaryMatrix, 0, 
@@ -163,22 +164,5 @@ public class Camera implements TouchTrackball.UpdateListener {
 
 	public Gyroscope getGyroscope() {
 		return gyroscope;
-	}
-
-	@Override
-	public float[] getOrientation() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setOrientation(float[] orientation) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void zoomBy(float fraction) {
-		distance *= fraction;
 	}
 }

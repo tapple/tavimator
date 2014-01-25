@@ -40,6 +40,18 @@ public class AnimationView extends GLSurfaceView {
 	private List<JointStore> jointStore = new ArrayList<JointStore>();
 	private Joint rootNode;
 
+	/**
+	 * Trackball that keeps track of orientation set by touch
+	 */
+	private TouchTrackball trackball;
+
+	/**
+	 * Gyroscope that keeps track of orientation set by device orientation
+	 */
+	private Gyroscope gyroscope;
+
+	private Joint camera;
+	
 	private PointerGroup pointers;
 
 	/**
@@ -102,6 +114,11 @@ public class AnimationView extends GLSurfaceView {
 		final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
 		final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x20000;
 
+		trackball = new TouchTrackball(getContext());
+		gyroscope = new Gyroscope(getContext());
+		camera = trackball;
+		resetCamera();
+
 		if (supportsEs2) {
 			// Request an OpenGL ES 2.0 compatible context.
 			setEGLContextClientVersion(2);
@@ -115,7 +132,7 @@ public class AnimationView extends GLSurfaceView {
 		} else {
 			// This is where you could create an OpenGL ES 1.x compatible
 			// renderer if you wanted to support both ES 1 and ES 2.
-			return;
+			throw new IllegalArgumentException("OpenGL ES 1.x not supported");
 		}
 
 		pointers = new PointerGroup(getContext());
@@ -128,7 +145,7 @@ public class AnimationView extends GLSurfaceView {
 	// this code probably would be more appropriate in the activity
 	public void initializeTouchDispatcher() {
 		tapHandler = new AnimationPartSelector(this);
-		cameraHandler = renderer.getCamera().getTrackball().getDragHandler(
+		cameraHandler = trackball.getDragHandler(
 				R.string.one_finger_tool_name_orbit_camera, R.string.short_tool_name_orbit_camera);
 	}
 
@@ -136,16 +153,16 @@ public class AnimationView extends GLSurfaceView {
 		return renderer;
 	}
 
-	public Camera getCamera() {
-		return getRenderer().getCamera();
+	public Joint getCamera() {
+		return camera;
 	}
 
 	public Trackball getCameraTrackball() {
-		return getCamera().getTrackball();
+		return trackball;
 	}
 
 	public Gyroscope getGyroscope() {
-		return getCamera().getGyroscope();
+		return gyroscope;
 	}
 
 	public Animation getSelectedAnimation() {
@@ -170,6 +187,13 @@ public class AnimationView extends GLSurfaceView {
 
 	public BVH getBVH() {
 		return bvh;
+	}
+
+	public void resetCamera() {
+		camera.setPosition(0, 0, 100);
+		camera.setOrigin(0, 40, 0);
+		camera.clearRotation();
+
 	}
 
 	public void selectAnimation(int index) {
@@ -343,7 +367,7 @@ public class AnimationView extends GLSurfaceView {
 	{
 		// The activity must call the GL surface view's onResume() on activity onResume().
 		super.onResume();
-		renderer.onResume();
+		gyroscope.onResume();
 	}
 
 	@Override
@@ -351,7 +375,7 @@ public class AnimationView extends GLSurfaceView {
 	{
 		// The activity must call the GL surface view's onPause() on activity onPause().
 		super.onPause();
-		renderer.onPause();
+		gyroscope.onPause();
 	}
 
 	public void pickPart(final int x, final int y, final Handler resultHandler) {
